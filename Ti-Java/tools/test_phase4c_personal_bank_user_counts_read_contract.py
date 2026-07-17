@@ -26,6 +26,12 @@ try:
         load_read_successor_contract,
         validate_read_successor_contract,
     )
+    from tools.phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as implementation_accepted_sha256,
+        fixed_source_sha256 as implementation_fixed_source_sha256,
+        load_http_implementation_successor_contract,
+        successor_sha256 as implementation_successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     import build_phase4c_personal_bank_user_counts_read_contract as builder
     from phase4c_http_entry_successor_acceptance import (
@@ -41,6 +47,12 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         PREDECESSOR_SHA256,
         load_read_successor_contract,
         validate_read_successor_contract,
+    )
+    from phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as implementation_accepted_sha256,
+        fixed_source_sha256 as implementation_fixed_source_sha256,
+        load_http_implementation_successor_contract,
+        successor_sha256 as implementation_successor_sha256,
     )
 
 
@@ -91,6 +103,9 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
         cls.http_entry = load_http_entry_successor_contract(ROOT)
         if cls.http_entry is None:
             raise AssertionError("Phase4C HTTP entry successor contract is required")
+        cls.http_implementation = load_http_implementation_successor_contract(ROOT)
+        if cls.http_implementation is None:
+            raise AssertionError("Phase4C HTTP implementation contract is required")
         cls.composition = json.loads(COMPOSITION_PATH.read_text(encoding="utf-8"))
         cls.requirements = cls.composition["successor_handoff"][
             "future_read_contract_requirements"
@@ -126,13 +141,30 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
             self.assertTrue(source.is_file(), name)
             override = HTTP_ENTRY_SUCCESSOR_SOURCES.get(relative)
             if override is None:
-                self.assertEqual(reference["sha256"], sha256(source), name)
-                continue
+                current_hash = sha256(source)
+                if reference["sha256"] == current_hash:
+                    continue
+                implementation_successor = implementation_successor_sha256(
+                    ROOT, relative
+                )
+                if implementation_successor is not None:
+                    self.assertEqual(
+                        reference["sha256"],
+                        implementation_accepted_sha256(relative),
+                        name,
+                    )
+                    self.assertEqual(current_hash, implementation_successor, name)
+                    continue
+                fixed_source = implementation_fixed_source_sha256(ROOT, relative)
+                if fixed_source is not None:
+                    self.assertEqual(current_hash, fixed_source, name)
+                    continue
+                self.fail(f"unreviewed read-contract source drift: {name}")
             self.assertEqual(
                 reference["sha256"], override["accepted_sha256"], name
             )
             self.assertEqual(
-                sha256(source), override["successor_sha256"], name
+                sha256(source), http_entry_successor_sha256(ROOT, relative), name
             )
 
         # The predecessor builder incorporates mutable documentation sources.
@@ -173,8 +205,17 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
         )
         runtime = implementation["production_runtime_surface"]
         self.assertEqual(288, runtime["file_count"])
-        self.assertEqual(builder.production_runtime_manifest(), runtime["files"])
         self.assertEqual(builder.sha256_json(runtime["files"]), runtime["manifest_sha256"])
+        transition = self.http_implementation["implementation"][
+            "production_runtime_transition"
+        ]
+        self.assertEqual({
+            "file_count": 288,
+            "manifest_sha256": runtime["manifest_sha256"],
+        }, transition["predecessor"])
+        current_runtime = builder.production_runtime_manifest()
+        self.assertEqual(297, len(current_runtime))
+        self.assertEqual(current_runtime, transition["current"]["files"])
 
     def test_03_exact_twenty_seven_method_shape_and_http_neutral_apis_close(self):
         methods = self.contract["implementation"]["public_application_methods"]
@@ -236,10 +277,13 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
         )
         for name, relative in implementation["verification_source_files"].items():
             source = ROOT / relative
-            self.assertEqual(
-                sha256(source),
-                implementation["verification_source_sha256"][name],
-            )
+            historical_hash = implementation["verification_source_sha256"][name]
+            current_hash = sha256(source)
+            if current_hash == historical_hash:
+                terminal_hash = historical_hash
+            else:
+                terminal_hash = implementation_fixed_source_sha256(ROOT, relative)
+            self.assertEqual(current_hash, terminal_hash, name)
             self.assertTrue(
                 set(self.requirements["required_verification_test_methods"][name])
                 .issubset(junit_methods(source)),
@@ -369,7 +413,18 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
                 self.assertEqual(relative, reference["source"])
                 expected = http_entry_successor_sha256(ROOT, relative)
                 if expected is None:
-                    expected = reference["successor_sha256"]
+                    implementation_successor = implementation_successor_sha256(
+                        ROOT, relative
+                    )
+                    if implementation_successor is not None:
+                        self.assertEqual(
+                            reference["successor_sha256"],
+                            implementation_accepted_sha256(relative),
+                            relative,
+                        )
+                        expected = implementation_successor
+                    else:
+                        expected = reference["successor_sha256"]
                 self.assertEqual(sha256(ROOT / relative), expected)
                 self.assertNotEqual(reference["accepted_sha256"], "")
 

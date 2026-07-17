@@ -1,0 +1,2 @@
+resource_kind,resource_name,base_resource,phase4c_owner,persistence_role,lifecycle,evidence,production_cutover
+redis_key,ti-java:learning:personal-bank-user-counts-read-rate:<api|web>:<identity:v1|ip:v1>:<hmac_sha256>:<second|hour|day>,false,learning,runtime_rate_limit,endpoint-isolated first-hit fixed windows; HMAC pseudonym only; integer counters with bounded PTTL,RedisPersonalBankUserCountsReadRateLimiter + RedisPersonalBankUserCountsReadRateLimiterIT + LegacyPersonalBankUserCountsNetworkIT,false

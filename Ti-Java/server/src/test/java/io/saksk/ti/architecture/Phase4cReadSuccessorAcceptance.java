@@ -37,6 +37,7 @@ final class Phase4cReadSuccessorAcceptance {
             fixedAuxiliarySources();
     private static final Map<String, FixedSource> PYTHON_SOURCES = fixedPythonSources();
     private static final Map<String, FixedSource> JAVA_SOURCES = fixedJavaSources();
+    private static volatile Map<String, String> verifiedTerminalSuccessorHashes = Map.of();
 
     private Phase4cReadSuccessorAcceptance() {
     }
@@ -44,6 +45,7 @@ final class Phase4cReadSuccessorAcceptance {
     static JsonNode load(Path tiJavaRoot) throws IOException {
         Path root = tiJavaRoot.toRealPath();
         Phase4cHttpEntrySuccessorAcceptance.load(root);
+        Phase4cHttpImplementationSuccessorAcceptance.load(root);
         JsonNode contract = JSON.readTree(Files.readString(
                 fixedRegularFile(root, CONTRACT_RELATIVE), StandardCharsets.UTF_8));
         validate(contract);
@@ -55,9 +57,11 @@ final class Phase4cReadSuccessorAcceptance {
                 predecessorPath, StandardCharsets.UTF_8));
         Phase4cSuccessorAcceptance.validate(predecessor);
 
-        validateFixedFiles(root, PYTHON_SOURCES);
-        validateFixedFiles(root, JAVA_SOURCES);
-        validateFixedFiles(root, AUXILIARY_SOURCES);
+        Map<String, String> terminalHashes = new LinkedHashMap<>();
+        terminalHashes.putAll(validateFixedFiles(root, PYTHON_SOURCES));
+        terminalHashes.putAll(validateFixedFiles(root, JAVA_SOURCES));
+        terminalHashes.putAll(validateFixedFiles(root, AUXILIARY_SOURCES));
+        verifiedTerminalSuccessorHashes = Map.copyOf(terminalHashes);
         return contract;
     }
 
@@ -131,13 +135,15 @@ final class Phase4cReadSuccessorAcceptance {
             return null;
         }
         validate(contract);
-        return fixed.successorSha256();
+        return verifiedTerminalSuccessorHashes.getOrDefault(
+                relative, fixed.successorSha256());
     }
 
-    private static void validateFixedFiles(
+    private static Map<String, String> validateFixedFiles(
             Path root,
             Map<String, FixedSource> sources
     ) throws IOException {
+        Map<String, String> terminalHashes = new LinkedHashMap<>();
         for (Map.Entry<String, FixedSource> entry : sources.entrySet()) {
             Path source = fixedRegularFile(root, entry.getKey());
             String expected = entry.getValue().successorSha256();
@@ -150,10 +156,24 @@ final class Phase4cReadSuccessorAcceptance {
                         "HTTP entry did not accept the exact read successor for "
                                 + entry.getKey());
                 expected = httpEntrySuccessor;
+            } else {
+                String implementationSuccessor =
+                        Phase4cHttpImplementationSuccessorAcceptance.successorHash(
+                                root, entry.getKey());
+                if (implementationSuccessor != null) {
+                    require(expected.equals(
+                                    Phase4cHttpImplementationSuccessorAcceptance
+                                            .acceptedHash(entry.getKey())),
+                            "HTTP implementation did not accept the exact read "
+                                    + "successor for " + entry.getKey());
+                    expected = implementationSuccessor;
+                }
             }
             require(expected.equals(sha256(source)),
                     "Phase4C read successor file hash drift for " + entry.getKey());
+            terminalHashes.put(entry.getKey(), expected);
         }
+        return Map.copyOf(terminalHashes);
     }
 
     private static void validateSourceReferences(

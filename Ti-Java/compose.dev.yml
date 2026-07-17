@@ -122,6 +122,12 @@ services:
       TI_SUBJECT_READ_REQUESTS_PER_MINUTE: ${TI_SUBJECT_READ_REQUESTS_PER_MINUTE:-60}
       TI_SUBJECT_READ_REQUESTS_PER_HOUR: ${TI_SUBJECT_READ_REQUESTS_PER_HOUR:-600}
       TI_RATE_LIMIT_MULTIPLIER: ${TI_RATE_LIMIT_MULTIPLIER:-1}
+      TI_PERSONAL_BANK_USER_COUNTS_READ_RATE_LIMIT_NAMESPACE: ${TI_PERSONAL_BANK_USER_COUNTS_READ_RATE_LIMIT_NAMESPACE:-ti-java:learning:personal-bank-user-counts-read-rate}
+      TI_PERSONAL_BANK_USER_COUNTS_READ_REQUESTS_PER_SECOND: ${TI_PERSONAL_BANK_USER_COUNTS_READ_REQUESTS_PER_SECOND:-10}
+      TI_PERSONAL_BANK_USER_COUNTS_READ_REQUESTS_PER_HOUR: ${TI_PERSONAL_BANK_USER_COUNTS_READ_REQUESTS_PER_HOUR:-500}
+      TI_PERSONAL_BANK_USER_COUNTS_READ_REQUESTS_PER_DAY: ${TI_PERSONAL_BANK_USER_COUNTS_READ_REQUESTS_PER_DAY:-5000}
+      TI_PERSONAL_BANK_USER_COUNTS_READ_RATE_LIMIT_MULTIPLIER: ${TI_PERSONAL_BANK_USER_COUNTS_READ_RATE_LIMIT_MULTIPLIER:-1}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75.0 -Djava.io.tmpdir=/tmp
       TI_MANAGEMENT_ADDRESS: 0.0.0.0
       TI_MANAGEMENT_PORT: "9090"
@@ -132,6 +138,8 @@ services:
         target: ti.redis.password
       - source: ti_login_rate_limit_key_secret
         target: ti.login-rate-limit.key-secret
+      - source: ti_personal_bank_user_counts_rate_limit_key_secret
+        target: ti.personal-bank-user-counts-read-rate-limit.key-secret
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001,mode=1770
     ports:
@@ -184,3 +192,5 @@ secrets:
     file: ${TI_JAVA_REDIS_PASSWORD_FILE:-./infra/phase2/secrets/ti-redis-password.example}
   ti_login_rate_limit_key_secret:
     file: ${TI_JAVA_LOGIN_RATE_LIMIT_KEY_SECRET_FILE:-./infra/phase2/secrets/ti-login-rate-limit-key-secret.example}
+  ti_personal_bank_user_counts_rate_limit_key_secret:
+    file: ${TI_JAVA_PERSONAL_BANK_USER_COUNTS_RATE_LIMIT_KEY_SECRET_FILE:-./infra/phase2/secrets/ti-personal-bank-user-counts-rate-limit-key-secret.example}

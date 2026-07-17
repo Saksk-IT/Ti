@@ -14,6 +14,17 @@ import hashlib
 import json
 from pathlib import Path
 
+try:
+    from tools.phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as implementation_accepted_sha256,
+        successor_sha256 as implementation_successor_sha256,
+    )
+except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as implementation_accepted_sha256,
+        successor_sha256 as implementation_successor_sha256,
+    )
+
 
 CONTRACT_ID = "ti.phase4c.personal-bank-user-counts-http-entry-contract"
 CONTRACT_STATUS = "entry_gate_passed_http_implementation_not_started"
@@ -50,6 +61,88 @@ BRIDGE_PROVENANCE_SENTINEL = "<bridge-self-provenance-sha256>"
 BRIDGE_SOURCE_KEYS = {
     "python_successor_bridge",
     "java_successor_bridge",
+}
+SOURCE_PATHS = {
+    "application_config_baseline": "server/src/main/resources/application.yml",
+    "approved_differences": "docs/refactor/phase4c/approved-differences.md",
+    "boundary_capture_test": (
+        "tools/test_capture_phase4c_personal_bank_user_counts_http_boundary_evidence.py"
+    ),
+    "boundary_capture_tool": (
+        "tools/capture_phase4c_personal_bank_user_counts_http_boundary_evidence.py"
+    ),
+    "contract_builder": (
+        "tools/build_phase4c_personal_bank_user_counts_http_entry_contract.py"
+    ),
+    "contract_test": (
+        "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py"
+    ),
+    "decimal_path_integer": (
+        "server/src/main/java/io/saksk/ti/web/LegacyDecimalPathInteger.java"
+    ),
+    "historical_composition_contract_test": (
+        "tools/test_phase4c_personal_bank_user_counts_composition_contract.py"
+    ),
+    "historical_java_read_bridge": (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cReadSuccessorAcceptance.java"
+    ),
+    "historical_python_read_bridge": "tools/phase4c_read_successor_acceptance.py",
+    "historical_read_contract_test": (
+        "tools/test_phase4c_personal_bank_user_counts_read_contract.py"
+    ),
+    "http_boundary_evidence": (
+        "docs/refactor/phase4c/personal-bank-user-counts-http-boundary-evidence.json"
+    ),
+    "java_successor_bridge": (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpEntrySuccessorAcceptance.java"
+    ),
+    "phase3_authentication_differences": (
+        "docs/refactor/phase3/approved-authentication-differences.md"
+    ),
+    "phase4b_callers": (
+        "docs/refactor/phase4b/personal-bank-user-counts-callers.json"
+    ),
+    "phase4b_entry": (
+        "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json"
+    ),
+    "phase4b_goldens": (
+        "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json"
+    ),
+    "phase4c_readme": "docs/refactor/phase4c/README.md",
+    "predecessor": PREDECESSOR_RELATIVE,
+    "production_config_baseline": (
+        "server/src/main/resources/application-prod.yml"
+    ),
+    "progress": "docs/refactor/05-progress.md",
+    "project_readme": "README.md",
+    "python_successor_bridge": "tools/phase4c_http_entry_successor_acceptance.py",
+    "rate_capture_test": (
+        "tools/test_capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py"
+    ),
+    "rate_capture_tool": (
+        "tools/capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py"
+    ),
+    "rate_limit_evidence": (
+        "docs/refactor/phase4c/personal-bank-user-counts-rate-limit-evidence.json"
+    ),
+    "rate_wiring_baseline": (
+        "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitConfiguration.java"
+    ),
+    "request_id": "server/src/main/java/io/saksk/ti/web/request/RequestId.java",
+    "request_id_filter": (
+        "server/src/main/java/io/saksk/ti/web/request/RequestIdFilter.java"
+    ),
+    "request_id_filter_test": (
+        "server/src/test/java/io/saksk/ti/web/request/RequestIdFilterTest.java"
+    ),
+    "security_baseline": (
+        "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java"
+    ),
+    "worm_tip": (
+        "docs/refactor/phase4c/personal-bank-user-counts-read-access-worm-evidence.json"
+    ),
 }
 
 # Filled with exact reviewed hashes after all predecessor-source edits settle.
@@ -182,6 +275,40 @@ def _fixed_regular_file(root: Path, relative: str) -> Path:
     return resolved
 
 
+def _validated_terminal_sha256(
+        root: Path,
+        relative: str,
+        accepted_sha256: str,
+) -> str:
+    physical_sha256 = _sha256(_fixed_regular_file(root, relative))
+    if physical_sha256 == accepted_sha256:
+        return physical_sha256
+    if implementation_accepted_sha256(relative) != accepted_sha256:
+        raise AssertionError(
+            f"HTTP implementation did not accept exact HTTP entry source: {relative}"
+        )
+    successor_sha256 = implementation_successor_sha256(root, relative)
+    if successor_sha256 != physical_sha256:
+        raise AssertionError(
+            f"HTTP implementation successor file hash drift for {relative}"
+        )
+    return physical_sha256
+
+
+def _validate_source_contracts(root: Path, source_contracts: object) -> None:
+    if not isinstance(source_contracts, dict):
+        raise AssertionError("HTTP entry source contracts are missing")
+    if set(source_contracts) != set(SOURCE_PATHS):
+        raise AssertionError("unexpected HTTP entry source contract set")
+    for name, relative in SOURCE_PATHS.items():
+        reference = source_contracts.get(name)
+        if not isinstance(reference, dict) or set(reference) != {"source", "sha256"}:
+            raise AssertionError(f"unexpected HTTP entry source contract shape: {name}")
+        if reference.get("source") != relative:
+            raise AssertionError(f"fixed HTTP entry source path drift: {name}")
+        _validated_terminal_sha256(root, relative, reference.get("sha256"))
+
+
 def load_http_entry_successor_contract(ti_java_root: Path) -> dict | None:
     path = ti_java_root / CONTRACT_RELATIVE
     if not path.is_file():
@@ -256,8 +383,7 @@ def validate_http_entry_successor_contract(
             "successor_sha256": fixed["successor_sha256"],
         }:
             raise AssertionError(f"HTTP entry successor reference drift for {relative}")
-        if _sha256(_fixed_regular_file(root, relative)) != fixed["successor_sha256"]:
-            raise AssertionError(f"HTTP entry successor file hash drift for {relative}")
+        _validated_terminal_sha256(root, relative, fixed["successor_sha256"])
 
     current = contract.get("current_state", {})
     if current.get("implementation_started"):
@@ -342,14 +468,7 @@ def validate_http_entry_successor_contract(
         raise AssertionError(
             "Phase4C HTTP entry independent trust payload drifted"
         )
-    source_contracts = contract["source_contracts"]
-    for name, reference in source_contracts.items():
-        relative = reference["source"]
-        physical = _fixed_regular_file(root, relative)
-        if _sha256(physical) != reference["sha256"]:
-            raise AssertionError(
-                f"HTTP entry source contract file hash drift for {name}"
-            )
+    _validate_source_contracts(root, contract.get("source_contracts"))
 
 
 def accepted_sha256(relative: str) -> str | None:
@@ -364,4 +483,8 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     fixed = SUCCESSOR_SOURCES.get(relative)
     if fixed is None:
         return None
-    return fixed["successor_sha256"]
+    return _validated_terminal_sha256(
+        ti_java_root.resolve(strict=True),
+        relative,
+        fixed["successor_sha256"],
+    )

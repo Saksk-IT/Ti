@@ -7,13 +7,13 @@ import copy
 import hashlib
 import json
 from pathlib import Path
-import subprocess
-import sys
 import tempfile
 import unittest
+from unittest import mock
 
 try:
     from tools import build_phase4c_personal_bank_user_counts_http_entry_contract as builder
+    from tools import phase4c_http_entry_successor_acceptance as acceptance
     from tools.phase4c_http_entry_successor_acceptance import (
         CONTRACT_ID,
         CONTRACT_STATUS,
@@ -21,14 +21,21 @@ try:
         load_http_entry_successor_contract,
         validate_http_entry_successor_contract,
     )
+    from tools.phase4c_http_implementation_successor_acceptance import (
+        load_http_implementation_successor_contract,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     import build_phase4c_personal_bank_user_counts_http_entry_contract as builder
+    import phase4c_http_entry_successor_acceptance as acceptance
     from phase4c_http_entry_successor_acceptance import (
         CONTRACT_ID,
         CONTRACT_STATUS,
         SUCCESSOR_SOURCES,
         load_http_entry_successor_contract,
         validate_http_entry_successor_contract,
+    )
+    from phase4c_http_implementation_successor_acceptance import (
+        load_http_implementation_successor_contract,
     )
 
 
@@ -66,6 +73,9 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
         cls.contract = load_http_entry_successor_contract(ROOT)
         if cls.contract is None:
             raise AssertionError("Phase4C HTTP entry contract is required")
+        cls.implementation = load_http_implementation_successor_contract(ROOT)
+        if cls.implementation is None:
+            raise AssertionError("Phase4C HTTP implementation successor is required")
         cls.predecessor = json.loads(
             (ROOT / builder.PREDECESSOR_RELATIVE).read_text(encoding="utf-8")
         )
@@ -104,24 +114,13 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
         for name, reference in contract["source_contracts"].items():
             source = ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
-            self.assertEqual(reference["sha256"], sha256(source), name)
-
-        with tempfile.TemporaryDirectory(prefix="ti-phase4c-http-entry-") as temporary:
-            generated = Path(temporary) / "http-entry-contract.json"
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / (
-                        "tools/build_phase4c_personal_bank_user_counts_"
-                        "http_entry_contract.py"
-                    )),
-                    "--output",
-                    str(generated),
-                ],
-                cwd=ROOT,
-                check=True,
+            self.assertEqual(
+                sha256(source),
+                acceptance._validated_terminal_sha256(
+                    ROOT, reference["source"], reference["sha256"]
+                ),
+                name,
             )
-            self.assertEqual(CONTRACT_PATH.read_bytes(), generated.read_bytes())
 
     def test_02_current_production_surface_is_byte_identical_and_routes_stay_pending(self) -> None:
         current = self.contract["current_state"]
@@ -141,21 +140,32 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
             surface["public_application_methods"],
         )
         main = builder.read_builder.main_source_manifest()
-        runtime = builder.read_builder.production_runtime_manifest()
-        route = builder.read_builder.route_status_manifest()
         self.assertEqual(40, len(main))
         self.assertEqual(builder.EXPECTED_MAIN_MANIFEST_SHA256, builder.sha256_json(main))
-        self.assertEqual(288, len(runtime))
         self.assertEqual(
-            builder.EXPECTED_RUNTIME_MANIFEST_SHA256, builder.sha256_json(runtime)
+            288, surface["production_runtime_file_count"]
         )
-        self.assertEqual(5, len(route))
         self.assertEqual(
-            builder.EXPECTED_ROUTE_MANIFEST_SHA256, builder.sha256_json(route)
+            builder.EXPECTED_RUNTIME_MANIFEST_SHA256,
+            surface["production_runtime_manifest_sha256"],
+        )
+        self.assertEqual(5, surface["route_status_file_count"])
+        self.assertEqual(
+            builder.EXPECTED_ROUTE_MANIFEST_SHA256,
+            surface["route_status_manifest_sha256"],
         )
         self.assertEqual(
             builder.EXPECTED_BUILD_CONTEXT_SHA256,
-            builder.read_builder.java_build_context_sha256(),
+            surface["java_build_context_sha256"],
+        )
+        transition = self.implementation["implementation"][
+            "production_runtime_transition"
+        ]
+        self.assertEqual(288, transition["predecessor"]["file_count"])
+        self.assertEqual(297, transition["current"]["file_count"])
+        self.assertEqual(
+            builder.EXPECTED_RUNTIME_MANIFEST_SHA256,
+            transition["predecessor"]["manifest_sha256"],
         )
         self.assertEqual(11, current["migrated_operation_count"])
         self.assertEqual(600, current["pending_operation_count"])
@@ -390,8 +400,23 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
         self.assertEqual(builder.FORBIDDEN_FUTURE_MAIN_SOURCES, future[
             "forbidden_main_sources"])
         self.assertEqual(10, len(future["required_test_families"]))
+        implementation_delta = self.implementation["implementation"][
+            "production_runtime_transition"
+        ]["exact_delta"]
+        self.assertEqual(
+            set(builder.FUTURE_NEW_MAIN_SOURCES),
+            set(implementation_delta["added_files"]) - {
+                builder.FUTURE_OPENAPI_OVERLAY
+            },
+        )
         for relative in builder.FUTURE_NEW_MAIN_SOURCES:
-            self.assertFalse((ROOT / relative).exists(), relative)
+            self.assertTrue((ROOT / relative).is_file(), relative)
+
+        checkpoint = self.implementation["acceptance"]
+        self.assertFalse(checkpoint["route_migration_eligible"])
+        self.assertEqual(11, checkpoint["migrated_operation_count"])
+        self.assertEqual(600, checkpoint["pending_operation_count"])
+        self.assertEqual(0, checkpoint["production_cutover_operation_count"])
 
         authorization = self.contract["authorization"]
         for field in (
@@ -428,7 +453,12 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
                 "accepted_sha256"])
             self.assertEqual(fixed["successor_sha256"], reference[
                 "successor_sha256"])
-            self.assertEqual(fixed["successor_sha256"], sha256(ROOT / relative))
+            self.assertEqual(
+                sha256(ROOT / relative),
+                acceptance._validated_terminal_sha256(
+                    ROOT, relative, fixed["successor_sha256"]
+                ),
+            )
 
         tampered = copy.deepcopy(self.contract)
         tampered["historical_successor_acceptance"]["read_source_overrides"][
@@ -503,6 +533,178 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
         self.assertTrue(acceptance["routes_remain_pending"])
         self.assertTrue(acceptance["operator_and_real_migration_remain_blocked"])
         self.assertFalse(acceptance["production_cutover"])
+
+
+class Phase4cHttpEntryFixedHandoffUnitTest(unittest.TestCase):
+
+    def test_fixed_source_map_matches_immutable_http_entry_contract(self) -> None:
+        contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+        recorded_paths = {
+            name: reference["source"]
+            for name, reference in contract["source_contracts"].items()
+        }
+        self.assertEqual(recorded_paths, acceptance.SOURCE_PATHS)
+        self.assertEqual(32, len(acceptance.SOURCE_PATHS))
+
+    def test_unchanged_source_does_not_delegate_to_implementation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ti-http-entry-handoff-") as temporary:
+            root = Path(temporary)
+            source = root / "fixed-source.txt"
+            source.write_bytes(b"unchanged HTTP entry source\n")
+            accepted = sha256(source)
+            with (
+                mock.patch.object(
+                    acceptance, "implementation_accepted_sha256"
+                ) as implementation_accepted,
+                mock.patch.object(
+                    acceptance, "implementation_successor_sha256"
+                ) as implementation_successor,
+            ):
+                self.assertEqual(
+                    accepted,
+                    acceptance._validated_terminal_sha256(
+                        root, "fixed-source.txt", accepted
+                    ),
+                )
+            implementation_accepted.assert_not_called()
+            implementation_successor.assert_not_called()
+
+    def test_drift_requires_exact_implementation_handoff(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ti-http-entry-handoff-") as temporary:
+            root = Path(temporary)
+            source = root / "fixed-source.txt"
+            source.write_bytes(b"Phase4C HTTP implementation successor\n")
+            physical = sha256(source)
+            accepted = "a" * 64
+
+            with (
+                mock.patch.object(
+                    acceptance,
+                    "implementation_accepted_sha256",
+                    return_value=accepted,
+                ) as implementation_accepted,
+                mock.patch.object(
+                    acceptance,
+                    "implementation_successor_sha256",
+                    return_value=physical,
+                ) as implementation_successor,
+            ):
+                self.assertEqual(
+                    physical,
+                    acceptance._validated_terminal_sha256(
+                        root, "fixed-source.txt", accepted
+                    ),
+                )
+                implementation_accepted.assert_called_once_with("fixed-source.txt")
+                implementation_successor.assert_called_once_with(
+                    root, "fixed-source.txt"
+                )
+
+            with mock.patch.object(
+                acceptance,
+                "implementation_accepted_sha256",
+                return_value="b" * 64,
+            ):
+                with self.assertRaisesRegex(
+                    AssertionError, "did not accept exact HTTP entry source"
+                ):
+                    acceptance._validated_terminal_sha256(
+                        root, "fixed-source.txt", accepted
+                    )
+
+            with (
+                mock.patch.object(
+                    acceptance,
+                    "implementation_accepted_sha256",
+                    return_value=accepted,
+                ),
+                mock.patch.object(
+                    acceptance,
+                    "implementation_successor_sha256",
+                    return_value="b" * 64,
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    AssertionError, "implementation successor file hash drift"
+                ):
+                    acceptance._validated_terminal_sha256(
+                        root, "fixed-source.txt", accepted
+                    )
+
+    def test_source_contracts_never_supply_followed_paths(self) -> None:
+        contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+        source_contracts = contract["source_contracts"]
+        with mock.patch.object(
+            acceptance,
+            "_validated_terminal_sha256",
+            side_effect=lambda _root, _relative, accepted: accepted,
+        ) as validate_terminal:
+            acceptance._validate_source_contracts(ROOT, source_contracts)
+        self.assertEqual(
+            [
+                mock.call(
+                    ROOT,
+                    relative,
+                    source_contracts[name]["sha256"],
+                )
+                for name, relative in acceptance.SOURCE_PATHS.items()
+            ],
+            validate_terminal.call_args_list,
+        )
+
+        first_name = next(iter(acceptance.SOURCE_PATHS))
+        tampered_path = copy.deepcopy(source_contracts)
+        tampered_path[first_name]["source"] = "tools/unreviewed.py"
+        with mock.patch.object(
+            acceptance, "_validated_terminal_sha256"
+        ) as validate_terminal:
+            with self.assertRaisesRegex(
+                AssertionError, "fixed HTTP entry source path drift"
+            ):
+                acceptance._validate_source_contracts(ROOT, tampered_path)
+        validate_terminal.assert_not_called()
+
+        tampered_shape = copy.deepcopy(source_contracts)
+        tampered_shape[first_name]["unreviewed_path"] = "tools/unreviewed.py"
+        with self.assertRaisesRegex(
+            AssertionError, "source contract shape"
+        ):
+            acceptance._validate_source_contracts(ROOT, tampered_shape)
+
+        tampered_set = copy.deepcopy(source_contracts)
+        tampered_set["unreviewed"] = {
+            "source": "tools/unreviewed.py",
+            "sha256": "0" * 64,
+        }
+        with self.assertRaisesRegex(
+            AssertionError, "unexpected HTTP entry source contract set"
+        ):
+            acceptance._validate_source_contracts(ROOT, tampered_set)
+
+    def test_successor_lookup_returns_verified_terminal_hash(self) -> None:
+        relative, fixed = next(iter(SUCCESSOR_SOURCES.items()))
+        terminal = "c" * 64
+        with (
+            mock.patch.object(
+                acceptance,
+                "load_http_entry_successor_contract",
+                return_value={},
+            ),
+            mock.patch.object(
+                acceptance,
+                "_validated_terminal_sha256",
+                return_value=terminal,
+            ) as validate_terminal,
+        ):
+            self.assertEqual(
+                terminal,
+                acceptance.successor_sha256(ROOT, relative),
+            )
+        validate_terminal.assert_called_once_with(
+            ROOT.resolve(strict=True),
+            relative,
+            fixed["successor_sha256"],
+        )
 
 
 if __name__ == "__main__":

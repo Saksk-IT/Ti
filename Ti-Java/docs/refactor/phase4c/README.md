@@ -1,6 +1,6 @@
 # Phase 4C：练习与学习记录
 
-本目录保存 `learning` 垂直切片的实现前合同、HTTP-neutral read 后继合同、所有权 overlay、批准差异和可重复证据。
+本目录保存 `learning` 垂直切片的实现前合同、HTTP-neutral read 后继合同、HTTP pending implementation successor、OpenAPI/route delta、所有权 overlay、批准差异和可重复证据。
 Phase 1/Phase 4A/Phase 4B 的历史基线保持不可变；Phase 4C 只能通过显式 successor
 合同推进，不得把后续结论回写成早期事实。
 
@@ -10,7 +10,7 @@ HEAD 或任意新 source hash 动态放行，也不得据此改变 Phase 4B 的�
 
 Phase 2 的历史 `local-reference-verification.json` 及 Phase 4B 副本同样保持字节不可变。
 Phase 4C 使用版本化 successor 报告追加当前 build-context，由固定 allowlist gate 校验“Phase 4B 锚点 →
-Phase 4C 入口 → Phase 4C HTTP-neutral read → access fail-closed hardening”的四节点连续链和唯一 tip；静态门禁不得扫描任意报告或接受调用方传入的报告路径，采集脚本也必须显式指定新路径、
+Phase 4C 入口 → Phase 4C HTTP-neutral read → access fail-closed hardening → HTTP pending implementation”的五节点连续链和唯一 tip；第五节点报告 SHA-256 为 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，绑定 build-context `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。静态门禁不得扫描任意报告或接受调用方传入的报告路径，采集脚本也必须显式指定新路径、
 拒绝任何已存在目标并以原子 no-clobber 方式发布。固定门禁同时绑定 canonical schema SHA，采集期间
 Dockerfile/build-context 的前后摘要必须一致。
 
@@ -23,13 +23,13 @@ Dockerfile/build-context 的前后摘要必须一致。
 - 共享访问同时绑定请求题库、分享记录与分享本体，拒绝跨题库、未知权限和非确定性首行授权；
 - `bank_<bank_id>_tags` compatibility namespace 的唯一 owner overlay；
 - operator-only、幂等、逐来源行原子的显式迁移；
-- GET 禁止 DDL/DML，生产 schema/index、Controller、OpenAPI、route delta 和切流继续为 0。
+- 在 HTTP-neutral predecessor 时点，GET 禁止 DDL/DML，生产 schema/index、Controller、OpenAPI、route delta 和切流均为 0。
 
-实现前合同已经由 `personal-bank-user-counts-read-contract.json` 的固定第二层后继承接。当前生产面只新增
+实现前合同已经由 `personal-bank-user-counts-read-contract.json` 的固定第二层后继承接。在 HTTP-neutral read predecessor 时点，生产面只新增
 17 个 `learning`/`personalbank` 主源码并修改 `LearningApplicationApi`，累计形成 27 个公开应用方法；
 `learning` 以 `NOT_SUPPORTED` 编排，模块内查询与 personalbank facts 使用独立 `REQUIRES_NEW` 只读事务，
 候选题使用单个 PostgreSQL `integer[]` 参数。每次 facts 调用重新鉴权，任何 `DENIED` 都终止并丢弃部分字段；
-只有可选字段的基础设施/事务查询异常允许局部降级。第四个 WORM tip 固定当前 40 文件模块 manifest、
+只有可选字段的基础设施/事务查询异常允许局部降级。该历史 predecessor 的第四个 WORM tip 固定 40 文件模块 manifest、
 288 文件生产面与 Java build-context；前三个 WORM 报告保持字节不可变，最后一次追加专门绑定空/未知
 分享权限 fail closed 与 optional 事务 25P02 故障不扩散的最终生产面。
 
@@ -39,8 +39,8 @@ dry-run/preflight、全量 blocker 汇总与逐项批准仍未闭合。生产
 operator 实现必须在 dedicated connection 上用 session-level advisory lock 覆盖整个 preflight 与 apply，并在窗口内
 冻结 legacy source、normalized target 及 bank/question membership 写入，或记录可比较的 version/digest
 并在 apply 前复核；还必须用持久 migration ledger/version 或等价 tombstone 防止目标被有意清空后
-从保留的 legacy source 复活标签。因此完整迁移设计和生产执行器均尚未闭合。两条 HTTP alias 仍需独立的 Security、限流、
-Controller、OpenAPI、双运行时对比与切流门禁。
+从保留的 legacy source 复活标签。因此完整迁移设计和生产执行器均尚未闭合。在该历史 predecessor 时点，两条 HTTP alias 仍需独立的 Security、限流、
+Controller、OpenAPI、双运行时对比与切流门禁；当前实现状态由后文的显式 successor 描述。
 
 ## User-counts HTTP entry gate
 
@@ -55,7 +55,7 @@ CORS/OPTIONS 运行时观察，覆盖 GET/HEAD/OPTIONS、API/Web 认证协商、
 请求 ID、CORS 与无业务副作用边界。其 case payload SHA-256 为
 `f577ff99a7f04030fd5f4dae0f95610351d4fcfff92de7e9ca0c406516725dbf`，document payload
 SHA-256 为 `3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f`。
-这只是固定旧栈观察，不代表 Java HTTP 已实现，也不替代浏览器、真实 Servlet、反向代理或生产流量证据。
+这只是在 HTTP-neutral predecessor 时点固定的旧栈观察，不代表 Java HTTP 等价已闭合，也不替代浏览器、真实 Servlet、反向代理或生产流量证据。
 
 独立 rate-limit evidence 固定 7 组旧栈事实：`10/second`、`500/hour`、`5000/day` 三个窗口，
 两个注册 endpoint 的 alias scope，API/Web 429 内容协商，Session/Bearer/IP key 选择，以及 Redis
@@ -66,13 +66,21 @@ SHA-256 为 `3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f`�
 `P4C-LEARNING-007` 至 `P4C-LEARNING-012` 是本入口的批准差异集合，依次固定：显式 Bearer
 选择与统一拒绝、user-counts 不写 `users.last_active`、按有效 actor 的 HMAC 假名独立限流与 Redis
 故障 503、仅 API alias 的 CORS 和无副作用 OPTIONS、Unicode `Nd`/溢出/防火墙路径边界，以及
-HEAD 与 GET 同语义但所有状态零字节响应体。后续实现必须逐项携带差异 ID、强制测试和可观察影响，
+GET 与派生 HEAD 的状态和语义一致，只有 HEAD 在所有状态保持零字节响应体。后续实现必须逐项携带差异 ID、强制测试和可观察影响，
 不得把批准差异解释为绕过证据或切流门禁。
 
-当前 entry gate 的状态是“只授权未来精确 HTTP slice，生产实现尚未开始”：公开应用方法仍为 27 个，
-有效迁移状态仍为 **11 migrated、600 pending、0 production cutover**。相对 HTTP-neutral read
-predecessor，`server/src/main`、`server/src/main/resources`、OpenAPI 和 route 状态均为零变更；两条
-user-counts operation 仍未实现、未迁移、未切流。本门禁只允许下一步新增精确 Controller、
-route-specific Security/error writer、独立 rate limiter、路由级 CORS、必要配置与 OpenAPI；
-operator、schema/index、真实迁移、全局 preflight 和 production cutover 继续禁止。下一生产切片改变
-main/resources/OpenAPI 后必须生成并验证新的追加式 WORM，当前 read WORM 不能为未来生产面背书。
+历史 entry gate 的状态是“只授权未来精确 HTTP slice，生产实现尚未开始”；该时点公开应用方法为 27 个，有效迁移状态为 **11 migrated、600 pending、0 production cutover**。这些实现前事实保持不变，但已由下述 successor 承接，不再是当前工作树状态。
+
+## User-counts HTTP pending implementation checkpoint
+
+HTTP 生产适配已经存在：双 alias Controller、安全错误投影、严格路径解析、API-only CORS/OPTIONS、GET 与派生 HEAD 状态/语义一致且 HEAD 零响应体、独立 Redis 三窗口限流与相应配置/OpenAPI 均已物化。OpenAPI 和 route delta 将两条 GET 明确登记为 implemented-pending；派生 HEAD/OPTIONS 不计迁移 operation。新的 Redis namespace 由 `learning` 唯一拥有，有效所有权总数为 **160/160**。
+
+当前 implementation successor 固定 297 个 production runtime files；相对 288 文件 predecessor 精确新增 9 个、修改 6 个，并绑定 44 个 source contract 路径。第五节点 WORM 报告 SHA-256 为 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，Java build-context 为 `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。
+
+首次完整独立验收尝试虽逐段通过 source tools 与 Maven，但在 Compose 运行阶段发现 `read_only` API 服务不支持 environment-backed secret，因此整轮作废。将限流 HMAC Secret 改为 file-backed configtree 后，验收时冻结的 pre-documentation checkpoint 已从头重跑并通过：该冻结点 1,449 个受控文件的源/副本清单 SHA-256 均为 `154013da39c75fb33c7b0c9d02f4e0f34038b259972d4a9a7f93a7ae47e90d63`，临时报告 SHA-256 为 `2b3cd6e4ea34a501809b5083bad0b49db82dba0aea92b36a4328c5d2ac530f8d`。全部 source tools 496/496、Phase 1 23/23、Phase 2、Phase 3 29/29、topology 60/60、小程序 36/36、独立 PostgreSQL/Redis 数据面、专用空缓存 Maven 661+93、唯一镜像、3/3 Compose readiness 与重启恢复均绿色；9 个只读 bind 全部来自副本，environment Secret 为 0，临时资源和端口为 0 残留。该 manifest 与临时报告只描述验收冻结点，不是当前工作树的字节清单；其后的证据措辞、固定 trust/contract 与 parity 测试更新只由当前 source/contract 门禁另行约束。
+
+真实随机端口 Tomcat `NetworkIT` 仍 mock `LearningApplicationApi` 与认证 ports；它证明网络和 Servlet 适配行为，但不证明 Target Session、Flask Session、Bearer、应用服务与 JDBC 的真实端到端链路。
+
+当前 59-case 映射证据明确分类为 `PARTIAL_EXECUTION_MAPPING_LEDGER`：48 个 case 只通过 MockMvc 执行真实适配层并 mock `LearningApplicationApi`，8 个 case 仅绑定认证测试，3 个 case 仅绑定 typed PostgreSQL 测试。因此 `full_target_parity_closed=false`、`route_migration_eligible=false`，有效状态继续为 **11 migrated、600 pending、0 production cutover**。
+
+下一门禁是消除绑定式和回显式证明，使全部 59 个 case 经真实目标认证、应用与数据库路径执行；还必须闭合全部前置终止的 `users.last_active` 零 DML 指纹和原始 Servlet 路径边界。operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。

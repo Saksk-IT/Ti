@@ -14,8 +14,13 @@ try:
     from tools.phase2_wormhole_successor_acceptance import (
         EvidenceDescriptor,
         EvidenceValidationError,
+        FIXED_EVIDENCE_CHAIN,
         ImmutableMirror,
         CANONICAL_SCHEMA_SHA256,
+        PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256,
+        PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH,
+        PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
+        PHASE4C_READ_ACCESS_REPORT_SHA256,
         POSTGRES_IMAGE,
         sha256,
         validate_evidence_chain,
@@ -24,8 +29,13 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase2_wormhole_successor_acceptance import (
         EvidenceDescriptor,
         EvidenceValidationError,
+        FIXED_EVIDENCE_CHAIN,
         ImmutableMirror,
         CANONICAL_SCHEMA_SHA256,
+        PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256,
+        PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH,
+        PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
+        PHASE4C_READ_ACCESS_REPORT_SHA256,
         POSTGRES_IMAGE,
         sha256,
         validate_evidence_chain,
@@ -261,6 +271,20 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 current_build=fourth.build_context_sha256,
             )
 
+    def test_fixed_fifth_node_links_the_immutable_read_access_tip(self) -> None:
+        self.assertEqual(5, len(FIXED_EVIDENCE_CHAIN))
+        tip = FIXED_EVIDENCE_CHAIN[-1]
+        self.assertEqual(
+            "phase4c-personal-bank-user-counts-http-implementation", tip.label
+        )
+        self.assertEqual(PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH, tip.relative_path)
+        self.assertEqual(PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256, tip.sha256)
+        self.assertEqual(
+            PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256,
+            tip.build_context_sha256,
+        )
+        self.assertEqual(PHASE4C_READ_ACCESS_REPORT_SHA256, tip.predecessor_sha256)
+
     def test_fourth_node_tampering_fails_even_when_digest_is_reaccepted(self) -> None:
         _, third = self._successor_after(
             self.successor,
@@ -378,6 +402,11 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             / (
                 "docs/refactor/phase4c/"
                 "personal-bank-user-counts-read-access-worm-evidence.json"
+            ),
+            ROOT
+            / (
+                "docs/refactor/phase4c/"
+                "personal-bank-user-counts-http-implementation-worm-evidence.json"
             ),
         ]
         before = {path: sha256(path) for path in immutable_paths}

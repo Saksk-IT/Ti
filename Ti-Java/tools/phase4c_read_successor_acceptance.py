@@ -12,6 +12,10 @@ try:
         accepted_sha256 as http_entry_accepted_sha256,
         successor_sha256 as http_entry_successor_sha256,
     )
+    from tools.phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as http_implementation_accepted_sha256,
+        successor_sha256 as http_implementation_successor_sha256,
+    )
     from tools.phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
         successor_sha256 as composition_successor_sha256,
@@ -21,6 +25,10 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_entry_successor_acceptance import (
         accepted_sha256 as http_entry_accepted_sha256,
         successor_sha256 as http_entry_successor_sha256,
+    )
+    from phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as http_implementation_accepted_sha256,
+        successor_sha256 as http_implementation_successor_sha256,
     )
     from phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
@@ -203,6 +211,17 @@ def validate_read_successor_contract(contract: dict, ti_java_root: Path) -> None
                     f"HTTP entry did not accept the exact read successor for {relative}"
                 )
             physical_hash = http_successor
+        else:
+            implementation_successor = http_implementation_successor_sha256(
+                root, relative
+            )
+            if implementation_successor is not None:
+                if http_implementation_accepted_sha256(relative) != successor_hash:
+                    raise AssertionError(
+                        "HTTP implementation did not accept the exact read "
+                        f"successor for {relative}"
+                    )
+                physical_hash = implementation_successor
         if not resolved.is_file() or _sha256(resolved) != physical_hash:
             raise AssertionError(f"read successor file hash drift for {relative}")
 
@@ -226,6 +245,22 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
         http_successor = http_entry_successor_sha256(ti_java_root, relative)
         if http_successor is not None:
             return http_successor
+        implementation_successor = http_implementation_successor_sha256(
+            ti_java_root, relative
+        )
+        if implementation_successor is not None:
+            fixed = {
+                **PYTHON_SOURCES,
+                **JAVA_SOURCES,
+                **AUXILIARY_SOURCES,
+            }.get(relative)
+            if fixed is None or (
+                    http_implementation_accepted_sha256(relative) != fixed[1]):
+                raise AssertionError(
+                    "HTTP implementation did not accept the exact read "
+                    f"successor for {relative}"
+                )
+            return implementation_successor
         fixed = {
             **PYTHON_SOURCES,
             **JAVA_SOURCES,

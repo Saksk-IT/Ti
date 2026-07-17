@@ -52,6 +52,8 @@ final class Phase4cHttpEntrySuccessorAcceptance {
     private static final Set<String> BRIDGE_SOURCE_KEYS = Set.of(
             "python_successor_bridge", "java_successor_bridge");
     private static final Map<String, FixedSource> SUCCESSOR_SOURCES = fixedSources();
+    private static final Map<String, String> SOURCE_PATHS = sourcePaths();
+    private static volatile Map<String, String> verifiedTerminalSuccessorHashes = Map.of();
 
     private Phase4cHttpEntrySuccessorAcceptance() {
     }
@@ -74,8 +76,9 @@ final class Phase4cHttpEntrySuccessorAcceptance {
         require(PREDECESSOR_PAYLOAD_SHA256.equals(
                         predecessor.path("document_payload_sha256").asString()),
                 "unexpected physical Phase4C read predecessor payload");
-        validateFixedFiles(root);
+        Map<String, String> terminalSuccessorHashes = validateFixedFiles(root);
         validateSourceContracts(root, contract.path("source_contracts"));
+        verifiedTerminalSuccessorHashes = terminalSuccessorHashes;
         return contract;
     }
 
@@ -225,26 +228,57 @@ final class Phase4cHttpEntrySuccessorAcceptance {
 
     static String successorHash(String relative) {
         FixedSource fixed = SUCCESSOR_SOURCES.get(relative);
-        return fixed == null ? null : fixed.successorSha256();
+        if (fixed == null) {
+            return null;
+        }
+        return verifiedTerminalSuccessorHashes.getOrDefault(
+                relative, fixed.successorSha256());
     }
 
-    private static void validateFixedFiles(Path root) throws IOException {
+    private static Map<String, String> validateFixedFiles(Path root) throws IOException {
+        Map<String, String> terminalHashes = new LinkedHashMap<>();
         for (Map.Entry<String, FixedSource> entry : SUCCESSOR_SOURCES.entrySet()) {
-            Path source = fixedRegularFile(root, entry.getKey());
-            require(entry.getValue().successorSha256().equals(sha256(source)),
-                    "HTTP entry successor file hash drift for " + entry.getKey());
+            terminalHashes.put(entry.getKey(), validateTerminalSource(
+                    root, entry.getKey(), entry.getValue().successorSha256()));
         }
+        return Map.copyOf(terminalHashes);
     }
 
     private static void validateSourceContracts(Path root, JsonNode sources)
             throws IOException {
-        for (String name : propertyNames(sources)) {
+        require(propertyNames(sources).equals(SOURCE_PATHS.keySet()),
+                "unexpected HTTP entry source contract set");
+        Set<String> sourceFields = Set.of("source", "sha256");
+        for (Map.Entry<String, String> entry : SOURCE_PATHS.entrySet()) {
+            String name = entry.getKey();
+            String relative = entry.getValue();
             JsonNode reference = sources.path(name);
-            String relative = reference.path("source").asString();
-            Path source = fixedRegularFile(root, relative);
-            require(reference.path("sha256").asString().equals(sha256(source)),
-                    "HTTP entry source contract file hash drift for " + name);
+            require(propertyNames(reference).equals(sourceFields),
+                    "unexpected HTTP entry source contract shape: " + name);
+            require(relative.equals(reference.path("source").asString()),
+                    "fixed HTTP entry source path drift: " + name);
+            validateTerminalSource(
+                    root, relative, reference.path("sha256").asString());
         }
+    }
+
+    private static String validateTerminalSource(
+            Path root,
+            String relative,
+            String acceptedSha256
+    ) throws IOException {
+        String physicalSha256 = sha256(fixedRegularFile(root, relative));
+        if (acceptedSha256.equals(physicalSha256)) {
+            return physicalSha256;
+        }
+        require(acceptedSha256.equals(
+                        Phase4cHttpImplementationSuccessorAcceptance.acceptedHash(relative)),
+                "HTTP implementation did not accept exact HTTP entry source: " + relative);
+        String successorSha256 =
+                Phase4cHttpImplementationSuccessorAcceptance.successorHash(root, relative);
+        require(physicalSha256.equals(successorSha256),
+                "HTTP implementation successor file hash drift for " + relative);
+        return physicalSha256;
     }
 
     private static Path fixedRegularFile(Path root, String relative) throws IOException {
@@ -431,6 +465,107 @@ final class Phase4cHttpEntrySuccessorAcceptance {
                 new FixedSource(
                         "08e82154d66ab4a112091ee97b40bc1c155aae14a4bd9ca0b6afbb9032e71bdd",
                         "c08ff0263d0da2c4e08733685256d7946a316a06772b8959c3520cc7947aaa76"));
+        return Map.copyOf(sources);
+    }
+
+    private static Map<String, String> sourcePaths() {
+        Map<String, String> sources = new LinkedHashMap<>();
+        sources.put(
+                "application_config_baseline",
+                "server/src/main/resources/application.yml");
+        sources.put(
+                "approved_differences",
+                "docs/refactor/phase4c/approved-differences.md");
+        sources.put(
+                "boundary_capture_test",
+                "tools/test_capture_phase4c_personal_bank_user_counts_"
+                        + "http_boundary_evidence.py");
+        sources.put(
+                "boundary_capture_tool",
+                "tools/capture_phase4c_personal_bank_user_counts_"
+                        + "http_boundary_evidence.py");
+        sources.put(
+                "contract_builder",
+                "tools/build_phase4c_personal_bank_user_counts_http_entry_contract.py");
+        sources.put(
+                "contract_test",
+                "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py");
+        sources.put(
+                "decimal_path_integer",
+                "server/src/main/java/io/saksk/ti/web/LegacyDecimalPathInteger.java");
+        sources.put(
+                "historical_composition_contract_test",
+                "tools/test_phase4c_personal_bank_user_counts_composition_contract.py");
+        sources.put(
+                "historical_java_read_bridge",
+                "server/src/test/java/io/saksk/ti/architecture/"
+                        + "Phase4cReadSuccessorAcceptance.java");
+        sources.put(
+                "historical_python_read_bridge",
+                "tools/phase4c_read_successor_acceptance.py");
+        sources.put(
+                "historical_read_contract_test",
+                "tools/test_phase4c_personal_bank_user_counts_read_contract.py");
+        sources.put(
+                "http_boundary_evidence",
+                "docs/refactor/phase4c/"
+                        + "personal-bank-user-counts-http-boundary-evidence.json");
+        sources.put(
+                "java_successor_bridge",
+                "server/src/test/java/io/saksk/ti/architecture/"
+                        + "Phase4cHttpEntrySuccessorAcceptance.java");
+        sources.put(
+                "phase3_authentication_differences",
+                "docs/refactor/phase3/approved-authentication-differences.md");
+        sources.put(
+                "phase4b_callers",
+                "docs/refactor/phase4b/personal-bank-user-counts-callers.json");
+        sources.put(
+                "phase4b_entry",
+                "docs/refactor/phase4b/personal-bank-user-counts-entry-contract.json");
+        sources.put(
+                "phase4b_goldens",
+                "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json");
+        sources.put("phase4c_readme", "docs/refactor/phase4c/README.md");
+        sources.put("predecessor", PREDECESSOR_RELATIVE);
+        sources.put(
+                "production_config_baseline",
+                "server/src/main/resources/application-prod.yml");
+        sources.put("progress", "docs/refactor/05-progress.md");
+        sources.put("project_readme", "README.md");
+        sources.put(
+                "python_successor_bridge",
+                "tools/phase4c_http_entry_successor_acceptance.py");
+        sources.put(
+                "rate_capture_test",
+                "tools/test_capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py");
+        sources.put(
+                "rate_capture_tool",
+                "tools/capture_phase4c_personal_bank_user_counts_rate_limit_evidence.py");
+        sources.put(
+                "rate_limit_evidence",
+                "docs/refactor/phase4c/"
+                        + "personal-bank-user-counts-rate-limit-evidence.json");
+        sources.put(
+                "rate_wiring_baseline",
+                "server/src/main/java/io/saksk/ti/web/security/"
+                        + "LoginRateLimitConfiguration.java");
+        sources.put(
+                "request_id",
+                "server/src/main/java/io/saksk/ti/web/request/RequestId.java");
+        sources.put(
+                "request_id_filter",
+                "server/src/main/java/io/saksk/ti/web/request/RequestIdFilter.java");
+        sources.put(
+                "request_id_filter_test",
+                "server/src/test/java/io/saksk/ti/web/request/RequestIdFilterTest.java");
+        sources.put(
+                "security_baseline",
+                "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java");
+        sources.put(
+                "worm_tip",
+                "docs/refactor/phase4c/"
+                        + "personal-bank-user-counts-read-access-worm-evidence.json");
         return Map.copyOf(sources);
     }
 

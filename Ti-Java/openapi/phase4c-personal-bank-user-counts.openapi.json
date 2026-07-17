@@ -1,0 +1,2622 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "Ti Phase 4C Personal Bank User Counts Compatibility Delta",
+    "version": "0.4.0-phase4c-user-counts",
+    "description": "Self-contained Java overlay for the API and Web aliases of the learning-owned personal-bank user-counts read. The two legacy GET implementations are present but remain pending until full target parity closes; HEAD and OPTIONS are explicitly documented derived HTTP behavior. Production cutover remains disabled."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:{port}",
+      "description": "Phase 4C local/test Java runtime only",
+      "variables": {
+        "port": {
+          "default": "18080"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "learning-personal-bank-user-counts",
+      "description": "Learning-owned protected read composed through personalbank::api"
+    }
+  ],
+  "paths": {
+    "/api/user/banks/api/{bank_id}/user-counts": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BankId"
+        }
+      ],
+      "get": {
+        "operationId": "legacy_6858f6fa506f_get",
+        "summary": "Read personal-bank user counts through the API alias",
+        "tags": [
+          "learning-personal-bank-user-counts"
+        ],
+        "security": [
+          {
+            "targetSession": []
+          },
+          {
+            "legacyFlaskSession": []
+          },
+          {
+            "legacyBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/QType"
+          },
+          {
+            "$ref": "#/components/parameters/Source"
+          },
+          {
+            "$ref": "#/components/parameters/Tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ApiSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/PathFirewallRejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiAuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApiConverterNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiRateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ApiInternalFailure"
+          },
+          "503": {
+            "$ref": "#/components/responses/ApiServiceUnavailable"
+          }
+        },
+        "x-ti-route-id": "6858f6fa506f",
+        "x-ti-alias": "api",
+        "x-ti-application-api": "io.saksk.ti.learning.api.LearningApplicationApi#findPersonalBankUserCounts",
+        "x-ti-authentication": {
+          "accepted": [
+            "authoritative target Session",
+            "successfully exchanged legacy Flask Session",
+            "valid legacy Bearer for this request only"
+          ],
+          "explicitAuthorizationSelectsBearer": true,
+          "cookieFallbackAfterAuthorization": false,
+          "rejectedOrAnonymousStatus": 401,
+          "authorityStoreUnavailableStatus": 503
+        },
+        "x-ti-cors": {
+          "scope": "this API alias only",
+          "simpleAllowedOriginContinuesRequest": true,
+          "simpleDisallowedOriginStatus": 403,
+          "simpleDisallowedOriginBodyBytes": 0
+        },
+        "x-ti-vary-tokens": [
+          "Origin",
+          "Cookie"
+        ],
+        "x-ti-approved-differences": [
+          "P4C-LEARNING-007",
+          "P4C-LEARNING-008",
+          "P4C-LEARNING-009",
+          "P4C-LEARNING-010",
+          "P4C-LEARNING-011",
+          "P4C-LEARNING-012"
+        ],
+        "x-ti-migration": {
+          "status": "pending",
+          "targetModule": "learning",
+          "countsAsMigratedOperation": false,
+          "productionCutover": false
+        }
+      },
+      "head": {
+        "operationId": "legacy_6858f6fa506f_head_derived",
+        "summary": "Read API-alias metadata with GET-equivalent execution",
+        "tags": [
+          "learning-personal-bank-user-counts"
+        ],
+        "security": [
+          {
+            "targetSession": []
+          },
+          {
+            "legacyFlaskSession": []
+          },
+          {
+            "legacyBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/QType"
+          },
+          {
+            "$ref": "#/components/parameters/Source"
+          },
+          {
+            "$ref": "#/components/parameters/Tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HeadApiSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/HeadFirewallRejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/HeadAuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/HeadApiForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/HeadConverterNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/HeadApiRateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/HeadApiInternalFailure"
+          },
+          "503": {
+            "$ref": "#/components/responses/HeadApiServiceUnavailable"
+          }
+        },
+        "x-ti-route-id": "6858f6fa506f",
+        "x-ti-alias": "api",
+        "x-ti-derived-from": "legacy_6858f6fa506f_get",
+        "x-ti-head-contract": {
+          "sameRawPathAuthenticationActorRateApplicationSqlStatusAndSemanticHeadersAsGet": true,
+          "bodyBytesForEveryStatus": 0,
+          "contentLengthMayBeOmittedOrRepresentGet": true
+        },
+        "x-ti-vary-tokens": [
+          "Origin",
+          "Cookie"
+        ],
+        "x-ti-approved-differences": [
+          "P4C-LEARNING-007",
+          "P4C-LEARNING-008",
+          "P4C-LEARNING-009",
+          "P4C-LEARNING-010",
+          "P4C-LEARNING-011",
+          "P4C-LEARNING-012"
+        ],
+        "x-ti-migration": {
+          "status": "derived",
+          "targetModule": "learning",
+          "countsAsMigratedOperation": false,
+          "productionCutover": false
+        }
+      },
+      "options": {
+        "operationId": "legacy_6858f6fa506f_options_derived",
+        "summary": "Terminate API bare OPTIONS and CORS preflight before authentication",
+        "tags": [
+          "learning-personal-bank-user-counts"
+        ],
+        "security": [],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/ApiOptionsAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/OptionsFirewallRejected"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiPreflightRejected"
+          }
+        },
+        "x-ti-route-id": "6858f6fa506f",
+        "x-ti-alias": "api",
+        "x-ti-derived-from": "legacy_6858f6fa506f_get",
+        "x-ti-options-contract": {
+          "bareOptionsStatus": 204,
+          "validPreflightStatus": 204,
+          "invalidPreflightStatus": 403,
+          "bodyBytesForEveryStatus": 0,
+          "allow": [
+            "GET",
+            "HEAD",
+            "OPTIONS"
+          ],
+          "authentication": false,
+          "rateLimited": false,
+          "sessionMutation": false,
+          "applicationCalled": false,
+          "sql": 0
+        },
+        "x-ti-vary-tokens": [
+          "Origin",
+          "Access-Control-Request-Method",
+          "Access-Control-Request-Headers",
+          "Cookie"
+        ],
+        "x-ti-approved-differences": [
+          "P4C-LEARNING-008",
+          "P4C-LEARNING-010",
+          "P4C-LEARNING-011"
+        ],
+        "x-ti-migration": {
+          "status": "derived",
+          "targetModule": "learning",
+          "countsAsMigratedOperation": false,
+          "productionCutover": false
+        }
+      }
+    },
+    "/user/banks/api/{bank_id}/user-counts": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BankId"
+        }
+      ],
+      "get": {
+        "operationId": "legacy_006913d0d956_get",
+        "summary": "Read personal-bank user counts through the Web alias",
+        "tags": [
+          "learning-personal-bank-user-counts"
+        ],
+        "security": [
+          {
+            "targetSession": []
+          },
+          {
+            "legacyFlaskSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/QType"
+          },
+          {
+            "$ref": "#/components/parameters/Source"
+          },
+          {
+            "$ref": "#/components/parameters/Tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "302": {
+            "$ref": "#/components/responses/WebLoginRedirect"
+          },
+          "400": {
+            "$ref": "#/components/responses/PathFirewallRejected"
+          },
+          "403": {
+            "$ref": "#/components/responses/WebForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/WebConverterNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/WebRateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/WebInternalFailure"
+          },
+          "503": {
+            "$ref": "#/components/responses/WebServiceUnavailable"
+          }
+        },
+        "x-ti-route-id": "006913d0d956",
+        "x-ti-alias": "web",
+        "x-ti-application-api": "io.saksk.ti.learning.api.LearningApplicationApi#findPersonalBankUserCounts",
+        "x-ti-authentication": {
+          "accepted": [
+            "authoritative target Session",
+            "successfully exchanged legacy Flask Session"
+          ],
+          "bearerAccepted": false,
+          "anyAuthorizationStatus": 302,
+          "anyAuthorizationLocation": "/login",
+          "authorityStoreUnavailableStatus": 503
+        },
+        "x-ti-cors": {
+          "enabled": false,
+          "originDoesNotAlterGetOrHead": true,
+          "accessControlAllowOrigin": false
+        },
+        "x-ti-vary-tokens": [
+          "Cookie"
+        ],
+        "x-ti-approved-differences": [
+          "P4C-LEARNING-007",
+          "P4C-LEARNING-008",
+          "P4C-LEARNING-009",
+          "P4C-LEARNING-010",
+          "P4C-LEARNING-011",
+          "P4C-LEARNING-012"
+        ],
+        "x-ti-migration": {
+          "status": "pending",
+          "targetModule": "learning",
+          "countsAsMigratedOperation": false,
+          "productionCutover": false
+        }
+      },
+      "head": {
+        "operationId": "legacy_006913d0d956_head_derived",
+        "summary": "Read Web-alias metadata with GET-equivalent execution",
+        "tags": [
+          "learning-personal-bank-user-counts"
+        ],
+        "security": [
+          {
+            "targetSession": []
+          },
+          {
+            "legacyFlaskSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/QType"
+          },
+          {
+            "$ref": "#/components/parameters/Source"
+          },
+          {
+            "$ref": "#/components/parameters/Tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/HeadSuccess"
+          },
+          "302": {
+            "$ref": "#/components/responses/HeadLoginRedirect"
+          },
+          "400": {
+            "$ref": "#/components/responses/HeadFirewallRejected"
+          },
+          "403": {
+            "$ref": "#/components/responses/HeadWebForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/HeadConverterNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/HeadRateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/HeadInternalFailure"
+          },
+          "503": {
+            "$ref": "#/components/responses/HeadServiceUnavailable"
+          }
+        },
+        "x-ti-route-id": "006913d0d956",
+        "x-ti-alias": "web",
+        "x-ti-derived-from": "legacy_006913d0d956_get",
+        "x-ti-head-contract": {
+          "sameRawPathAuthenticationActorRateApplicationSqlStatusAndSemanticHeadersAsGet": true,
+          "bodyBytesForEveryStatus": 0,
+          "contentLengthMayBeOmittedOrRepresentGet": true
+        },
+        "x-ti-vary-tokens": [
+          "Cookie"
+        ],
+        "x-ti-approved-differences": [
+          "P4C-LEARNING-007",
+          "P4C-LEARNING-008",
+          "P4C-LEARNING-009",
+          "P4C-LEARNING-010",
+          "P4C-LEARNING-011",
+          "P4C-LEARNING-012"
+        ],
+        "x-ti-migration": {
+          "status": "derived",
+          "targetModule": "learning",
+          "countsAsMigratedOperation": false,
+          "productionCutover": false
+        }
+      },
+      "options": {
+        "operationId": "legacy_006913d0d956_options_derived",
+        "summary": "Terminate Web bare OPTIONS before authentication",
+        "tags": [
+          "learning-personal-bank-user-counts"
+        ],
+        "security": [],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/WebOptionsAccepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/OptionsFirewallRejected"
+          }
+        },
+        "x-ti-route-id": "006913d0d956",
+        "x-ti-alias": "web",
+        "x-ti-derived-from": "legacy_006913d0d956_get",
+        "x-ti-options-contract": {
+          "bareOptionsStatus": 204,
+          "bodyBytesForEveryStatus": 0,
+          "allow": [
+            "GET",
+            "HEAD",
+            "OPTIONS"
+          ],
+          "corsEnabled": false,
+          "authentication": false,
+          "rateLimited": false,
+          "sessionMutation": false,
+          "applicationCalled": false,
+          "sql": 0
+        },
+        "x-ti-vary-tokens": [
+          "Cookie"
+        ],
+        "x-ti-approved-differences": [
+          "P4C-LEARNING-008",
+          "P4C-LEARNING-010",
+          "P4C-LEARNING-011"
+        ],
+        "x-ti-migration": {
+          "status": "derived",
+          "targetModule": "learning",
+          "countsAsMigratedOperation": false,
+          "productionCutover": false
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "targetSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "ti_dev_session",
+        "description": "Authoritative target Session. The production cookie name is __Host-ti_session."
+      },
+      "legacyFlaskSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session",
+        "description": "Temporary kill-switched signed Flask Session accepted only after authoritative exchange."
+      },
+      "legacyBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Temporary kill-switched request-only legacy Bearer credential; it never creates or extends a target Session."
+      }
+    },
+    "parameters": {
+      "BankId": {
+        "name": "bank_id",
+        "in": "path",
+        "required": true,
+        "description": "One nonempty segment of Unicode decimal digits (General_Category=Nd), strictly percent-decoded once and normalized by decimal digit value. Leading zeros are ignored for numeric classification. Zero reaches authentication and rate limiting then returns 403 without an application call; 1 through 2147483647 reaches the application; larger values reach authentication and rate limiting then return safe 500 without an application call. Negative, empty, non-Nd, extra-segment and trailing-slash targets are converter 404 before the route limiter. Encoded slash and literal or encoded semicolon are firewall 400 before the route limiter.",
+        "schema": {
+          "type": "string",
+          "pattern": "^\\p{Nd}+$",
+          "examples": [
+            "1",
+            "0001",
+            "١٢٣",
+            "２１４７４８３６４７",
+            "2147483648",
+            "9223372036854775808"
+          ]
+        },
+        "x-ti-coercion": {
+          "strictPercentDecodeOnce": true,
+          "acceptedCodePointCategory": "Nd",
+          "normalization": "per-code-point decimal digit value to bounded ASCII representation",
+          "zero": {
+            "status": 403,
+            "authenticated": true,
+            "rateLimited": true,
+            "applicationCalled": false
+          },
+          "applicationRange": "1..2147483647",
+          "aboveIntegerMaximum": {
+            "status": 500,
+            "authenticated": true,
+            "rateLimited": true,
+            "applicationCalled": false,
+            "businessSql": 0,
+            "boundedParse": "length and lexical comparison before integer conversion"
+          },
+          "converterMiss": {
+            "status": 404,
+            "rateLimited": false,
+            "applicationCalled": false
+          },
+          "encodedSlashOrSemicolon": {
+            "status": 400,
+            "rateLimited": false,
+            "applicationCalled": false
+          }
+        }
+      },
+      "QType": {
+        "name": "q_type",
+        "in": "query",
+        "required": false,
+        "description": "The first repeated value wins. Missing defaults to the empty string. Trim; case-insensitive all means no type filter; every other unknown value resolves to essay.",
+        "schema": {
+          "type": "string",
+          "default": ""
+        },
+        "x-ti-repeated-value-rule": "first value wins",
+        "x-ti-coercion": {
+          "trim": true,
+          "allCaseInsensitive": true,
+          "unknown": "essay"
+        }
+      },
+      "Source": {
+        "name": "source",
+        "in": "query",
+        "required": false,
+        "description": "The first repeated value wins. Missing defaults to all. Only exact lowercase favorites and mistakes are special; every other value resolves to all.",
+        "schema": {
+          "type": "string",
+          "default": "all"
+        },
+        "x-ti-repeated-value-rule": "first value wins",
+        "x-ti-coercion": {
+          "specialExactLowercase": [
+            "favorites",
+            "mistakes"
+          ],
+          "other": "all"
+        }
+      },
+      "Tag": {
+        "name": "tag",
+        "in": "query",
+        "required": false,
+        "description": "The first repeated value wins. Missing defaults to the empty string. Only exact lowercase all bypasses filtering; every other nonempty value is a normalized learning-owned tag filter.",
+        "schema": {
+          "type": "string",
+          "default": ""
+        },
+        "x-ti-repeated-value-rule": "first value wins",
+        "x-ti-coercion": {
+          "bypassOnlyExactLowercase": "all",
+          "otherNonempty": "normalized learning-owned tag filter"
+        }
+      }
+    },
+    "headers": {
+      "RequestId": {
+        "description": "Validated request correlation identifier; when a JSON body is present it equals request_id.",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "Vary": {
+        "description": "Merged token set. API ordinary responses contain Origin and Cookie; Web responses contain Cookie; API preflight additionally contains Access-Control-Request-Method and Access-Control-Request-Headers.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ContentTypeOptions": {
+        "schema": {
+          "type": "string",
+          "const": "nosniff"
+        }
+      },
+      "FrameOptions": {
+        "schema": {
+          "type": "string",
+          "const": "SAMEORIGIN"
+        }
+      },
+      "ReferrerPolicy": {
+        "schema": {
+          "type": "string",
+          "const": "strict-origin-when-cross-origin"
+        }
+      },
+      "RateLimitLimit": {
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "RateLimitRemaining": {
+        "schema": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "RateLimitReset": {
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 0
+        }
+      },
+      "RetryAfter": {
+        "schema": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "Allow": {
+        "schema": {
+          "type": "string",
+          "const": "GET, HEAD, OPTIONS"
+        }
+      },
+      "AccessControlAllowOrigin": {
+        "description": "Exact allowlisted Origin; never wildcard.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AccessControlAllowMethods": {
+        "schema": {
+          "type": "string",
+          "const": "GET, HEAD, OPTIONS"
+        }
+      },
+      "AccessControlAllowHeaders": {
+        "description": "Only the requested case-insensitive subset of Authorization, Content-Type and X-Request-ID.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "LocationLogin": {
+        "schema": {
+          "type": "string",
+          "const": "/login"
+        }
+      }
+    },
+    "responses": {
+      "Success": {
+        "description": "Available learning result. Permission is rechecked before any zero-count or tag-filtered return.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          }
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "$ref": "#/components/schemas/UserCountsSuccess"
+            }
+          }
+        }
+      },
+      "ApiAuthenticationRequired": {
+        "description": "Anonymous or rejected explicit Bearer request after the alias-local user-count limiter. Malformed, duplicate, bad-signature, expired, stale, revoked, missing and locked cases use the same enumeration-resistant body and never fall back to cookies. All four rate headers describe the charged route decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiUnauthorized"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "WebLoginRedirect": {
+        "description": "Missing Session or any explicit Authorization on the Web alias is charged to the alias-local IP limiter, then redirects to login before the application. All four rate headers describe the charged route decision.",
+        "headers": {
+          "Location": {
+            "$ref": "#/components/headers/LocationLogin"
+          },
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ApiForbidden": {
+        "description": "Either a charged terminal permission/zero-bank denial or an uncharged empty CORS rejection. X-Request-ID, Vary and the three security headers are common to both variants; rate headers are not guaranteed by this umbrella response.",
+        "x-ti-variants": {
+          "businessOrZero": {
+            "$ref": "#/components/responses/ApiBusinessForbidden"
+          },
+          "disallowedOrigin": {
+            "$ref": "#/components/responses/ApiCorsForbidden"
+          }
+        },
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "$ref": "#/components/schemas/Forbidden"
+            }
+          }
+        }
+      },
+      "ApiBusinessForbidden": {
+        "description": "Terminal permission denial or zero bank ID after authentication and the alias-local user-count limiter. All four rate headers describe the charged route decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "$ref": "#/components/schemas/Forbidden"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "ApiCorsForbidden": {
+        "description": "Unallowlisted API Origin rejected before authentication, rate limiting, Session mutation, application and SQL. The response is empty and has no route rate, Access-Control-Allow-Origin or Set-Cookie headers.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-rate-limit-headers": []
+      },
+      "WebForbidden": {
+        "description": "Terminal permission denial or zero bank ID after authentication and the alias-local user-count limiter. All four rate headers describe the charged route decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "$ref": "#/components/schemas/Forbidden"
+            }
+          }
+        }
+      },
+      "PathFirewallRejected": {
+        "description": "Encoded slash or literal/encoded semicolon rejected before route authentication, limiter and application. The rejected raw target is outside an ordinary legal path-template value.",
+        "x-ti-body-contract": "safe response only; no internal exception or rejected value",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        }
+      },
+      "ApiConverterNotFound": {
+        "description": "Negative, empty, non-Nd, extra-segment or trailing-slash converter miss before the user-count route limiter and application.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SafeError"
+            }
+          }
+        }
+      },
+      "WebConverterNotFound": {
+        "description": "The same uncounted converter miss as the API alias. Web defaults to HTML and uses JSON only when the raw Accept header starts with application/json.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SafeError"
+            }
+          }
+        }
+      },
+      "ApiRateLimited": {
+        "description": "Either the alias-local user-count route limiter or the earlier Flask Session exchange guard rejected the request. Retry-After and X-RateLimit-Reset are guaranteed; Limit and Remaining depend on the limiter branch.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-variants": {
+          "userCountRouteLimiter": {
+            "$ref": "#/components/responses/ApiUserCountRouteRateLimited"
+          },
+          "authenticationExchange": {
+            "$ref": "#/components/responses/ApiAuthenticationExchangeRateLimited"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimited"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "WebRateLimited": {
+        "description": "Either the alias-local user-count route limiter or the earlier Flask Session exchange guard rejected the request. Retry-After and X-RateLimit-Reset are guaranteed; Limit and Remaining depend on the limiter branch. Web defaults to HTML and uses JSON only when the raw Accept header starts with application/json.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-variants": {
+          "userCountRouteLimiter": {
+            "$ref": "#/components/responses/WebUserCountRouteRateLimited"
+          },
+          "authenticationExchange": {
+            "$ref": "#/components/responses/WebAuthenticationExchangeRateLimited"
+          }
+        },
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimited"
+            }
+          }
+        }
+      },
+      "ApiUserCountRouteRateLimited": {
+        "description": "The first breached alias-local user-count fixed window. All four route rate headers describe that one atomic decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimited"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "WebUserCountRouteRateLimited": {
+        "description": "The first breached alias-local user-count fixed window. All four route rate headers describe that one atomic decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimited"
+            }
+          }
+        }
+      },
+      "ApiAuthenticationExchangeRateLimited": {
+        "description": "Flask Session exchange rejected before the user-count route limiter. Retry-After and X-RateLimit-Reset are guaranteed. The attempt-window branch may also emit X-RateLimit-Limit and X-RateLimit-Remaining; neither is guaranteed.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-optional-headers": [
+          "X-RateLimit-Limit",
+          "X-RateLimit-Remaining",
+          "Access-Control-Allow-Origin"
+        ],
+        "x-ti-not-promised-headers": [],
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimited"
+            }
+          }
+        }
+      },
+      "WebAuthenticationExchangeRateLimited": {
+        "description": "Flask Session exchange rejected before the user-count route limiter. Retry-After and X-RateLimit-Reset are guaranteed. The attempt-window branch may also emit X-RateLimit-Limit and X-RateLimit-Remaining; neither is guaranteed.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-optional-headers": [
+          "X-RateLimit-Limit",
+          "X-RateLimit-Remaining"
+        ],
+        "x-ti-not-promised-headers": [],
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimited"
+            }
+          }
+        }
+      },
+      "ApiInternalFailure": {
+        "description": "Safe API JSON for an application failure or a normalized bank ID above Integer.MAX_VALUE. The request is charged to the route limiter; overflow invokes no application or business SQL. All four rate headers describe the charged route decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InternalFailure"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "WebInternalFailure": {
+        "description": "Safe charged Web failure for an application failure or normalized overflow. HTML is the default; JSON is selected only when the raw Accept header starts with application/json. All four rate headers describe the route decision.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string",
+              "const": "<h1>500 - 服务器错误</h1><p>发生了一个意外错误，请稍后再试。</p>"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InternalFailure"
+            }
+          }
+        }
+      },
+      "ApiServiceUnavailable": {
+        "description": "Fail-closed target authority or rate-store failure. No internal detail and no user-count rate headers are emitted.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ServiceUnavailable"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "WebServiceUnavailable": {
+        "description": "The same fail-closed authority or rate-store failure. Web defaults to HTML and uses JSON only when the raw Accept header starts with application/json.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "content": {
+          "text/html; charset=utf-8": {
+            "schema": {
+              "type": "string",
+              "const": "<h1>503 - 服务不可用</h1><p>服务暂时不可用，请稍后再试。</p>"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ServiceUnavailable"
+            }
+          }
+        }
+      },
+      "HeadSuccess": {
+        "description": "GET-equivalent 200 execution with zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/Success"
+      },
+      "HeadLoginRedirect": {
+        "description": "GET-equivalent charged Web 302 with Location /login, all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "Location": {
+            "$ref": "#/components/headers/LocationLogin"
+          },
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebLoginRedirect"
+      },
+      "HeadFirewallRejected": {
+        "description": "GET-equivalent firewall 400 with zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/PathFirewallRejected"
+      },
+      "HeadAuthenticationRequired": {
+        "description": "GET-equivalent charged API 401 with all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiAuthenticationRequired",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadApiForbidden": {
+        "description": "GET-equivalent API 403 umbrella. X-Request-ID, Vary and the three security headers are common to the charged business denial and uncharged CORS rejection variants.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-variants": {
+          "businessOrZero": {
+            "$ref": "#/components/responses/HeadApiBusinessForbidden"
+          },
+          "disallowedOrigin": {
+            "$ref": "#/components/responses/HeadApiCorsForbidden"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiForbidden"
+      },
+      "HeadApiBusinessForbidden": {
+        "description": "GET-equivalent charged API business/zero 403 with all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiBusinessForbidden",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadApiCorsForbidden": {
+        "description": "GET-equivalent uncharged API CORS 403 with no route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-rate-limit-headers": [],
+        "x-ti-get-response": "#/components/responses/ApiCorsForbidden"
+      },
+      "HeadWebForbidden": {
+        "description": "GET-equivalent charged Web 403 with all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebForbidden"
+      },
+      "HeadConverterNotFound": {
+        "description": "GET-equivalent converter 404 with zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "alias-specific converter response"
+      },
+      "HeadRateLimited": {
+        "description": "GET-equivalent Web 429 umbrella with zero response-body bytes. Retry-After and X-RateLimit-Reset are guaranteed; Limit and Remaining depend on the limiter branch.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-variants": {
+          "webUserCountRouteLimiter": {
+            "$ref": "#/components/responses/HeadWebUserCountRouteRateLimited"
+          },
+          "webAuthenticationExchange": {
+            "$ref": "#/components/responses/HeadWebAuthenticationExchangeRateLimited"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebRateLimited"
+      },
+      "HeadApiUserCountRouteRateLimited": {
+        "description": "GET-equivalent API user-count route-limit 429 with all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiUserCountRouteRateLimited",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadWebUserCountRouteRateLimited": {
+        "description": "GET-equivalent Web user-count route-limit 429 with all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebUserCountRouteRateLimited"
+      },
+      "HeadApiAuthenticationExchangeRateLimited": {
+        "description": "GET-equivalent API Flask Session exchange 429 with guaranteed Retry-After and X-RateLimit-Reset, plus zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-optional-headers": [
+          "X-RateLimit-Limit",
+          "X-RateLimit-Remaining",
+          "Access-Control-Allow-Origin"
+        ],
+        "x-ti-not-promised-headers": [],
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiAuthenticationExchangeRateLimited"
+      },
+      "HeadWebAuthenticationExchangeRateLimited": {
+        "description": "GET-equivalent Web Flask Session exchange 429 with guaranteed Retry-After and X-RateLimit-Reset, plus zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-optional-headers": [
+          "X-RateLimit-Limit",
+          "X-RateLimit-Remaining"
+        ],
+        "x-ti-not-promised-headers": [],
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebAuthenticationExchangeRateLimited"
+      },
+      "HeadInternalFailure": {
+        "description": "GET-equivalent charged 500 with all four route rate headers and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebInternalFailure"
+      },
+      "HeadServiceUnavailable": {
+        "description": "GET-equivalent authority/rate-store 503 with zero response-body bytes and no route rate headers.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/WebServiceUnavailable"
+      },
+      "ApiOptionsAccepted": {
+        "description": "Bare OPTIONS or valid API preflight. No authentication, rate, Session mutation, application call or SQL.",
+        "headers": {
+          "Allow": {
+            "$ref": "#/components/headers/Allow"
+          },
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AccessControlAllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AccessControlAllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AccessControlAllowHeaders"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-header-variants": {
+          "bareOptions": "Allow, request ID, Vary and security headers; no Access-Control headers without a preflight Origin",
+          "validPreflight": "exact ACAO, GET/HEAD/OPTIONS ACAM, requested allowed ACAH subset; no credentials or max-age"
+        }
+      },
+      "WebOptionsAccepted": {
+        "description": "Bare Web OPTIONS. CORS remains disabled and Origin does not create CORS headers.",
+        "headers": {
+          "Allow": {
+            "$ref": "#/components/headers/Allow"
+          },
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0
+      },
+      "ApiPreflightRejected": {
+        "description": "Origin, requested method or requested-header set is not allowed. Empty before authentication, rate, Session, application and SQL; no Access-Control or Set-Cookie headers.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0
+      },
+      "OptionsFirewallRejected": {
+        "description": "Ambiguous raw target rejected before route processing.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
+        "x-ti-body-bytes": 0
+      },
+      "ApiSuccess": {
+        "description": "Available API learning result. Permission is rechecked before any zero-count or tag-filtered return; an allowlisted simple Origin receives optional Access-Control-Allow-Origin.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          }
+        },
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "$ref": "#/components/schemas/UserCountsSuccess"
+            }
+          }
+        },
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadApiSuccess": {
+        "description": "GET-equivalent API 200 execution with zero response-body bytes and optional allowlisted Access-Control-Allow-Origin.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiSuccess",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadApiRateLimited": {
+        "description": "GET-equivalent API 429 umbrella with zero response-body bytes. Retry-After and X-RateLimit-Reset are guaranteed; Limit and Remaining depend on the limiter branch.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          }
+        },
+        "x-ti-variants": {
+          "apiUserCountRouteLimiter": {
+            "$ref": "#/components/responses/HeadApiUserCountRouteRateLimited"
+          },
+          "apiAuthenticationExchange": {
+            "$ref": "#/components/responses/HeadApiAuthenticationExchangeRateLimited"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiRateLimited",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadApiInternalFailure": {
+        "description": "GET-equivalent charged API 500 with all four route rate headers, optional allowlisted Access-Control-Allow-Origin and zero response-body bytes.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-RateLimit-Limit": {
+            "$ref": "#/components/headers/RateLimitLimit"
+          },
+          "X-RateLimit-Remaining": {
+            "$ref": "#/components/headers/RateLimitRemaining"
+          },
+          "X-RateLimit-Reset": {
+            "$ref": "#/components/headers/RateLimitReset"
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiInternalFailure",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      },
+      "HeadApiServiceUnavailable": {
+        "description": "GET-equivalent API authority/rate-store 503 with optional allowlisted Access-Control-Allow-Origin, zero response-body bytes and no route rate headers.",
+        "headers": {
+          "X-Request-ID": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "Vary": {
+            "$ref": "#/components/headers/Vary"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/ContentTypeOptions"
+          },
+          "X-Frame-Options": {
+            "$ref": "#/components/headers/FrameOptions"
+          },
+          "Referrer-Policy": {
+            "$ref": "#/components/headers/ReferrerPolicy"
+          }
+        },
+        "x-ti-body-bytes": 0,
+        "x-ti-get-response": "#/components/responses/ApiServiceUnavailable",
+        "x-ti-optional-headers": [
+          "Access-Control-Allow-Origin"
+        ]
+      }
+    },
+    "schemas": {
+      "UserCountsSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "data",
+          "message",
+          "request_id"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "code": {
+            "type": "integer",
+            "const": 0
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserCountsData"
+          },
+          "message": {
+            "type": "string",
+            "const": ""
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "UserCountsData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "total",
+          "favorites",
+          "mistakes",
+          "types",
+          "shuffle_options_available"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Signed JSON integer backed by Java long."
+          },
+          "favorites": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Signed JSON integer backed by Java long; infrastructure/query failure may degrade this optional count field only."
+          },
+          "mistakes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Signed JSON integer backed by Java long; infrastructure/query failure may degrade this optional count field only."
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ordered display labels; infrastructure/query failure may degrade this optional field only."
+          },
+          "shuffle_options_available": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiUnauthorized": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message",
+          "status_code",
+          "request_id"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "unauthorized"
+          },
+          "message": {
+            "type": "string",
+            "const": "请先登录"
+          },
+          "status_code": {
+            "type": "integer",
+            "const": 401
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "Forbidden": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "message",
+          "status_code",
+          "request_id"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "error"
+          },
+          "code": {
+            "type": "integer",
+            "const": 403
+          },
+          "message": {
+            "type": "string",
+            "const": "无权访问此题库"
+          },
+          "status_code": {
+            "type": "integer",
+            "const": 403
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "x-ti-forbidden-fields": [
+          "data",
+          "payload"
+        ]
+      },
+      "SafeError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message",
+          "payload",
+          "status_code",
+          "request_id"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "error"
+          },
+          "message": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "null"
+          },
+          "status_code": {
+            "type": "integer"
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "RateLimited": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SafeError"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status_code": {
+                "const": 429
+              }
+            }
+          }
+        ],
+        "description": "Exact fields are status, message, payload, status_code and request_id; payload is null."
+      },
+      "InternalFailure": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SafeError"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "const": "An unexpected server error occurred."
+              },
+              "status_code": {
+                "const": 500
+              }
+            }
+          }
+        ]
+      },
+      "ServiceUnavailable": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message",
+          "status_code",
+          "request_id"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "error"
+          },
+          "message": {
+            "type": "string",
+            "const": "服务暂时不可用"
+          },
+          "status_code": {
+            "type": "integer",
+            "const": 503
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "x-ti-base-contract": {
+    "path": "contracts/openapi.json",
+    "sha256": "41e0ad0e1eca3ba8731242dea7a638cd348069aad1331382f5f1bf6d4a08d64e",
+    "immutable": true
+  },
+  "x-ti-prior-overlays": [
+    {
+      "path": "openapi/phase3-authentication.openapi.json",
+      "sha256": "7b014165a027ae3dbdbf8597ca910db8ab153b0437156f6d0fdd07985f348fab",
+      "immutable": true
+    },
+    {
+      "path": "openapi/phase4a-public-bank.openapi.json",
+      "sha256": "1f163574d9fb5b25d58df4a4a75ffca6b74b874dfbf66551cf46408d67110a34",
+      "immutable": true
+    },
+    {
+      "path": "openapi/phase4a-subject-directory.openapi.json",
+      "sha256": "8344f0173f523939abae203430cf92455d6240404e3d8ffe7a002507cadd2169",
+      "immutable": true
+    }
+  ],
+  "x-ti-route-accounting": {
+    "frozenBaselineOperationCount": 611,
+    "predecessorMigratedOperationCount": 11,
+    "phase4cLegacyGetDeltaCount": 0,
+    "phase4cImplementedPendingGetCount": 2,
+    "effectiveMigratedOperationCount": 11,
+    "effectivePendingOperationCount": 600,
+    "productionCutoverOperationCount": 0,
+    "countedMethods": [
+      "GET"
+    ],
+    "documentedDerivedMethods": [
+      "HEAD",
+      "OPTIONS"
+    ],
+    "derivedMethodsCountAsMigratedOperations": false
+  },
+  "x-ti-credential-contract": {
+    "apiAccepted": [
+      "authoritative target Session",
+      "successfully exchanged legacy Flask Session",
+      "valid legacy Bearer for this request only"
+    ],
+    "webAccepted": [
+      "authoritative target Session",
+      "successfully exchanged legacy Flask Session"
+    ],
+    "precedence": [
+      "explicit Authorization selects Bearer",
+      "target Session",
+      "legacy Flask Session exchange"
+    ],
+    "cookieFallbackAfterAuthorization": false,
+    "webAnyAuthorization": "302 Location /login",
+    "apiRejectedCredential": "uniform 401 请先登录 envelope",
+    "viewerSource": "authoritative TargetAuthenticatedPrincipal only"
+  },
+  "x-ti-query-contract": {
+    "repeatedParameterRule": "first value wins",
+    "q_type": "default empty; trim; case-insensitive all means no filter; unknown means essay",
+    "source": "default all; exact lowercase favorites or mistakes are special; every other value means all",
+    "tag": "default empty; exact lowercase all bypasses; every other nonempty value is normalized by learning"
+  },
+  "x-ti-path-contract": {
+    "normalizer": "io.saksk.ti.web.LegacyDecimalPathInteger",
+    "unicodeNdAndLeadingZeros": "strictly decode once and normalize by numeric digit value",
+    "zero": "authenticate and charge alias limiter; 403; no application call",
+    "positiveIntegerRange": "invoke LearningApplicationApi",
+    "aboveIntegerMaximum": "authenticate and charge alias limiter; safe 500; no application or business SQL",
+    "converterMiss": "404; no user-count limiter or application",
+    "encodedSlashOrSemicolon": "firewall 400; no user-count limiter or application"
+  },
+  "x-ti-method-contract": {
+    "get": "authenticate, acquire alias-local rate budget, invoke learning application for a positive int bank ID",
+    "head": "same path/authentication/actor/rate/application/SQL/status/semantic headers as GET; actual body bytes always zero",
+    "bareOptions": "204 with Allow GET, HEAD, OPTIONS; zero authentication/rate/Session/application/SQL",
+    "derivedMethodsCountAsRouteMigrations": false
+  },
+  "x-ti-cors-contract": {
+    "scope": "API alias only",
+    "allowedOrigins": [
+      "https://servicewechat.com",
+      "explicit configured origins",
+      "development-profile localhost/127.0.0.1 ports 5000 and 3000"
+    ],
+    "wildcardOrigin": false,
+    "credentials": false,
+    "allowedMethods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "allowedHeaders": [
+      "Content-Type",
+      "Authorization",
+      "X-Request-ID"
+    ],
+    "validPreflight": "204 empty before authentication and all side effects",
+    "invalidOrDisallowedOrigin": "403 empty before authentication and all side effects; no Access-Control or Set-Cookie headers",
+    "webAliasCors": false
+  },
+  "x-ti-rate-limit-contract": {
+    "algorithm": "atomic Redis fixed windows; stop after first breached window",
+    "baseLimits": {
+      "perSecond": 10,
+      "perHour": 500,
+      "perDay": 5000
+    },
+    "developmentDefaultMultiplier": 1,
+    "productionDefaultMultiplier": 100,
+    "productionEffectiveDefaults": {
+      "perSecond": 1000,
+      "perHour": 50000,
+      "perDay": 500000
+    },
+    "deploymentOverride": "route-specific override then TI_RATE_LIMIT_MULTIPLIER",
+    "aliasBucketsIndependent": true,
+    "publicBankBucketsIndependent": true,
+    "actor": "effective TargetAuthenticatedPrincipal; trusted client address only when no valid principal exists",
+    "keying": "domain-separated HMAC-SHA-256 pseudonym with independent secret and namespace",
+    "rawIdentityAddressCookieOrBearerInRedis": false,
+    "rateLimitedStatus": 429,
+    "userCountRouteDecisionHeaders": [
+      "X-RateLimit-Limit",
+      "X-RateLimit-Remaining",
+      "X-RateLimit-Reset",
+      "Retry-After"
+    ],
+    "authenticationExchange429": {
+      "beforeUserCountRouteLimiter": true,
+      "guaranteedRateHeaders": [
+        "Retry-After",
+        "X-RateLimit-Reset"
+      ],
+      "optionalAttemptWindowHeaders": [
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining"
+      ],
+      "notPromised": []
+    },
+    "storageFailure": "fail closed 503 without rate headers or internal details"
+  },
+  "x-ti-side-effect-contract": {
+    "usersLastActiveDml": 0,
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "businessWrites": 0,
+    "optionsAuthenticationRateSessionApplicationSql": 0,
+    "allowedAuthenticationRuntimeEffects": [
+      "authoritative Session registry/cookie reconciliation",
+      "successful legacy Flask Session exchange"
+    ]
+  },
+  "x-ti-approved-differences": [
+    "P4C-LEARNING-007",
+    "P4C-LEARNING-008",
+    "P4C-LEARNING-009",
+    "P4C-LEARNING-010",
+    "P4C-LEARNING-011",
+    "P4C-LEARNING-012"
+  ],
+  "x-ti-evidence": {
+    "httpEntryContract": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-http-entry-contract.json",
+      "sha256": "d91d4ce6ccae982ded22a83ca9a7663042102c257565d3973b125e535f9c6676"
+    },
+    "readContract": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json",
+      "sha256": "458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73"
+    },
+    "legacyGolden": {
+      "path": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1",
+      "caseCount": 59
+    },
+    "httpBoundary": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-http-boundary-evidence.json",
+      "sha256": "bb08482f2628dccdf8e5a4fc7c1e669b28787f0c4309f5c65707d0a29e1867c9",
+      "caseCount": 62
+    },
+    "rateLimit": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-rate-limit-evidence.json",
+      "sha256": "b0f08ddba54641e776df368ecb10361154a7434aee5d734c379a34d42538e66b"
+    },
+    "approvedDifferences": {
+      "path": "docs/refactor/phase4c/approved-differences.md",
+      "sha256": "921d6626ab11d59a9667e1942953807b0aa1a81c06c01094cc109312f9d6b300"
+    },
+    "postgresCompatibility": [
+      "16.14",
+      "18.4"
+    ]
+  }
+}

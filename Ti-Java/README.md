@@ -2,13 +2,15 @@
 
 Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、Spring MVC 和 Spring Modulith 重新实现现有业务，并逐步加入 Vue 3 + TypeScript Web 与项目自有的小程序。
 
-阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 已完成 personal-bank 分类、按题库分享列表、我创建的全部分享和使用人数统计四项 HTTP-neutral 内部读取能力；user-counts 双 alias 的调用方、59-case golden、八个 SQL family 与 PostgreSQL 16.14/18.4 实现前证据也已闭合，但所有八条 personalbank HTTP operation 都保持 pending。Phase 4C 已实现 `learning -> personalbank::api` 的 user-counts HTTP-neutral 组合和 personalbank 题目事实边界，累计生产 shape 为 27 个公开应用方法；跨题库分享授权、逐次鉴权、typed `integer[]`、独立只读事务及字段级失败边界由第二层固定合同约束。`bank_<bank_id>_tags` 所有权 overlay 与逐行迁移原语仍只属于证据层，完整迁移设计因全局 preflight、持久 migration ledger/tombstone 与真实 ambiguous-commit 恢复未闭合而保持未授权。Controller、Security/OpenAPI、schema/index、真实迁移和切流均未新增。有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
+阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 已完成 personal-bank 分类、按题库分享列表、我创建的全部分享和使用人数统计四项 HTTP-neutral 内部读取能力；user-counts 双 alias 的调用方、59-case golden、八个 SQL family 与 PostgreSQL 16.14/18.4 实现前证据也已闭合，但所有八条 personalbank HTTP operation 都保持 pending。Phase 4C 已实现 `learning -> personalbank::api` 的 user-counts HTTP-neutral 组合和 personalbank 题目事实边界，累计生产 shape 为 27 个公开应用方法；跨题库分享授权、逐次鉴权、typed `integer[]`、独立只读事务及字段级失败边界由第二层固定合同约束。`bank_<bank_id>_tags` 所有权 overlay 与逐行迁移原语仍只属于证据层，完整迁移设计因全局 preflight、持久 migration ledger/tombstone 与真实 ambiguous-commit 恢复未闭合而保持未授权。user-counts HTTP 候选实现已物化：双 alias Controller、安全错误 writer、Unicode `Nd` 路径解析、GET/派生 HEAD、API-only CORS/OPTIONS、按有效 actor HMAC 假名的 Redis 三窗口限流，以及配置、OpenAPI overlay 和两行 pending route delta 均已存在。当前 59-case 证据仍是 48 个 MockMvc、8 个认证绑定与 3 个 typed PostgreSQL 绑定组成的 `PARTIAL_EXECUTION_MAPPING_LEDGER`，不是完整目标执行闭环；两条 GET 因此仍为 pending。有效状态保持 **11 个 migrated operation、600 个 pending、0 个 production cutover**。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
 
-当前 user-counts 内部读取合同固定 40 个 `learning`/`personalbank` 主源码与 288 文件生产面；第二层历史合同 77/77、全部 source tools 442/442、完整 Maven 545 个 surefire + 79 个 failsafe 均为零失败。最终追加式 WORM tip 绑定 Java build-context `935e6a95a33621b01e1e04d752a09513c8037cffe807a73fa1ce9850fb5912f0`，在 PostgreSQL 18.4 的 70 表/617 列恢复副本上通过只读 ACL、Hibernate `validate` 和 readiness；前三份报告保持字节不可变。该 read predecessor 的物理 SHA-256 固定为 `458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73`，后续 HTTP 工作只能通过显式 successor 承接，禁止改写这份历史合同。
+历史 HTTP-neutral read predecessor 固定 40 个 `learning`/`personalbank` 主源码与 288 文件生产面；第二层历史合同 77/77、全部 source tools 442/442、完整 Maven 545 个 surefire + 79 个 failsafe 均为零失败。该历史时点的追加式 WORM tip 绑定 Java build-context `935e6a95a33621b01e1e04d752a09513c8037cffe807a73fa1ce9850fb5912f0`，在 PostgreSQL 18.4 的 70 表/617 列恢复副本上通过只读 ACL、Hibernate `validate` 和 readiness；前三份报告保持字节不可变。该 read predecessor 的物理 SHA-256 固定为 `458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73`，后续 HTTP 工作只能通过显式 successor 承接，禁止改写这份历史合同。上述 442/442、545+79 与 `935e6a95…12f0` 均是 predecessor 历史证据，不代表当前 HTTP successor 的最终验收结果。
 
-Phase 4C user-counts HTTP entry gate 已固定实现前边界：旧栈最终捕获 62 个双 alias case，其中包含 8 个 CORS/OPTIONS 运行时观察；case payload SHA-256 为 `f577ff99a7f04030fd5f4dae0f95610351d4fcfff92de7e9ca0c406516725dbf`，document payload SHA-256 为 `3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f`。独立限流证据固定三组窗口、alias scope、429 协商、key 选择和 Redis 拒绝共 7 组观察；旧基础预算是 `10/second;500/hour;5000/day`，但固定生产部署默认乘数为 100，即 `1000/second;50000/hour;500000/day`，且仍允许显式部署覆盖。批准差异 `P4C-LEARNING-007` 至 `P4C-LEARNING-012` 分别冻结凭据选择、`last_active` 零写入、限流、路由级 CORS/OPTIONS、路径整数和 HEAD 零体边界。
+Phase 4C user-counts 的历史 HTTP entry gate 已固定实现前边界：旧栈最终捕获 62 个双 alias case，其中包含 8 个 CORS/OPTIONS 运行时观察；case payload SHA-256 为 `f577ff99a7f04030fd5f4dae0f95610351d4fcfff92de7e9ca0c406516725dbf`，document payload SHA-256 为 `3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f`。独立限流证据固定三组窗口、alias scope、429 协商、key 选择和 Redis 拒绝共 7 组观察；旧基础预算是 `10/second;500/hour;5000/day`，但固定生产部署默认乘数为 100，即 `1000/second;50000/hour;500000/day`，且仍允许显式部署覆盖。批准差异 `P4C-LEARNING-007` 至 `P4C-LEARNING-012` 分别冻结凭据选择、`last_active` 零写入、限流、路由级 CORS/OPTIONS、路径整数和 HEAD 零体边界。
 
-该门禁只授权下一步精确实现 user-counts 的 HTTP Controller、route-specific Security、独立限流、路由级 CORS、配置与 OpenAPI slice；这些生产改动当前尚未发生。公开应用方法仍为 27 个，有效状态仍为 **11 个 migrated、600 个 pending、0 个 production cutover**，`server/src/main`、`server/src/main/resources`、OpenAPI 与 route 状态相对 read predecessor 均为零变更。HTTP 尚未实现，operation 尚未迁移或切流；operator、schema/index 和真实数据迁移继续禁止。下一生产切片完成后必须捕获新的追加式 WORM，不能复用当前 read WORM 为新生产面背书。
+历史 entry gate 已由“implementation present、parity incomplete、routes pending”的后继检查点承接。当前 successor 覆盖 297 个 production runtime files；相对 288 文件 predecessor 精确新增 9 个、修改 6 个，并固定 44 个 source contract 路径。第五节点 WORM 报告 SHA-256 为 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，绑定 Java build-context `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。首次独立验收在 Compose 运行阶段发现 `read_only` API 服务不支持 environment-backed secret，整轮已作废；改为 file-backed configtree 后，验收时冻结的 pre-documentation checkpoint 已从头重跑并通过。该冻结点的权威副本包含 1,449 个受控文件，源/副本清单 SHA-256 均为 `154013da39c75fb33c7b0c9d02f4e0f34038b259972d4a9a7f93a7ae47e90d63`，临时结构化报告 SHA-256 为 `2b3cd6e4ea34a501809b5083bad0b49db82dba0aea92b36a4328c5d2ac530f8d`；496/496 source tools、Phase 1 23/23、Phase 2、Phase 3 29/29、topology 60/60、小程序 36/36、独立数据面、专用空缓存 Maven 661+93、唯一镜像、3/3 Compose readiness 与重启恢复均绿色。9 个只读 bind 全部来自独立副本，其中 user-counts Secret 为文件型挂载；临时容器、网络、卷、镜像、缓存卷和端口均清理至 0 残留。该 manifest 与临时报告只描述验收冻结点，不是当前工作树的字节清单；验收后的证据措辞、固定 trust/contract 与 parity 测试更新由当前 source/contract 门禁另行约束，未重新冒充为一次完整独立验收。
+
+生产 HTTP 适配代码、配置、OpenAPI 和 route delta 已存在，但 `full_target_parity_closed=false`、`route_migration_eligible=false`；MockMvc 中被 mock 的 `LearningApplicationApi` 以及认证/数据库绑定不能冒充完整端到端等价。真实随机端口 Tomcat `NetworkIT` 仍 mock `LearningApplicationApi` 与认证 ports，只证明网络/Servlet 适配边界，不证明真实认证、应用和 JDBC 端到端链路。下一门禁是把全部 59 个 case 闭合为真实目标执行，并完成 Target Session、Flask Session 和 Bearer 到 Controller 的完整认证链；在此之前不得登记为 migrated。operator、schema/index 和真实数据迁移继续禁止。
 
 ## 当前技术与边界
 
@@ -27,7 +29,7 @@ Phase 4C user-counts HTTP entry gate 已固定实现前边界：旧栈最终捕�
 - `QuestionMetadataApplicationApi#listQuestionExportRecords` 按可选的 `Optional<Integer> subjectId` 在两条固定 SQL 中二选一，以 `questions LEFT JOIN subjects` 返回严格 `q.id ASC` 的不可变十字段原始快照。catalog 保留 nullable/孤儿科目、空名称与畸形 JSON 文本，不做默认值、JSON 解析、认证、响应信封或安全错误投影；`GET /admin/api/questions/export` 与 `GET /admin/questions/export` 仍由 `operations` 持有，延后到 Phase 4H 并保持 pending。
 - `PersonalBankApplicationApi#listCategories` 在只读事务中以一条固定 SQL 返回当前身份的不可变八字段分类事实；只统计关联到分类且 `status = 1` 的题库，保留旧栈的跨 owner 关联计数，并严格 `sort_order ASC NULLS LAST, id ASC`。双 alias 的认证、信封、日期/null 序列化、Session `last_active` 与安全故障投影尚未进入 Java HTTP 层，因此仍为 pending。
 - `PersonalBankApplicationApi#findShares` 已实现 HTTP-neutral 分享列表读取：只读事务先用 `int bankId + bigint viewerId` 执行 owner/status probe，命中后再以第二条 SQL 原样读取 11 个 nullable 字段并按 `created_at DESC NULLS FIRST` 返回；不增加 tie-breaker、过滤、分页或 Java 重排。`Optional.empty` 与 present-empty 不混淆，列表由 `List.copyOf` 防御性复制。双 alias 的 Controller、认证、信封、OpenAPI、schema/index 与 cutover 仍未授权。
-- 当前有效数据所有权为 **159 个资源且 159 个均有唯一 owner**。公共题库新增的 snapshot/viewer 投影控制表、读取限流键和刷新锁均是可重建辅助状态，`production cutover=0`，不能据此宣称接管旧业务事实或生产流量。
+- 当前有效数据所有权为 **160 个资源且 160 个均有唯一 owner**。新增的 `learning` user-counts 限流 namespace 与 catalog snapshot/viewer 投影控制表、限流键和刷新锁一样，都是可重建辅助状态；`production cutover=0`，不能据此宣称接管旧业务事实或生产流量。
 
 ## 目录
 
@@ -39,11 +41,12 @@ Phase 4C user-counts HTTP entry gate 已固定实现前边界：旧栈最终捕�
 - `docs/refactor/phase3/`：阶段 3 路由增量、认证兼容、批准差异和 p3-009 双运行时证据。
 - `docs/refactor/phase4a/`：科目、公共题库、题型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台科目上下文与后台题目导出的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状、查询计划证据、24-operation 候选处置与 Phase 4A closure 记录。
 - `docs/refactor/phase4b/`：个人题库分类读取的最终验收证据，以及分享列表的调用方、40-case golden、PG16/18 SQL/计划、历史入口合同、累计 API shape 与已通过完整 Maven 的内部实现合同。
-- `docs/refactor/phase4c/`：learning 组合、个人题库标签 compatibility namespace 所有权 overlay、显式迁移证据与批准差异；HTTP 和生产切流仍需后续门禁。
+- `docs/refactor/phase4c/`：learning 组合、个人题库标签 compatibility namespace 所有权 overlay、显式迁移证据与批准差异，以及 user-counts HTTP pending implementation、部分执行账本、OpenAPI、pending route delta 和限流资源所有权 successor；完整 parity、operator、真实迁移与生产切流仍未闭合。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-public-bank.openapi.json`：7 条公共题库 GET 的自包含 OpenAPI 3.1.2 增量，全部保持 `productionCutover=false`。
+- `openapi/phase4c-personal-bank-user-counts.openapi.json`：两条 user-counts GET 的自包含 OpenAPI 3.1.2 implemented-pending 增量；HEAD/OPTIONS 是派生语义，不增加 migrated operation。
 - `docs/refactor/adr/`：已接受的架构决策。
 - `docs/refactor/phase1/`：API 约定、模块合同、关键不变量和对比/切换协议。
 - `docs/refactor/`：事实盘点、迁移矩阵、数据所有权、运行手册与连续进度。
@@ -57,18 +60,19 @@ Phase 4C user-counts HTTP entry gate 已固定实现前边界：旧栈最终捕�
 从本目录运行固定镜像构建的完整验证：
 
 ```bash
+../.venv/bin/python -B -m unittest discover -s tools -p 'test_*.py'
 ./infra/phase2/verify-static.sh
-./infra/phase2/verify-in-maven-container.sh clean verify
+./infra/phase2/verify-in-maven-container.sh -DargLine=-javaagent:/root/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar clean verify
 ./infra/phase3/verify-static.sh
 ./infra/phase3/topology/verify-static.sh
 ./infra/phase3/topology/verify-data-plane.sh
 ```
 
-第二条命令把本目录挂载到固定 Maven/Temurin 25 容器，并挂载 Docker socket 供 Testcontainers 启动固定 digest 的 PostgreSQL 与 Redis。**Docker socket 近似授予容器主机 root 控制能力，只能对受信代码运行。** 若本机已经安装匹配的 Java 25 和 Maven 3.9.16，也可以运行：
+第三条命令把本目录挂载到固定 Maven/Temurin 25 容器，以显式 Mockito Java agent 运行 JDK 25 测试，并挂载 Docker socket 供 Testcontainers 启动固定 digest 的 PostgreSQL 与 Redis。**Docker socket 近似授予容器主机 root 控制能力，只能对受信代码运行。** 若本机已经安装匹配的 Java 25 和 Maven 3.9.16，也可以运行，但同样必须通过 `-DargLine=-javaagent:<本机 mockito-core-5.23.0.jar 的绝对路径>` 显式加载 agent：
 
 ```bash
 cd server
-./mvnw clean verify
+./mvnw -DargLine=-javaagent:"${HOME}/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar" clean verify
 ```
 
 阶段 2 最小夹具与完整 70 表本地参考结构验证的适用范围见 [`docs/refactor/phase2/README.md`](docs/refactor/phase2/README.md)；阶段 3 的读写、切换和回滚证据边界见 [`docs/refactor/phase3/README.md`](docs/refactor/phase3/README.md)。Phase 3 绿色检查点的完整 Maven 结果为 208 个 surefire 与 22 个 failsafe，Python 门禁为 29 项比较器测试与 59 项拓扑/审计/写证据测试；最终 WORM 与仅复制 `Ti-Java/` 的独立构建、启动、挂载边界和清理也已通过。

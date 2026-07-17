@@ -6,6 +6,7 @@ TI_JAVA_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd -P)
 COMPOSE_FILE="$TI_JAVA_DIR/compose.dev.yml"
 ENV_FILE="$TI_JAVA_DIR/.env.example"
 SCHEMA_FILE="$TI_JAVA_DIR/server/src/test/resources/db/phase2/minimal-reference-schema.sql"
+USER_COUNTS_SECRET_EXAMPLE="$TI_JAVA_DIR/infra/phase2/secrets/ti-personal-bank-user-counts-rate-limit-key-secret.example"
 EXPECTED_SCHEMA_SHA=2873948e1d0a59eb8ceb9dce94e23ec05d9db6bfe288e33140d33519dac62c83
 
 sha256_file() {
@@ -42,6 +43,7 @@ def require(condition, message):
 
 services = config.get("services", {})
 networks = config.get("networks", {})
+secrets = config.get("secrets", {})
 
 def service_networks(name):
     configured = services.get(name, {}).get("networks", {})
@@ -94,7 +96,22 @@ require(api_secrets == [
                 "source": "ti_login_rate_limit_key_secret",
                 "target": "ti.login-rate-limit.key-secret",
             },
-        ], "api must mount the exact database, Redis, and login-HMAC configtree secrets")
+            {
+                "source": "ti_personal_bank_user_counts_rate_limit_key_secret",
+                "target": "ti.personal-bank-user-counts-read-rate-limit.key-secret",
+            },
+        ], "api must mount the exact database, Redis, login-HMAC, and user-counts HMAC configtree secrets")
+user_counts_secret = secrets.get(
+        "ti_personal_bank_user_counts_rate_limit_key_secret", {})
+user_counts_secret_file = user_counts_secret.get("file")
+require(isinstance(user_counts_secret_file, str) and user_counts_secret_file.endswith(
+        "/infra/phase2/secrets/ti-personal-bank-user-counts-rate-limit-key-secret.example"),
+        "user-counts HMAC secret must use the dedicated configtree file boundary")
+require("environment" not in user_counts_secret,
+        "user-counts HMAC secret must not use an unsupported Compose environment secret")
+require("TI_JAVA_PERSONAL_BANK_USER_COUNTS_RATE_LIMIT_KEY_SECRET" not in
+        services.get("api", {}).get("environment", {}),
+        "user-counts HMAC secret must not be exposed as a container environment variable")
 
 redis_command = services.get("redis", {}).get("command", [])
 require(isinstance(redis_command, list), "redis command must render as an argv list")
@@ -173,6 +190,21 @@ assert_file_contains "Phase 2 login-HMAC Compose default" \
 assert_file_contains "Phase 2 public login-HMAC placeholder" \
     "PUBLIC-TEST-ONLY-phase2-login-rate-hmac-key-0001" \
     "$TI_JAVA_DIR/infra/phase2/secrets/ti-login-rate-limit-key-secret.example"
+assert_file_contains "Phase 4C user-counts HMAC env-file boundary" \
+    "TI_JAVA_PERSONAL_BANK_USER_COUNTS_RATE_LIMIT_KEY_SECRET_FILE=./infra/phase2/secrets/ti-personal-bank-user-counts-rate-limit-key-secret.example" \
+    "$ENV_FILE"
+assert_file_contains "Phase 4C user-counts HMAC Compose file source" \
+    'TI_JAVA_PERSONAL_BANK_USER_COUNTS_RATE_LIMIT_KEY_SECRET_FILE:-./infra/phase2/secrets/ti-personal-bank-user-counts-rate-limit-key-secret.example' \
+    "$COMPOSE_FILE"
+assert_file_contains "Phase 4C public user-counts HMAC placeholder" \
+    "PUBLIC-TEST-ONLY-phase4c-user-counts-rate-hmac-key-0001" \
+    "$USER_COUNTS_SECRET_EXAMPLE"
+if cmp -s \
+    "$TI_JAVA_DIR/infra/phase2/secrets/ti-login-rate-limit-key-secret.example" \
+    "$USER_COUNTS_SECRET_EXAMPLE"; then
+    echo "Login and user-counts HMAC example secrets must remain distinct" >&2
+    exit 1
+fi
 assert_file_contains "Wormhole PostgreSQL 18 image" \
     "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15" \
     "$WORMHOLE_FILE"
@@ -184,6 +216,12 @@ assert_file_contains "Wormhole ephemeral login-HMAC secret" \
     "$WORMHOLE_FILE"
 assert_file_contains "Wormhole login-HMAC configtree mount" \
     'target=/run/secrets/ti.login-rate-limit.key-secret,readonly' \
+    "$WORMHOLE_FILE"
+assert_file_contains "Wormhole ephemeral user-counts HMAC secret" \
+    'user_counts_rate_limit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom' \
+    "$WORMHOLE_FILE"
+assert_file_contains "Wormhole user-counts HMAC configtree mount" \
+    'target=/run/secrets/ti.personal-bank-user-counts-read-rate-limit.key-secret,readonly' \
     "$WORMHOLE_FILE"
 assert_file_contains "Wormhole explicit versioned report" \
     '--report is required and must name a new versioned evidence file' \
@@ -199,6 +237,15 @@ assert_file_contains "Fixed Phase 4C read WORM successor" \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 assert_file_contains "Fixed Phase 4C read-access WORM successor" \
     'a393e79afb76c53a1aca8be1e4709506b58ad062e3c6536c26c12f10b29d1ec6' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C HTTP implementation WORM successor" \
+    '7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C HTTP implementation WORM predecessor" \
+    'predecessor_sha256=PHASE4C_READ_ACCESS_REPORT_SHA256' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C HTTP implementation successor contract" \
+    'load_http_implementation_successor_contract(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"

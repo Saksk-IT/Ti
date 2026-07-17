@@ -21,6 +21,12 @@ try:
         load_read_successor_contract,
         successor_sha256,
     )
+    from tools.phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as implementation_accepted_sha256,
+        fixed_source_sha256 as implementation_fixed_source_sha256,
+        load_http_implementation_successor_contract,
+        successor_sha256 as implementation_successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_successor_acceptance import (
         ACCEPTED_COMMIT,
@@ -31,6 +37,12 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         load_composition_predecessor_contract,
         load_read_successor_contract,
         successor_sha256,
+    )
+    from phase4c_http_implementation_successor_acceptance import (
+        accepted_sha256 as implementation_accepted_sha256,
+        fixed_source_sha256 as implementation_fixed_source_sha256,
+        load_http_implementation_successor_contract,
+        successor_sha256 as implementation_successor_sha256,
     )
 
 
@@ -224,6 +236,9 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
         )
         if cls.phase4c_composition is None:
             raise AssertionError("Phase4C composition contract is required")
+        cls.http_implementation = load_http_implementation_successor_contract(ROOT)
+        if cls.http_implementation is None:
+            raise AssertionError("Phase4C HTTP implementation contract is required")
 
     def test_01_identity_predecessor_sources_payload_and_forward_handoff_close(self):
         contract = self.contract
@@ -263,15 +278,33 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
             source = ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
             if name == "entry_contract_test":
+                relative = reference["source"]
                 self.assertEqual(
                     self.phase4c_composition["historical_acceptance"]
-                    ["accepted_file_sha256"][reference["source"]],
+                    ["accepted_file_sha256"][relative],
                     reference["sha256"],
                 )
+                composition_handoff = self.phase4c_composition[
+                    "historical_acceptance"
+                ]["successor_aware_test_files"][relative]
                 self.assertEqual(
-                    sha256(source),
-                    successor_sha256(ROOT, reference["source"]),
+                    reference["sha256"], composition_handoff["accepted_sha256"], name
+                )
+                read_handoff = self.phase4c_read[
+                    "historical_successor_acceptance"
+                ]["python_sources"][relative]
+                self.assertEqual(
+                    composition_handoff["successor_sha256"],
+                    read_handoff["accepted_sha256"],
                     name,
+                )
+                self.assertEqual(
+                    read_handoff["successor_sha256"],
+                    implementation_accepted_sha256(relative),
+                    name,
+                )
+                self.assertEqual(
+                    sha256(source), implementation_successor_sha256(ROOT, relative), name
                 )
                 self.assertNotEqual(reference["sha256"], sha256(source), name)
             else:
@@ -407,16 +440,31 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
             baseline_surface = self.phase4c_composition["production_baseline"][
                 "production_runtime_surface"
             ]["files"]
-            current_surface = production_runtime_manifest()
-            self.assertEqual(expected_added, set(current_surface) - set(baseline_surface))
-            self.assertEqual(set(), set(baseline_surface) - set(current_surface))
+            read_surface = successor["production_runtime_surface"]["files"]
+            self.assertEqual(expected_added, set(read_surface) - set(baseline_surface))
+            self.assertEqual(set(), set(baseline_surface) - set(read_surface))
             self.assertEqual(
                 expected_changed,
                 {
-                    relative for relative in set(baseline_surface) & set(current_surface)
-                    if baseline_surface[relative] != current_surface[relative]
+                    relative for relative in set(baseline_surface) & set(read_surface)
+                    if baseline_surface[relative] != read_surface[relative]
                 },
             )
+            transition = self.http_implementation["implementation"][
+                "production_runtime_transition"
+            ]
+            self.assertEqual({
+                "file_count": 288,
+                "manifest_sha256": successor["production_runtime_surface"][
+                    "manifest_sha256"
+                ],
+            }, transition["predecessor"])
+            current_surface = production_runtime_manifest()
+            self.assertEqual(297, len(current_surface))
+            self.assertEqual(current_surface, transition["current"]["files"])
+            self.assertEqual(9, transition["exact_delta"]["added_file_count"])
+            self.assertEqual(6, transition["exact_delta"]["changed_file_count"])
+            self.assertEqual(0, transition["exact_delta"]["deleted_file_count"])
             self.assertEqual(
                 self.phase4c_composition["production_baseline"]
                 ["route_status_surface"]["files"],
@@ -442,7 +490,11 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 self.assertEqual(relative, verification_files[name])
                 source = ROOT / relative
                 self.assertTrue(source.is_file(), name)
-                self.assertEqual(sha256(source), verification_hashes[name])
+                if sha256(source) == verification_hashes[name]:
+                    terminal_hash = verification_hashes[name]
+                else:
+                    terminal_hash = implementation_fixed_source_sha256(ROOT, relative)
+                self.assertEqual(sha256(source), terminal_hash, name)
                 parity_code = compact_java_code(source)
                 self.assertIn("@Test", parity_code)
                 required_methods = requirements["required_verification_test_methods"][name]

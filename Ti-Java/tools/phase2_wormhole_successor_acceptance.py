@@ -19,8 +19,14 @@ import re
 from typing import Sequence
 
 try:
+    from tools.phase4c_http_implementation_successor_acceptance import (
+        load_http_implementation_successor_contract,
+    )
     from tools.phase4c_read_successor_acceptance import load_read_successor_contract
 except ModuleNotFoundError:  # Direct script execution from tools/.
+    from phase4c_http_implementation_successor_acceptance import (
+        load_http_implementation_successor_contract,
+    )
     from phase4c_read_successor_acceptance import load_read_successor_contract
 
 
@@ -83,6 +89,20 @@ PHASE4C_READ_ACCESS_DOCKERFILE_SHA256 = (
     "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
 )
 
+PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH = (
+    "docs/refactor/phase4c/"
+    "personal-bank-user-counts-http-implementation-worm-evidence.json"
+)
+PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256 = (
+    "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39"
+)
+PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256 = (
+    "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3"
+)
+PHASE4C_HTTP_IMPLEMENTATION_DOCKERFILE_SHA256 = (
+    "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+)
+
 
 class EvidenceValidationError(ValueError):
     """A fixed WORM evidence invariant was not satisfied."""
@@ -136,11 +156,20 @@ PHASE4C_READ_ACCESS_SUCCESSOR = EvidenceDescriptor(
     dockerfile_sha256=PHASE4C_READ_ACCESS_DOCKERFILE_SHA256,
     predecessor_sha256=PHASE4C_READ_REPORT_SHA256,
 )
+PHASE4C_HTTP_IMPLEMENTATION_SUCCESSOR = EvidenceDescriptor(
+    label="phase4c-personal-bank-user-counts-http-implementation",
+    relative_path=PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH,
+    sha256=PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
+    build_context_sha256=PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256,
+    dockerfile_sha256=PHASE4C_HTTP_IMPLEMENTATION_DOCKERFILE_SHA256,
+    predecessor_sha256=PHASE4C_READ_ACCESS_REPORT_SHA256,
+)
 FIXED_EVIDENCE_CHAIN = (
     HISTORICAL_ANCHOR,
     PHASE4C_SUCCESSOR,
     PHASE4C_READ_SUCCESSOR,
     PHASE4C_READ_ACCESS_SUCCESSOR,
+    PHASE4C_HTTP_IMPLEMENTATION_SUCCESSOR,
 )
 FIXED_IMMUTABLE_MIRRORS = (
     ImmutableMirror(
@@ -514,6 +543,31 @@ def validate_fixed_acceptance(
         load_read_successor_contract(ti_java_root) is not None,
         "Phase4C fixed read successor contract is required",
     )
+    require(
+        load_http_implementation_successor_contract(ti_java_root) is not None,
+        "Phase4C fixed HTTP implementation successor contract is required",
+    )
+
+    return validate_fixed_chain(
+        ti_java_root,
+        drift_manifest_path,
+        current_dockerfile_sha256,
+        current_build_context_sha256,
+    )
+
+
+def validate_fixed_chain(
+    ti_java_root: Path,
+    drift_manifest_path: Path,
+    current_dockerfile_sha256: str,
+    current_build_context_sha256: str,
+) -> EvidenceDescriptor:
+    """Validate the fixed bytes without using the successor contract as authority.
+
+    The implementation-contract builder uses this path before the contract file
+    exists.  The production static gate calls ``validate_fixed_acceptance`` and
+    therefore additionally requires the independently trusted successor.
+    """
 
     return validate_evidence_chain(
         ti_java_root,

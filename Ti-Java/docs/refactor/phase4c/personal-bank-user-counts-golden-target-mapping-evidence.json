@@ -1,0 +1,254 @@
+{
+  "evidence_id": "ti.phase4c.personal-bank-user-counts-golden-target-mapping-evidence",
+  "schema_version": 1,
+  "claim": {
+    "classification": "PARTIAL_EXECUTION_MAPPING_LEDGER",
+    "full_target_parity_closed": false,
+    "cutover_evidence": false,
+    "route_migration_eligible": false,
+    "reason": "Only the HTTP adapter portion of 48 representable cases executes here; authentication, application/database semantics, PostgreSQL-only constraints, Redis, CORS and side effects remain in explicitly named test bindings."
+  },
+  "source_golden": {
+    "path": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+    "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1",
+    "case_payload_sha256": "0ace2f642523a62e802db3dc3d045d601743a277e7edf7e2cf214d00619a51bf",
+    "case_count": 59
+  },
+  "difference_domains": {
+    "closed_read_predecessor_difference_ids": [
+      "P4C-LEARNING-001",
+      "P4C-LEARNING-002",
+      "P4C-LEARNING-003",
+      "P4C-LEARNING-004",
+      "P4C-LEARNING-005",
+      "P4C-LEARNING-006"
+    ],
+    "http_slice_difference_ids": [
+      "P4C-LEARNING-007",
+      "P4C-LEARNING-008",
+      "P4C-LEARNING-009",
+      "P4C-LEARNING-010",
+      "P4C-LEARNING-011",
+      "P4C-LEARNING-012"
+    ],
+    "classification_rule": "P4C-LEARNING-006 may appear only as inherited_predecessor_difference_id; per-case http_slice_difference_ids are restricted to P4C-LEARNING-007..012."
+  },
+  "execution_boundary": {
+    "MOCKMVC_AVAILABLE": "Executes the real compatibility controller, raw request resolver, JSON converter and success envelope with a mocked LearningApplicationApi result; it does not claim database or credential execution.",
+    "MOCKMVC_DENIED": "Executes the real compatibility controller and denial writer with a mocked terminal DENIED application result; access semantics remain bound to the named provider/application tests.",
+    "MOCKMVC_FAILURE": "Executes the real compatibility controller exception boundary and alias-specific safe 500 writer with a mocked application exception; the database failure point remains bound to named tests.",
+    "BOUND_AUTHENTICATION_ONLY": "The target request terminates before the controller. No synthetic controller call is counted; named authentication/security tests are the executable evidence.",
+    "BOUND_TYPED_DATABASE_ONLY": "The SQLite golden fixture contains a value shape that cannot be represented by the PostgreSQL typed expires_at column. No target HTTP parity outcome is invented; named PostgreSQL/schema tests are the executable evidence.",
+    "not_claimed": [
+      "The MockMvc harness does not execute legacy or target credential verification.",
+      "The MockMvc harness does not execute JDBC, Redis, CORS, last_active side effects, migration, or production traffic.",
+      "A binding proves a concrete target test exists; it is not relabeled as execution by this harness."
+    ]
+  },
+  "summary": {
+    "case_count": 59,
+    "mockmvc_case_count": 48,
+    "bound_only_case_count": 11,
+    "bound_authentication_case_count": 8,
+    "bound_typed_database_case_count": 3
+  },
+  "difference_bindings": {
+    "P4C-LEARNING-007": ["authentication_no_fallback", "bearer_expiry", "bearer_state_invalid", "uniform_authentication_envelope", "http_web_authorization"],
+    "P4C-LEARNING-008": ["read_only_rows"],
+    "P4C-LEARNING-009": ["effective_actor_rate_budget", "web_ip_rate_budget"],
+    "P4C-LEARNING-010": ["cors_no_origin_boundary"],
+    "P4C-LEARNING-011": ["path_boundaries"],
+    "P4C-LEARNING-012": ["head_network_boundary"]
+  },
+  "bindings": {
+    "controller_raw_parameters": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsControllerTest",
+      "method": "availableReadUsesTheAuthoritativePrincipalAndFirstRawParameterValues"
+    },
+    "controller_denial": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsControllerTest",
+      "method": "applicationDenialUsesTheTerminalCompatibilityEnvelopeWriter"
+    },
+    "http_success_envelope": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsHttpTest",
+      "method": "authenticatedApiReadUsesIdentityBudgetAndExactCompatibilityEnvelope"
+    },
+    "http_anonymous": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsHttpTest",
+      "method": "anonymousApiReadUsesIpBudgetBeforeTheUniform401"
+    },
+    "http_web_authorization": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsHttpTest",
+      "method": "webAuthorizationAlwaysRedirectsAndUsesIpEvenWithAnEffectivePrincipal"
+    },
+    "http_web_anonymous": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsSecurityErrorWriterTest",
+      "method": "webAuthenticationFailureRedirectsButAHeadResponseNeverWritesTheHtmlBody"
+    },
+    "authentication_bearer_selection": {
+      "class": "io.saksk.ti.web.security.TargetSessionAuthenticationFilterTest",
+      "method": "explicitValidBearerWinsOverCookieButNeverCreatesOrExtendsASession"
+    },
+    "authentication_no_fallback": {
+      "class": "io.saksk.ti.web.security.TargetSessionAuthenticationFilterTest",
+      "method": "invalidOrDuplicateExplicitBearerDoesNotFallBackToAValidTargetOrFlaskSession"
+    },
+    "bearer_expiry": {
+      "class": "io.saksk.ti.identity.infrastructure.security.LegacyAuthenticationCompatibilityServiceTest",
+      "method": "expiredJwtIsRejectedByTheVerifierBeforeAnyDatabaseLookup"
+    },
+    "bearer_state_invalid": {
+      "class": "io.saksk.ti.identity.infrastructure.security.LegacyAuthenticationCompatibilityServiceTest",
+      "method": "versionLockMissingUserAndDatabaseFailureAllFailClosed"
+    },
+    "uniform_authentication_envelope": {
+      "class": "io.saksk.ti.web.compat.LegacyPersonalBankUserCountsSecurityErrorWriterTest",
+      "method": "apiAuthenticationFailureHasTheEnumerationResistantEnvelopeAndMergedVary"
+    },
+    "effective_actor_rate_budget": {
+      "class": "io.saksk.ti.web.security.PersonalBankUserCountsReadRateLimitFilterTest",
+      "method": "apiEffectiveBearerPrincipalUsesItsIdentityDespiteAuthorizationHeader"
+    },
+    "web_ip_rate_budget": {
+      "class": "io.saksk.ti.web.security.PersonalBankUserCountsReadRateLimitFilterTest",
+      "method": "webAnyAuthorizationUsesTheTrustedAddressEvenWithAnInstalledPrincipal"
+    },
+    "cors_no_origin_boundary": {
+      "class": "io.saksk.ti.web.security.PersonalBankUserCountsCorsConfigurationSourceTest",
+      "method": "apiSimpleCorsAllowsOnlyConfiguredOriginsBeforeTheDownstreamChain"
+    },
+    "path_boundaries": {
+      "class": "io.saksk.ti.web.security.PersonalBankUserCountsReadRequestResolverTest",
+      "method": "resolvesBothAliasesGetAndHeadWithCanonicalIntegerBoundaries"
+    },
+    "head_network_boundary": {
+      "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsNetworkIT",
+      "method": "realNetworkKeepsGetAndHeadStatusParityFor200302401403404And500"
+    },
+    "access_policy": {
+      "class": "io.saksk.ti.integration.Phase4cPersonalBankUserCountsJdbcCompatibilityIT",
+      "method": "runsOnPostgres16And18"
+    },
+    "deterministic_share_grant": {
+      "class": "io.saksk.ti.personalbank.application.PersonalBankQuestionFactsServiceTest",
+      "method": "selectsDeterministicValidSameBankGrant"
+    },
+    "cross_bank_share_denied": {
+      "class": "io.saksk.ti.personalbank.application.PersonalBankQuestionFactsServiceTest",
+      "method": "rejectsCrossBankShareGrant"
+    },
+    "share_join_coherence": {
+      "class": "io.saksk.ti.personalbank.infrastructure.persistence.JdbcPersonalBankQuestionFactsQueryAdapterTest",
+      "method": "joinsShareRecordToRequestedBank"
+    },
+    "typed_postgresql_surface": {
+      "class": "io.saksk.ti.integration.Phase4cPersonalBankUserCountsJdbcCompatibilityIT",
+      "method": "servesRealControllerResponsesThroughReadOnlyJdbcOnPostgres16And18"
+    },
+    "read_only_rows": {
+      "class": "io.saksk.ti.integration.Phase4cPersonalBankUserCountsJdbcCompatibilityIT",
+      "method": "preservesSchemaAndBusinessRows"
+    },
+    "zero_view_recheck": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "rechecksAccessBeforeReturningZeroView"
+    },
+    "terminal_denial": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "deniedFromAnyPersonalbankCallIsTerminal"
+    },
+    "filter_normalization": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "normalizesFrozenFiltersAndPreservesRawTypeOrderAndDuplicates"
+    },
+    "query_sequence": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "preservesOrderedLegacyQuerySequence"
+    },
+    "favorite_failure_degradation": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "optionalFailuresRemainFieldLocal"
+    },
+    "mistake_failure_degradation": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "mistakeFailuresRemainFieldLocalAndTypesContinue"
+    },
+    "type_failure_degradation": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "typeFailuresRemainFieldLocal"
+    },
+    "strict_failure_boundary": {
+      "class": "io.saksk.ti.learning.application.PersonalBankUserCountsServiceTest",
+      "method": "onlyInfrastructureFailuresAreFailSoft"
+    },
+    "postgres_transaction_recovery": {
+      "class": "io.saksk.ti.integration.Phase4cPersonalBankUserCountsJdbcCompatibilityIT",
+      "method": "recoversFromTwentyFiveP02WithIndependentTransactions"
+    },
+    "legacy_tag_migration": {
+      "class": "io.saksk.ti.learning.infrastructure.persistence.LegacyPersonalBankTagMigrationEvidenceTest",
+      "method": "plansDefinitionsAndOnlyMembershipValidatedQuestionBindings"
+    }
+  },
+  "cases": [
+    {"case_id":"auth-session-owner-api-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["http_success_envelope"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"auth-bearer-owner-api-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["authentication_bearer_selection","http_success_envelope"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-010"]},
+    {"case_id":"auth-bearer-precedes-session-api-alias","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["authentication_bearer_selection","effective_actor_rate_budget","controller_denial"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-009","P4C-LEARNING-010"]},
+    {"case_id":"auth-invalid-bearer-falls-back-session-api-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":401,"bindings":["authentication_no_fallback","uniform_authentication_envelope"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-008","P4C-LEARNING-009","P4C-LEARNING-010"]},
+    {"case_id":"auth-state-invalid-bearer-does-not-fallback-session-api-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":401,"bindings":["bearer_state_invalid","uniform_authentication_envelope"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-009","P4C-LEARNING-010"]},
+    {"case_id":"auth-anonymous-api-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":401,"bindings":["http_anonymous","uniform_authentication_envelope"],"http_slice_difference_ids":["P4C-LEARNING-010"]},
+    {"case_id":"data-empty-api-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["zero_view_recheck","typed_postgresql_surface"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-status-zero-api-alias","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["access_policy","controller_denial"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-missing-api-alias","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["access_policy","controller_denial"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-public-other-api-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["access_policy","typed_postgresql_surface"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-source-favorites-api-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","query_sequence"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"tag-normalized-sa2-empty-api-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","zero_view_recheck"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-total-default-api-alias","adapter_execution":"MOCKMVC_FAILURE","target_status":500,"bindings":["strict_failure_boundary"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-total-json-api-alias","adapter_execution":"MOCKMVC_FAILURE","target_status":500,"bindings":["strict_failure_boundary"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"auth-session-owner-web-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["http_success_envelope"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"auth-bearer-owner-web-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":302,"bindings":["http_web_authorization","web_ip_rate_budget"],"http_slice_difference_ids":["P4C-LEARNING-007"]},
+    {"case_id":"auth-bearer-precedes-session-web-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":302,"bindings":["http_web_authorization","web_ip_rate_budget"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-009"]},
+    {"case_id":"auth-invalid-bearer-falls-back-session-web-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":302,"bindings":["authentication_no_fallback","http_web_authorization","web_ip_rate_budget"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-008","P4C-LEARNING-009"]},
+    {"case_id":"auth-state-invalid-bearer-does-not-fallback-session-web-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":302,"bindings":["bearer_state_invalid","http_web_authorization","web_ip_rate_budget"],"http_slice_difference_ids":["P4C-LEARNING-007","P4C-LEARNING-009"]},
+    {"case_id":"auth-anonymous-web-alias","adapter_execution":"BOUND_AUTHENTICATION_ONLY","target_status":302,"bindings":["http_web_anonymous"],"http_slice_difference_ids":[]},
+    {"case_id":"data-empty-web-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["zero_view_recheck","typed_postgresql_surface"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"access-status-zero-web-alias","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["access_policy","controller_denial"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"access-missing-web-alias","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["access_policy","controller_denial"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"access-public-other-web-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["access_policy","typed_postgresql_surface"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"filter-source-favorites-web-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","query_sequence"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"tag-normalized-sa2-empty-web-alias","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","zero_view_recheck"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"fault-total-default-web-alias","adapter_execution":"MOCKMVC_FAILURE","target_status":500,"bindings":["strict_failure_boundary"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"fault-total-json-web-alias","adapter_execution":"MOCKMVC_FAILURE","target_status":500,"bindings":["strict_failure_boundary"],"http_slice_difference_ids":["P4C-LEARNING-008"]},
+    {"case_id":"access-status-null-owner","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["access_policy"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-status-two-owner","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["access_policy"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-private-other-forbidden","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["access_policy","terminal_denial"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-future","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["deterministic_share_grant","access_policy"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-null-expiry","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["deterministic_share_grant","access_policy"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-equal-now-forbidden","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["deterministic_share_grant","terminal_denial"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-expired-forbidden","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["deterministic_share_grant","terminal_denial"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-inactive-forbidden","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["deterministic_share_grant","terminal_denial"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-malformed-expiry-value-error","adapter_execution":"BOUND_TYPED_DATABASE_ONLY","target_status":null,"bindings":["typed_postgresql_surface","read_only_rows"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"],"tracking_note":"The legacy SQLite string is not representable by the typed PostgreSQL expires_at column; no target HTTP status is claimed."},
+    {"case_id":"access-shared-aware-expiry-type-error","adapter_execution":"BOUND_TYPED_DATABASE_ONLY","target_status":null,"bindings":["typed_postgresql_surface","read_only_rows"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"],"tracking_note":"The legacy Python aware/naive object mismatch is not representable after JDBC maps the typed PostgreSQL value to LocalDateTime; no target HTTP status is claimed."},
+    {"case_id":"access-shared-empty-expiry","adapter_execution":"BOUND_TYPED_DATABASE_ONLY","target_status":200,"target_data_source_case":"access-shared-null-expiry","bindings":["deterministic_share_grant","typed_postgresql_surface"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"],"tracking_note":"The empty SQLite string is represented by SQL NULL on the typed target; the equivalent target fixture is the null-expiry case, not an execution of this raw value."},
+    {"case_id":"access-shared-fetchone-first-row","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"target_data_source_case":"access-shared-future","bindings":["deterministic_share_grant","share_join_coherence"],"inherited_predecessor_difference_id":"P4C-LEARNING-006","http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"access-shared-cross-bank-record","adapter_execution":"MOCKMVC_DENIED","target_status":403,"bindings":["cross_bank_share_denied","share_join_coherence"],"inherited_predecessor_difference_id":"P4C-LEARNING-006","http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-q-type-choice","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-q-type-all-uppercase","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-q-type-unknown-maps-essay","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-source-mistakes","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","query_sequence"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-source-case-sensitive-fallback","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-q-type-duplicate-first-wins","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-source-duplicate-first-wins","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","query_sequence"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"tag-all-bypasses-store","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"filter-tag-duplicate-first-all-wins","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"tag-case-sensitive-all-enters-store","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["controller_raw_parameters","filter_normalization"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"tag-legacy-migration-sa2-empty","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["legacy_tag_migration","zero_view_recheck"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-favorites-sqlite-continues","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["favorite_failure_degradation"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-favorites-postgresql-poison-simulation","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["favorite_failure_degradation","postgres_transaction_recovery"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-mistakes-sqlite-continues","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["mistake_failure_degradation"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-mistakes-postgresql-poison-simulation","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["mistake_failure_degradation","postgres_transaction_recovery"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-types-degrades","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["type_failure_degradation"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-source-favorites-second-count-postgresql-poison-simulation","adapter_execution":"MOCKMVC_AVAILABLE","target_status":200,"bindings":["type_failure_degradation","postgres_transaction_recovery"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]},
+    {"case_id":"fault-share-access-hard-failure","adapter_execution":"MOCKMVC_FAILURE","target_status":500,"bindings":["strict_failure_boundary","typed_postgresql_surface"],"http_slice_difference_ids":["P4C-LEARNING-008","P4C-LEARNING-010"]}
+  ]
+}

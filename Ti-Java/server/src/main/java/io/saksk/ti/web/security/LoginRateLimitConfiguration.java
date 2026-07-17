@@ -1,5 +1,6 @@
 package io.saksk.ti.web.security;
 
+import java.security.MessageDigest;
 import java.time.Clock;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +15,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
         TargetSessionLimitProperties.class,
         ClientAddressProperties.class,
         SubjectReadRateLimitProperties.class,
-        PublicBankReadRateLimitProperties.class
+        PublicBankReadRateLimitProperties.class,
+        PersonalBankUserCountsReadRateLimitProperties.class
 })
 class LoginRateLimitConfiguration {
 
@@ -83,5 +85,26 @@ class LoginRateLimitConfiguration {
                 properties,
                 loginProperties,
                 clock);
+    }
+
+    @Bean
+    PersonalBankUserCountsReadRateLimiter personalBankUserCountsReadRateLimiter(
+            StringRedisTemplate redis,
+            PersonalBankUserCountsReadRateLimitProperties properties,
+            PublicBankReadRateLimitProperties publicBankProperties,
+            LoginRateLimitProperties loginProperties,
+            Clock clock
+    ) {
+        if (properties.namespace().equals(publicBankProperties.namespace())) {
+            throw new IllegalStateException(
+                    "User-counts and public-bank rate limits require independent namespaces");
+        }
+        if (MessageDigest.isEqual(
+                properties.keySecretBytes(),
+                loginProperties.keySecretBytes())) {
+            throw new IllegalStateException(
+                    "User-counts and login rate limits require independent key material");
+        }
+        return new RedisPersonalBankUserCountsReadRateLimiter(redis, properties, clock);
     }
 }
