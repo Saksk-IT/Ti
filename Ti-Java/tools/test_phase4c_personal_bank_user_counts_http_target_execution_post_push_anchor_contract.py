@@ -275,6 +275,8 @@ class Phase4cTargetExecutionPostPushAnchorContractTest(unittest.TestCase):
             typed_acceptance.CONTRACT_RELATIVE,
             typed_acceptance.PREDECESSOR_RELATIVE,
             *typed_acceptance.LOCAL_SOURCES,
+            "docs/refactor/phase4c/"
+            "personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
         }
         if acceptance.successor_constants_settled():
             relatives.update(acceptance.SUCCESSOR_SOURCES)

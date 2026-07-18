@@ -457,9 +457,33 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
         validateContractPhysicalBytes(root);
         Path path = fixedRegularFile(root, relative);
         String physical = sha256(path);
-        require(source.successorSha256().equals(physical)
-                        && Files.size(path) == source.successorByteCount(),
+        String transitioned = currentOrTypedNormalizationAnchorSuccessorHash(
+                root, relative, source.successorSha256(), physical);
+        require(!source.successorSha256().equals(physical)
+                        || Files.size(path) == source.successorByteCount(),
                 "typed-normalization third-hop successor drifted: " + relative);
+        return transitioned;
+    }
+
+    private static String currentOrTypedNormalizationAnchorSuccessorHash(
+            Path root,
+            String relative,
+            String declared,
+            String physical
+    ) throws IOException {
+        if (declared.equals(physical)) {
+            return physical;
+        }
+        require(declared.equals(
+                        Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                                .acceptedHash(relative)),
+                "typed-normalization anchor does not accept historical bytes: "
+                        + relative);
+        require(physical.equals(
+                        Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                                .successorHash(root, relative)),
+                "typed-normalization anchor does not bind current bytes: "
+                        + relative);
         return physical;
     }
 
@@ -468,6 +492,9 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
         paths.add(CONTRACT_RELATIVE);
         paths.add(PREDECESSOR_RELATIVE);
         paths.addAll(SOURCE_CONTRACTS.keySet());
+        paths.add(
+                Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                        .contractRelative());
         return Set.copyOf(paths);
     }
 

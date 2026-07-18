@@ -323,9 +323,15 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationContractParityTest {
             assertThat(Phase4cHttpTypedNormalizationSuccessorAcceptance
                     .acceptedHash(entry.getKey())).as(entry.getKey())
                     .isEqualTo(entry.getValue().accepted());
+            String expectedSuccessor =
+                    Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                            .acceptedHash(entry.getKey()) == null
+                    ? entry.getValue().successor()
+                    : Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                            .successorHash(root(), entry.getKey());
             assertThat(Phase4cHttpTypedNormalizationSuccessorAcceptance
                     .successorHash(root(), entry.getKey())).as(entry.getKey())
-                    .isEqualTo(entry.getValue().successor());
+                    .isEqualTo(expectedSuccessor);
         }
         Set<String> forbiddenPaths = new LinkedHashSet<>(CURRENT_NODE_SOURCES);
         forbiddenPaths.addAll(FIXED_SOURCE_PATHS);
@@ -373,14 +379,20 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationContractParityTest {
     void thirdHopLookupRehashesTheContractAndRequestedPath(@TempDir Path temporary)
             throws Exception {
         String relative = "README.md";
-        for (String sourceRelative : List.of(CONTRACT_PATH, relative)) {
+        for (String sourceRelative : List.of(
+                CONTRACT_PATH,
+                Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                        .contractRelative(),
+                relative)) {
             Path target = temporary.resolve(sourceRelative);
             Files.createDirectories(target.getParent());
             Files.copy(root().resolve(sourceRelative), target);
         }
         assertThat(temporary.resolve(PREDECESSOR_PATH)).doesNotExist();
         assertThat(Phase4cHttpTypedNormalizationSuccessorAcceptance.successorHash(
-                temporary, relative)).isEqualTo(THIRD_HOP_SUCCESSORS.get(relative).successor());
+                temporary, relative)).isEqualTo(
+                Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                        .successorHash(root(), relative));
 
         Path contract = temporary.resolve(CONTRACT_PATH);
         Files.writeString(contract, " ", StandardOpenOption.APPEND);
@@ -397,7 +409,7 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationContractParityTest {
                 Phase4cHttpTypedNormalizationSuccessorAcceptance.successorHash(
                         temporary, relative))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("third-hop successor");
+                .hasMessageContaining("anchor");
     }
 
     @Test

@@ -112,7 +112,7 @@ target-execution 合同与两份 bridge 在 `0531b3c9272f9743a374edcf5c8bbeb7264
 
 该合同的普通构建与加载不读取 `.git`，显式 Git replay 只允许固定的 `1dae013` 对象和 16 路径 allowlist；新节点不导入历史 bridge 或 Phase 2，也不把外锚节点加入固定五节点 WORM 链。上一 post-push 节点的六个自排除来源现已外部锚定；本节点自身六个控制面来源在该时点继续声明 `independently_signed=false`，不能自授权 typed parity、full target parity、route migration 或 production cutover。该六来源现已由下述 typed-normalization 节点通过固定提交 `c38defa703b358a280122a09019031c040c58ea7` 承接。
 
-## User-counts HTTP typed-normalization successor（当前 bootstrap）
+## User-counts HTTP typed-normalization successor（predecessor）
 
 `P4C-LEARNING-013` 固定了 offset-aware 字符串进入生产 PostgreSQL `timestamp without time zone` 数据域的墙钟语义：字符串 `2026-07-17T13:00:00+08:00` 通过显式 String CAST 后规范化为 `LocalDateTime 2026-07-17T13:00:00`，来源 offset 被擦除，不按 instant 或 Session 时区换算。旧 SQLite/Python 夹具因 aware/naive datetime 比较产生的 500 不是 PostgreSQL 该列可保持的合法生产状态；目标在固定北京 12:00 语义下获得有效分享授权并返回 HTTP 200，数据为 `total=9`、`favorites=0`、`mistakes=0`，题型顺序与普通 future-share case 一致。
 
@@ -120,6 +120,12 @@ target-execution 合同与两份 bridge 在 `0531b3c9272f9743a374edcf5c8bbeb7264
 
 successor 只替换 aware case 的一个有效证明叶：malformed expiry 继续是 SQLSTATE `22007`、无 target HTTP 的唯一 `EXECUTED_TYPED_REJECTION`；aware case 从历史 `EXECUTED_TYPED_COLLAPSE` 改为 `EXECUTED_FULL_CONTEXT_HTTP`。因此有效 59-case 账本为 47 个普通完整上下文 HTTP、11 个 PostgreSQL abort HTTP 和 1 个 typed rejection，即 **58 HTTP + 1 typed rejection**；HTTP 状态为 200×35、302×5、401×3、403×10、500×5，业务 JDBC 50、前置终止 8、API/Web 44/14。历史报告 60 leaves 与新增报告 1 leaf 物理合计 61，但旧 aware leaf 被显式 supersede，逻辑选择仍为 59 disposition + 1 supplementary authentication leaf，共 60，不双计数。
 
-该合同固定回放 `c38defa` 的 commit/root tree/parent/Ti-Java subtree 和完整 18 路径 delta，并把前一节点六个自排除来源变成外部 Git 事实；普通构建与加载仍不依赖 `.git`。当前 typed-normalization 节点自身六个控制面来源继续自排除并等待下一次外部 Git 锚定，因此 `typed_parity_review_complete=false`、`full_target_parity_closed=false`、`route_migration_eligible=false`。生产源码、schema、OpenAPI、route delta、第五 WORM tip 和 build-context 均未改变，有效路由继续是 **11 migrated、600 pending、0 production cutover**。
+该合同固定回放 `c38defa` 的 commit/root tree/parent/Ti-Java subtree 和完整 18 路径 delta，并把前一节点六个自排除来源变成外部 Git 事实；普通构建与加载仍不依赖 `.git`。typed-normalization 节点自身六个控制面来源已由下述固定外锚从 `b0861d61438f649ed48d5d5e6806e02c804fa2e4` 承接；这只关闭 bootstrap 来源的外锚缺口，不改变 `typed_parity_review_complete=false`、`full_target_parity_closed=false`、`route_migration_eligible=false`。生产源码、schema、OpenAPI、route delta、第五 WORM tip 和 build-context 均未改变，有效路由继续是 **11 migrated、600 pending、0 production cutover**。
+
+## User-counts HTTP typed-normalization external anchor（当前节点）
+
+固定外锚精确绑定 `b0861d61438f649ed48d5d5e6806e02c804fa2e4`、父提交 `c38defa703b358a280122a09019031c040c58ea7`、root tree、Ti-Java subtree、原始 delta SHA-256，以及 **26 个路径（12 added + 14 modified）** 的 mode、前后 blob OID、SHA-256 和字节数。26 路径覆盖 typed-normalization 合同、manifest、差异说明、Java/Python acceptance/parity、真实双 PostgreSQL/Redis IT 和固定 Phase 2 接线；其中上一节点六个自排除控制源共 `280664` 字节，现已成为外部 Git 事实。
+
+普通 builder/load 仍完全 Gitless；显式 replay 只接受固定 `b0861d6`，不把 `HEAD`、工作树或 `origin/main` 当作验证权威。当前外锚合同、builder、Python/Java acceptance/parity 六个来源继续自排除、`independently_signed_provenance=false`、`current_anchor_source_bytes_external_git_anchor_complete=false`。WORM 仍只复用第五节点与 build-context `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`，不伪造第六份生产报告；路由保持 **11 migrated、600 pending、0 production cutover**。
 
 下一验收门禁是 PostgreSQL 16.14/18.4 关键前置终止的 connection identity/业务 SQL/九表指纹；随后补无 application/auth/limiter mock 的真实 Tomcat HEAD/Location/Vary/CORS/安全头/Request ID/全部限流头矩阵，以及同一服务 Redis 连接拒绝、中断与恢复。上述门禁完成前，operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。

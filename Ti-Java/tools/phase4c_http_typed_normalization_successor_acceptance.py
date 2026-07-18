@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from collections import Counter
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -1186,6 +1187,56 @@ def accepted_sha256(relative: str) -> str | None:
     return None if descriptor is None else descriptor["accepted_sha256"]
 
 
+def _load_typed_normalization_anchor_successor_acceptance() -> object:
+    """Lazily import the sole fixed successor for post-b086 bytes."""
+
+    qualified_name = (
+        "tools.phase4c_http_typed_normalization_anchor_successor_acceptance"
+    )
+    direct_name = "phase4c_http_typed_normalization_anchor_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed HTTP typed-normalization anchor successor is required"
+        ) from error
+
+
+def _current_or_typed_normalization_anchor_successor_sha256(
+        root: Path,
+        relative: str,
+        declared_sha256: str,
+        physical_sha256: str,
+) -> str:
+    """Accept b086 bytes directly or one exact code-fixed anchor successor."""
+
+    if declared_sha256 == physical_sha256:
+        return physical_sha256
+    anchor = _load_typed_normalization_anchor_successor_acceptance()
+    accepted_lookup = getattr(anchor, "accepted_sha256", None)
+    successor_lookup = getattr(anchor, "successor_sha256", None)
+    if not callable(accepted_lookup) or not callable(successor_lookup):
+        raise AssertionError("typed-normalization anchor successor API is incomplete")
+    if accepted_lookup(relative) != declared_sha256:
+        raise AssertionError(
+            "typed-normalization anchor does not accept historical source: "
+            f"{relative}"
+        )
+    if successor_lookup(root, relative) != physical_sha256:
+        raise AssertionError(
+            "typed-normalization anchor does not bind current source: "
+            f"{relative}"
+        )
+    return physical_sha256
+
+
 def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     """Bind the canonical contract and one current third-hop path.
 
@@ -1203,14 +1254,20 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     root = ti_java_root.resolve(strict=True)
     _validate_contract_physical_bytes(root)
     payload = _fixed_regular_file(root, relative).read_bytes()
-    if (
+    physical = _sha256_bytes(payload)
+    transitioned = _current_or_typed_normalization_anchor_successor_sha256(
+        root,
+        relative,
+        descriptor["successor_sha256"],
+        physical,
+    )
+    if physical == descriptor["successor_sha256"] and (
         len(payload) != descriptor["successor_byte_count"]
-        or _sha256_bytes(payload) != descriptor["successor_sha256"]
     ):
         raise AssertionError(
             f"typed-normalization third-hop successor drifted: {relative}"
         )
-    return descriptor["successor_sha256"]
+    return transitioned
 
 
 def _run_read_only_git(repository_root: Path, *arguments: str) -> bytes:

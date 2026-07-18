@@ -265,6 +265,12 @@ assert_file_contains "Fixed Phase 4C HTTP typed-normalization successor module" 
 assert_file_contains "Fixed Phase 4C HTTP typed-normalization successor contract" \
     'load_http_typed_normalization_successor(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C HTTP typed-normalization anchor successor module" \
+    'tools.phase4c_http_typed_normalization_anchor_successor_acceptance' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C HTTP typed-normalization anchor successor contract" \
+    'load_http_typed_normalization_anchor_successor(ti_java_root)' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"
 assert_file_contains "JDBC FK delete-rule assertion" "importedKeySetNull" "$REFERENCE_ASSERTIONS"

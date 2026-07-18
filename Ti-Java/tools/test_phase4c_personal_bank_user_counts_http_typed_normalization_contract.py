@@ -291,7 +291,7 @@ class Phase4cTypedNormalizationContractTest(unittest.TestCase):
                 acceptance.accepted_sha256(relative),
             )
             self.assertEqual(
-                descriptor["successor_sha256"],
+                _sha256_bytes((ROOT / relative).read_bytes()),
                 acceptance.successor_sha256(ROOT, relative),
             )
         for relative in (
@@ -484,7 +484,13 @@ print("typed-normalization-import-isolation=ok")
         descriptor = acceptance.THIRD_HOP_SOURCES[relative]
         with tempfile.TemporaryDirectory() as directory:
             isolated = Path(directory) / "Ti-Java"
-            for source_relative in (acceptance.CONTRACT_RELATIVE, relative):
+            for source_relative in (
+                acceptance.CONTRACT_RELATIVE,
+                "docs/refactor/phase4c/"
+                "personal-bank-user-counts-http-typed-normalization-"
+                "anchor-contract.json",
+                relative,
+            ):
                 source = ROOT / source_relative
                 target = isolated / source_relative
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -492,7 +498,7 @@ print("typed-normalization-import-isolation=ok")
 
             self.assertFalse((isolated / acceptance.PREDECESSOR_RELATIVE).exists())
             self.assertEqual(
-                descriptor["successor_sha256"],
+                _sha256_bytes((ROOT / relative).read_bytes()),
                 acceptance.successor_sha256(isolated, relative),
             )
 
@@ -504,10 +510,10 @@ print("typed-normalization-import-isolation=ok")
             shutil.copy2(ROOT / acceptance.CONTRACT_RELATIVE, contract)
             successor = isolated / relative
             successor.write_bytes(successor.read_bytes() + b" ")
-            with self.assertRaisesRegex(AssertionError, "third-hop successor"):
+            with self.assertRaisesRegex(AssertionError, "typed anchor"):
                 acceptance.successor_sha256(isolated, relative)
 
-    def test_16_fixed_checkpoint_worktree_drift_partition_is_complete(self) -> None:
+    def test_16_fixed_bootstrap_commit_partition_is_complete(self) -> None:
         local_additions = {
             "docs/refactor/phase4c/"
             "personal-bank-user-counts-typed-normalization-approved-difference.md",
@@ -529,10 +535,12 @@ print("typed-normalization-import-isolation=ok")
             *local_additions,
         }
 
+        bootstrap_commit = "b0861d61438f649ed48d5d5e6806e02c804fa2e4"
         tracked = subprocess.run(
             [
                 "git", "--no-optional-locks", "diff", "--name-only",
-                "--no-renames", acceptance.GIT_COMMIT_OID, "--", "Ti-Java",
+                "--no-renames", acceptance.GIT_COMMIT_OID, bootstrap_commit,
+                "--", "Ti-Java",
             ],
             cwd=REPOSITORY_ROOT,
             capture_output=True,
@@ -548,29 +556,9 @@ print("typed-normalization-import-isolation=ok")
             },
         )
         self.assertEqual(0, tracked.returncode, tracked.stderr)
-        untracked = subprocess.run(
-            [
-                "git", "--no-optional-locks", "ls-files", "--others",
-                "--exclude-standard", "--", "Ti-Java",
-            ],
-            cwd=REPOSITORY_ROOT,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-            env={
-                **os.environ,
-                "GIT_NO_REPLACE_OBJECTS": "1",
-                "GIT_OPTIONAL_LOCKS": "0",
-                "GIT_PAGER": "cat",
-                "LC_ALL": "C",
-            },
-        )
-        self.assertEqual(0, untracked.returncode, untracked.stderr)
-
         actual = {
             path.removeprefix("Ti-Java/")
-            for path in (*tracked.stdout.splitlines(), *untracked.stdout.splitlines())
+            for path in tracked.stdout.splitlines()
             if path.startswith("Ti-Java/")
         }
         self.assertEqual(expected, actual)
