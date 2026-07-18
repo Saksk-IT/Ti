@@ -1,0 +1,144 @@
+{
+  "authorization": {
+    "client_change": false,
+    "current_bootstrap_sources_external_git_anchor_complete": false,
+    "gateway_or_proxy_change": false,
+    "next_gate": "fixed_git_external_anchor_of_full_parity_bootstrap_sources",
+    "operator_migration_implementation": false,
+    "production_cutover": false,
+    "production_schema_or_index": false,
+    "real_data_migration_execution": false,
+    "route_migration_eligible": false,
+    "two_legacy_get_routes_migrated": false
+  },
+  "captured_at": "2026-07-18T21:44:20+08:00",
+  "contract_id": "ti.phase4c.personal-bank-user-counts-http-full-parity-contract",
+  "document_payload_sha256": "7eecb6279b2e2b5532dab21c171b9fca3a7bb6129ff2f4dff3bfcf7941196da2",
+  "parity": {
+    "all_required_parity_prerequisites_true": true,
+    "full_target_parity_closed": true,
+    "pg16_pg18_termination_fingerprints_complete": true,
+    "real_tomcat_complete_response_header_matrix_complete": true,
+    "same_service_redis_outage_and_recovery_complete": true,
+    "typed_parity_review_complete": true
+  },
+  "predecessor": {
+    "byte_count": 43737,
+    "contract_id": "ti.phase4c.personal-bank-user-counts-http-typed-normalization-anchor-contract",
+    "immutable": true,
+    "sha256": "c713aa04a82f340ea04fdd5ae870bd5cfae82f099101431c664f047c2d5218ca",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+    "status": "typed_normalization_checkpoint_externally_anchored_routes_pending"
+  },
+  "route_state": {
+    "derived_head_and_options_count_as_operations": false,
+    "implemented_pending_get_count": 2,
+    "migrated_operation_count": 11,
+    "pending_operation_count": 600,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-personal-bank-user-counts-http-full-target-parity-bootstrap",
+  "source_authority": {
+    "control_source_count": 6,
+    "control_sources": [
+      "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpFullParitySuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpFullParityContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_full_parity_contract.py",
+      "tools/phase4c_http_full_parity_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_full_parity_contract.py"
+    ],
+    "excluded_from_self_authority": true,
+    "historical_contracts_and_worm_overwritten": false
+  },
+  "status": "full_target_parity_closed_external_anchor_pending_routes_pending",
+  "verification": {
+    "full_command": "./infra/phase2/verify-in-maven-container.sh -DargLine=-javaagent:/root/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar clean verify",
+    "full_failsafe_tests": 167,
+    "full_failures_errors_skipped": 0,
+    "full_surefire_tests": 709,
+    "full_total_time": "07:02 min",
+    "heavy_verify_lock_held_for_all_maven_testcontainers_docker": true,
+    "targeted_command": "./infra/phase2/verify-in-maven-container.sh -DargLine=-javaagent:/root/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar -Dit.test=Phase4cUserCountsTerminationFingerprintIT,LegacyPersonalBankUserCountsRealTomcatHeaderMatrixIT,Phase4cUserCountsRedisOutageRecoveryIT test-compile failsafe:integration-test failsafe:verify",
+    "targeted_failsafe_tests": 13,
+    "targeted_failures_errors_skipped": 0,
+    "testcontainers_remaining_after_verification": 0,
+    "toolchain": "Java 25 / Maven 3.9.16"
+  },
+  "worker_integration": {
+    "artifact_count": 6,
+    "artifacts": {
+      "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsRealTomcatHeaderMatrixIT.java": {
+        "byte_count": 40107,
+        "sha256": "cd9a45f6cfc52342d235202519ace13883e37354a901a790304739b7507501c9"
+      },
+      "server/src/test/java/io/saksk/ti/integration/Phase4cUserCountsTerminationFingerprintIT.java": {
+        "byte_count": 26069,
+        "sha256": "aa55869a57233a34ceae59773456cbb759670db1624b844cae75e664f8c0701a"
+      },
+      "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsTerminationFingerprintSupport.java": {
+        "byte_count": 25907,
+        "sha256": "e4c4fc6f73b5ee9eebc3ab2e9904a51d6c593ed711b4aaaa39a79971e887ce42"
+      },
+      "server/src/test/java/io/saksk/ti/web/security/Phase4cUserCountsRedisOutageRecoveryIT.java": {
+        "byte_count": 39719,
+        "sha256": "b07ec534e41a74c1fddc3d9c2b63a6ae26f57ab8918112dc7799f10b479239c4"
+      },
+      "server/src/test/java/io/saksk/ti/web/security/support/Phase4cRedisNetworkGate.java": {
+        "byte_count": 7245,
+        "sha256": "ac3bab1cd092dcce640954c167baf4f7de5e53dee8579e77fb36d632c410b5ab"
+      },
+      "server/src/test/resources/db/phase4c/073-personal-bank-user-counts-termination-fingerprint-seed.sql": {
+        "byte_count": 843,
+        "sha256": "33a6a4ce9845fe8b51ae6d5006af9a394bdc51d8427183d2775b2ef1cb4e6b40"
+      }
+    },
+    "base_sha": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+    "integration_method": "reviewed_cherry_pick_no_commit_fixed_implementation_objects",
+    "lane_count": 3,
+    "lanes": {
+      "p4c-pg": {
+        "base_sha": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+        "branch": "codex/parallel-p4c-pg",
+        "central_authority_files_modified_by_worker": false,
+        "handoff_commit": "32c01975decceafb70a4cc837c13671e004e7525",
+        "handoff_file_integrated_into_main": false,
+        "implementation_commit": "0f584743dbdc187b6bc6fc67899a2d6718cb13c8",
+        "integrated_paths": [
+          "server/src/test/java/io/saksk/ti/integration/Phase4cUserCountsTerminationFingerprintIT.java",
+          "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsTerminationFingerprintSupport.java",
+          "server/src/test/resources/db/phase4c/073-personal-bank-user-counts-termination-fingerprint-seed.sql"
+        ],
+        "pg16_pg18_termination_fingerprints_complete": true
+      },
+      "p4c-redis": {
+        "base_sha": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+        "branch": "codex/parallel-p4c-redis",
+        "central_authority_files_modified_by_worker": false,
+        "handoff_commit": "e3c549fa06aeb1149f94b4f5385d1666f9ed7e0d",
+        "handoff_file_integrated_into_main": false,
+        "implementation_commit": "ad4d90b30cc5d244983fe759199f77ddeacdfc52",
+        "integrated_paths": [
+          "server/src/test/java/io/saksk/ti/web/security/Phase4cUserCountsRedisOutageRecoveryIT.java",
+          "server/src/test/java/io/saksk/ti/web/security/support/Phase4cRedisNetworkGate.java"
+        ],
+        "same_service_redis_outage_and_recovery_complete": true
+      },
+      "p4c-tomcat": {
+        "base_sha": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+        "branch": "codex/parallel-p4c-tomcat",
+        "central_authority_files_modified_by_worker": false,
+        "handoff_commit": "45c8723620723fcc6800e93740b634b2d83630ce",
+        "handoff_file_integrated_into_main": false,
+        "implementation_commit": "cd7eba9bbee4edcb6a0e14fec5fdfdf613d2ea70",
+        "integrated_paths": [
+          "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsRealTomcatHeaderMatrixIT.java"
+        ],
+        "real_tomcat_complete_response_header_matrix_complete": true
+      }
+    },
+    "shared_production_code_changed_by_int": false
+  }
+}
