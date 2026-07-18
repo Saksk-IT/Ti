@@ -4,6 +4,8 @@ Ti-Java 是 Ti 的独立重构项目，目标是以 Java 25、Spring Boot 4.1、
 
 阶段 0 事实基线与阶段 1 架构/契约已经固化，阶段 2 Java 基础骨架与阶段 3 认证兼容切片也已通过门禁；阶段 4A 的有界 catalog 范围已由 `docs/refactor/phase4a/phase4a-final-acceptance.json` 完成最终 closure。Phase 4B 已完成 personal-bank 分类、按题库分享列表、我创建的全部分享和使用人数统计四项 HTTP-neutral 内部读取能力；user-counts 双 alias 的调用方、59-case golden、八个 SQL family 与 PostgreSQL 16.14/18.4 实现前证据也已闭合，但所有八条 personalbank HTTP operation 都保持 pending。Phase 4C 已实现 `learning -> personalbank::api` 的 user-counts HTTP-neutral 组合和 personalbank 题目事实边界，累计生产 shape 为 27 个公开应用方法；跨题库分享授权、逐次鉴权、typed `integer[]`、独立只读事务及字段级失败边界由第二层固定合同约束。`bank_<bank_id>_tags` 所有权 overlay 与逐行迁移原语仍只属于证据层，完整迁移设计因全局 preflight、持久 migration ledger/tombstone 与真实 ambiguous-commit 恢复未闭合而保持未授权。user-counts HTTP 候选实现已物化：双 alias Controller、安全错误 writer、Unicode `Nd` 路径解析、GET/派生 HEAD、API-only CORS/OPTIONS、按有效 actor HMAC 假名的 Redis 三窗口限流，以及配置、OpenAPI overlay 和两行 pending route delta 均已存在。typed-normalization successor 已在同一绿色 leaf 中用 Java `String` bind 证明 PostgreSQL 16.14/18.4 及 UTC/America-Los_Angeles Session 时区均按 `timestamp without time zone` 规范化为 13:00 墙钟；PG18.4 完整过滤链 HTTP 使用请求追踪前由该 bind 创建的 share 行并返回 200。malformed expiry 继续是 SQLSTATE `22007` 的唯一域外 typed rejection。有效 59-case 账本现为 47 个普通完整上下文 HTTP、11 个真实 PostgreSQL abort HTTP 和 1 个 typed rejection，即 58 HTTP + 1 typed；其中 50 个 HTTP 到达业务 JDBC、8 个在认证边界提前终止。历史 60 leaves 加新增 1 leaf 物理合计 61，但旧 aware leaf 被显式替换，逻辑证明仍为 59 disposition + 1 supplementary leaf，不双计数。固定外锚已从提交 `b0861d61438f649ed48d5d5e6806e02c804fa2e4` 锚定 typed-normalization bootstrap。INT 又审查并集成 PG、TOMCAT、REDIS 三条独立 Worker 证据：双 PostgreSQL 关键终止 identity/SQL/九表指纹、无 application/auth/session/limiter mock 的真实 Tomcat GET/HEAD 完整响应头矩阵，以及同一服务 Redis 拒绝、中断、同端口恢复、限流复原和双实例收敛均已闭合；定向 Failsafe 13/13 与完整 `clean verify` 709+167 均为零失败/错误/跳过。因此 `pg16_pg18_termination_fingerprints_complete=true`、`real_tomcat_complete_response_header_matrix_complete=true`、`same_service_redis_outage_and_recovery_complete=true`、`full_target_parity_closed=true`。提交 `848af89cb99ae0330ec1f0955cf23749a044d40e` 的 15 路径完整差集与 full-parity 六个 bootstrap 控制源现已由固定 Git 外锚 successor 承接，因此 `route_migration_eligible=true`。新的追加式 `route-parity-successor-delta.csv` 只把两条 user-counts GET 从 pending 晋级为 migrated，派生 HEAD/OPTIONS 不计 operation；有效状态现为 **13 个 migrated operation、598 个 pending、0 个 production cutover**。旧 Flask 仍是生产运行所有者，整个长期重构目标尚未完成。
 
+Phase 6 的第一条 Web foundation 已由 INT 按固定 Worker 实现 SHA `c7fd40dad2340c320c31281e29608f33d0ee26fe` 集成。独立 Vue 3/Vite 应用当前只提供公共题库列表和只读名片两个 SPA 页面，只调用 Phase 4A 的五个 GET；OpenAPI 生成确定性、lint、strict typecheck、7 个单测、160-module 生产构建、3 个 Playwright 场景及 high-level npm audit 均通过。加入、练习、个人题库、user-counts 与写操作仍为显式阻断，四条 Phase 6 旧页面 operation 保持 pending；本节点不改变 **13 migrated / 598 pending / 0 production cutover**。
+
 历史 HTTP-neutral read predecessor 固定 40 个 `learning`/`personalbank` 主源码与 288 文件生产面；第二层历史合同 77/77、全部 source tools 442/442、完整 Maven 545 个 surefire + 79 个 failsafe 均为零失败。该历史时点的追加式 WORM tip 绑定 Java build-context `935e6a95a33621b01e1e04d752a09513c8037cffe807a73fa1ce9850fb5912f0`，在 PostgreSQL 18.4 的 70 表/617 列恢复副本上通过只读 ACL、Hibernate `validate` 和 readiness；前三份报告保持字节不可变。该 read predecessor 的物理 SHA-256 固定为 `458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73`，后续 HTTP 工作只能通过显式 successor 承接，禁止改写这份历史合同。上述 442/442、545+79 与 `935e6a95…12f0` 均是 predecessor 历史证据，不代表当前 HTTP successor 的最终验收结果。
 
 Phase 4C user-counts 的历史 HTTP entry gate 已固定实现前边界：旧栈最终捕获 62 个双 alias case，其中包含 8 个 CORS/OPTIONS 运行时观察；case payload SHA-256 为 `f577ff99a7f04030fd5f4dae0f95610351d4fcfff92de7e9ca0c406516725dbf`，document payload SHA-256 为 `3e8f7c24548d979723d2601c11221b9e569de7b342e6c3c0d8daa25de74cdd2f`。独立限流证据固定三组窗口、alias scope、429 协商、key 选择和 Redis 拒绝共 7 组观察；旧基础预算是 `10/second;500/hour;5000/day`，但固定生产部署默认乘数为 100，即 `1000/second;50000/hour;500000/day`，且仍允许显式部署覆盖。批准差异 `P4C-LEARNING-007` 至 `P4C-LEARNING-012` 分别冻结凭据选择、`last_active` 零写入、限流、路由级 CORS/OPTIONS、路径整数和 HEAD 零体边界。
@@ -16,6 +18,7 @@ Phase 4C user-counts 的历史 HTTP entry gate 已固定实现前边界：旧栈
 
 - `server/` 固定使用 Java 25、Maven Wrapper 3.9.16、Spring Boot 4.1.0 和 Spring Modulith 2.1.0；默认采用 Spring MVC，不引入 WebFlux、R2DBC 或阶段 8 之前的 Flyway。
 - 模块化单体包含 `identity`、`catalog`、`personalbank`、`learning`、`assessment`、`community`、`messaging`、`campus`、`coding`、`intelligence`、`operations` 11 个业务模块，以及 `sharedkernel`、`web` 两个支撑模块。
+- `web/` 已建立独立 Vue 3、TypeScript strict、Vite、Vue Router、TanStack Vue Query 与 Pinia foundation；服务端状态不进入 Pinia，API 客户端仅从三份固定 Phase 3/4A OpenAPI 生成，生产构建使用同源 `/api` 且不含旧 Jinja/Flask 回退。
 - `identity`、`catalog`、`operations`、`personalbank` 与 `learning` 已部分实现，共有 27 个受机器合同约束的公开应用方法；其余 6 个业务模块仍保持延后形状。新增 4 个方法全部是 HTTP-neutral 内部边界，不代表两条 user-counts alias 已迁移。
 - PostgreSQL 是唯一业务事实源；Redis 只用于可重建的辅助状态。Hibernate 始终使用 `ddl-auto=validate`，禁止 ORM 自动建表或改表。
 - `catalog` 已通过 `identity::api` 迁移 `GET /api/quiz/subjects` 与 `/meta`；业务用例固定两条 SELECT，加上 HTTP 认证权威查询后正常成功请求总计三条 SELECT。读取保持稳定 ID 顺序和 per-identity/per-route Redis 限流，不拥有写入权，也未启用无法完整失效的应用数据缓存。
@@ -42,6 +45,7 @@ Phase 4C user-counts 的历史 HTTP entry gate 已固定实现前边界：旧栈
 - `docs/refactor/phase4a/`：科目、公共题库、题型、题量、单题详情、后台题目摘要集合、后台科目库存摘要、后台科目上下文与后台题目导出的读取金样、snapshot 决策、业务不变量、批准差异、累计路由/API 形状、查询计划证据、24-operation 候选处置与 Phase 4A closure 记录。
 - `docs/refactor/phase4b/`：个人题库分类读取的最终验收证据，以及分享列表的调用方、40-case golden、PG16/18 SQL/计划、历史入口合同、累计 API shape 与已通过完整 Maven 的内部实现合同。
 - `docs/refactor/phase4c/`：learning 组合、个人题库标签 compatibility namespace 所有权 overlay、显式迁移证据与批准差异，以及 user-counts HTTP 实现、59-disposition 目标执行、full-parity 外锚、追加式 route successor delta、OpenAPI 和限流资源所有权；operator、真实迁移与生产切流仍未闭合。
+- `docs/refactor/phase6/`：Web foundation 固定实现来源、Gitless 内容摘要、OpenAPI 边界、精确验证结果与禁止切流合同。
 - `contracts/`：确定性生成的 OpenAPI 3.1.2 初稿与人工证据 override。
 - `openapi/phase3-authentication.openapi.json`：两条 Phase 3 operation 的自包含 OpenAPI 3.1.2 增量。
 - `openapi/phase4a-subject-directory.openapi.json`：两条科目目录 operation 的自包含 OpenAPI 3.1.2 增量。
@@ -52,7 +56,7 @@ Phase 4C user-counts 的历史 HTTP entry gate 已固定实现前边界：旧栈
 - `docs/refactor/`：事实盘点、迁移矩阵、数据所有权、运行手册与连续进度。
 - `tools/`：迁移期盘点和黄金样本工具；不是生产运行依赖。
 - `miniprogram/`：阶段 0 从旧项目受版本控制源码复制的新项目小程序基线。
-- `web/`：计划在阶段 6 创建，目前尚未创建。
+- `web/`：Phase 6 独立 Vue 3/Vite 应用；当前只覆盖公共题库列表/详情的只读 foundation，未迁移旅程显式阻断且不回退旧页面。
 - `services/`：只有后续证明确需 Python 独立工作负载时才创建。
 
 ## Phase 2/3 验证

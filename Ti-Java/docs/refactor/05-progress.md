@@ -4,9 +4,10 @@
 
 ## 当前阶段
 
+- **Phase 6 Web foundation 已完成固定 SHA 集成，但 Phase 6 整体未完成。** INT 以 `cherry-pick -n` 审查并集成 Worker `c7fd40dad2340c320c31281e29608f33d0ee26fe`；其唯一父提交为 BASE `765e4470f1ddb60f0ce6f23227d6303961f47fcf`，102 个新增文件全部位于 `Ti-Java/web/**`，handoff `528ccb759d269fb1a2655e9c14838dc1b621c863` 没有合入 main。公共题库列表/只读名片只调用五个已迁移 Phase 4A GET；OpenAPI/生成漂移、lint、strict typecheck、unit 7/7、Vite 160 modules、Playwright 3/3 与 high-level npm audit 全绿。加入、练习、个人题库、user-counts、写操作、跨域搜索和科目页仍未迁移；四条 Phase 6 旧页面 operation 保持 pending，未创建 route delta，13/598/0 与生产 owner 均不变。
 - **阶段 4C：user-counts 完整 target parity、bootstrap Git 外锚与追加式 route promotion 已闭合。** typed-normalization 的 58 HTTP + 1 typed rejection 账本保持不变；INT 从 BASE `765e4470f1ddb60f0ce6f23227d6303961f47fcf` 审查并以 fixed implementation SHA 集成 PG `0f584743dbdc187b6bc6fc67899a2d6718cb13c8`、TOMCAT `cd7eba9bbee4edcb6a0e14fec5fdfdf613d2ea70` 与 REDIS `ad4d90b30cc5d244983fe759199f77ddeacdfc52`。双 PostgreSQL 终止 identity/SQL/九表指纹、真实 Tomcat GET/HEAD 全响应头矩阵、同一服务 Redis outage/recovery 均闭合；定向 Failsafe 13/13 与完整 `clean verify` 709 Surefire + 167 Failsafe 全部 0 failure/error/skip。提交 `848af89cb99ae0330ec1f0955cf23749a044d40e` 的完整 15 路径差集和 bootstrap 六源现已固定，四个 parity 前提与 `route_migration_eligible` 均为 `true`；新 successor delta 只晋级 route ID `6858f6fa506f` 与 `006913d0d956` 两条 GET。有效资源 160/160，路由现为 **13 migrated、598 pending、0 cutover**；派生 HEAD/OPTIONS 不计 operation，operator、schema/index、真实迁移与生产切流继续禁止。
 - **当前已外锚的 typed-normalization bootstrap 是提交 `b0861d61438f649ed48d5d5e6806e02c804fa2e4`（`test(java): normalize user counts typed execution`）。** 固定外锚绑定其父提交 `c38defa`、root/Ti-Java tree、26 路径（12 A + 14 M）完整差集与上一节点六个自排除来源；提交链同步到 `main`。
-- **当前恢复点：full-parity bootstrap `848af89cb99ae0330ec1f0955cf23749a044d40e` 与固定外锚 `906adeb` 均已推送；route successor delta、13/598/0 有效状态和 promotion 合同已生成。** 历史 matrix、Phase 3/4A delta、Phase 4C pending delta、WORM 和生产配置均未覆盖；完成本节点最小双语验证并推送 main 后暂停，等待 Worker 交接。
+- **当前恢复点：Phase 4C full-parity 外锚/route successor 已闭合，Phase 6 Web foundation 固定实现已完成 INT 验收。** `docs/refactor/phase6/web-foundation-acceptance.json` 固定 102 文件/558,898 字节内容摘要、三份 OpenAPI 摘要、五个 GET 与验证计数；历史 matrix/delta、WORM、全局配置和生产代码均未覆盖。推送本节点后暂停，等待下一份明确交接。
 - implementation predecessor 继续固定 297 个 production runtime files、44 个 source contract 和第五节点 WORM `7b863dd3…ca39`；本节点没有生产文件或 build-context 变化，继续复用 `27322797…8a3`，`fixed_chain_node_count=5` 且不伪造第六份 WORM。历史 `PARTIAL_EXECUTION_MAPPING_LEDGER` 保持字节不可变。
 - **阶段 4B：personalbank 四项 HTTP-neutral 内部读取能力与 user-counts 实现前证据已完成。** 分类、分享列表、全部分享和 usage-stats 累计形成当前 23 个公开应用方法，其中 personalbank 4 个；user-counts 的双 alias 固定提交调用方、59-case golden、八个 SQL family、PG16.14/18.4 JDBC、每版 14 个查询计划观测、15 万题目未过滤路径、900-tag 边界与事务失败恢复链均已冻结。其 413/413 source tools 与 503+74 Maven 只证明 Phase 4B 入口和 owner 决策，不得冒充 Phase 4C 内部实现、operator、HTTP 路由或生产迁移完成。
 - 基线提交：旧 Ti `700006dfdfa063deb4387be572911e782bcea0d9`。
@@ -278,6 +279,7 @@
 | Phase 4C user-counts Worker full parity | 固定 BASE `765e447`；PG `0f58474`、TOMCAT `cd7eba9`、REDIS `ad4d90b` 仅按 implementation SHA 审查集成，handoff 不进 main；三类定向 Failsafe 13/13；完整 `clean verify` 709 Surefire + 167 Failsafe，总用时 07:02 | 全部 0 failure/error/skip；PG16/18 终止指纹、真实 Tomcat 全响应头矩阵、同一服务 Redis outage/recovery 与 full target parity 四项均为 true；生产源码零修改 |
 | Phase 4C full-parity bootstrap 与固定 Git 外锚 | bootstrap Python 10/10 + Java 5/5，提交 `848af89cb99ae0330ec1f0955cf23749a044d40e` 已推送；外锚固定其 15 路径（12 A + 3 M）和 bootstrap 六源，Python 10/10 + Java 5/5，提交 `906adeb` 已推送 | `route_migration_eligible=true`；外锚本身不直接改路由，历史合同/WORM 不覆盖，operator/schema/真实迁移/cutover 不授权 |
 | Phase 4C user-counts route-promotion successor | 新 `route-parity-successor-delta.csv` SHA-256 `eef46dc1…1d07`；有效状态 SHA-256 `c0e96472…358a`；promotion 合同 Python 10/10 + Java 5/5 | 仅 route ID `6858f6fa506f`、`006913d0d956` 两条 GET 晋级；有效状态 13 migrated / 598 pending / 0 cutover，HEAD/OPTIONS 不计 operation |
+| Phase 6 Web public-bank foundation | 固定 Worker `c7fd40d`；102 文件/558,898 字节 manifest `e92634ec…7752`；Phase 6 合同 10/10；OpenAPI/生成、lint、typecheck、unit 7/7、Vite 160 modules、Playwright 3/3、npm audit 0 high+ | foundation 绿色；只覆盖两个只读 SPA 页面与五个 Phase 4A GET，handoff 不进 main，四条旧页面 route 仍 pending，保持 13/598/0 |
 | Phase 4A 科目目录检查点独立抽取 | 1,251 个文件；Phase 1、Phase 2/3 静态门禁、231+28 Maven 全绿 | 绿色；这是科目目录检查点证据；无符号链接、无父目录运行时读取，临时副本和容器无残留 |
 | Phase 4A 旧栈回归 | 374 个 Python 文件 compileall；654 passed、2 个登记失败、3 skipped；两套小程序各 36/36 | 绿色；登记基线和 warning 窗口保持一致 |
 
@@ -289,7 +291,7 @@
 
 - **路由：** Phase 0 冻结矩阵仍保存 592 条规则/611 个 operation 的历史 `pending` 事实；Phase 3 与 Phase 4A delta 先物化 11 个 migrated，Phase 4C 历史 pending delta 保持不变，新的追加式 successor delta 再把两条 user-counts GET 晋级。有效状态为 **13 个 `migrated`、598 个 `pending`、0 个 production cutover**；派生 HEAD/OPTIONS 不计 operation，旧 Flask 仍是当前运行所有者。
 - **表与非表资源：** 当前有效资源为 **160 个且全部唯一 owner**。新增的 `ti-java:learning:personal-bank-user-counts-read-rate:<api|web>:<identity:v1|ip:v1>:<hmac_sha256>:<second|hour|day>` 可重建限流资源归 `learning`；Phase 4A 的科目/公共题库限流 Redis Key、snapshot/viewer 投影控制表和刷新锁归 catalog。这些辅助状态均 `production_cutover=false`；旧业务事实表未因 shadow 读取切片而转移生产所有权，仍未建立 Flyway 正式 baseline。
-- **客户端：** Web 仍是 Jinja/原生 JavaScript，小程序当前只是固定来源副本；Vue、OpenAPI 生成客户端和适配尚未开始。
+- **客户端：** Vue 3/Vite foundation 已建立，公共题库列表与只读名片使用五个固定 Phase 4A GET 的生成客户端；加入、个人题库、练习、user-counts、写操作、跨域搜索和科目页仍显式阻断。旧 Jinja 仍是生产 owner，SPA 未切流；小程序当前仍只是固定来源副本。
 - **部署：** Java 骨架、独立 PostgreSQL/Redis 测试设施及 Phase 3 本地对比/切换工具已建立；p3-009 已对固定本地镜像完成真实恢复、切换和回滚。生产 Compose、网关入口和整体生产切换仍未实施；Flask 与 Java 仍不得同时写同一数据库。
 
 ## 已知风险与未收口项
@@ -319,7 +321,7 @@
 
 ## 下一项具体动作
 
-1. Phase 4C user-counts 的 Worker 集成、full-parity、固定 Git 外锚和追加式 route promotion 推送后暂停；有效状态为 **13 migrated、598 pending、0 cutover**。等待下一份 Worker handoff，不合入 WEB Worker，也不继续 operator、schema/index、真实标签迁移、客户端/网关或 production cutover。
+1. 推送 Phase 6 Web foundation 固定 SHA 集成与 acceptance 后暂停；有效状态继续为 **13 migrated、598 pending、0 cutover**。等待下一份明确 Worker handoff，不自行扩展登录/写旅程、route promotion、客户端入口、网关或 production cutover。
 2. 独立建立由 `learning` 拥有的生产迁移 operator 与全局 dry-run/preflight 证据，覆盖全量 all-or-block、无效/规范化 ID/目标冲突处置、并发锁竞争及 `ON CONFLICT` 竞态；当前逐行测试原语不得直接用于真实数据。只有该 gate 另行闭合后，才可讨论题量双路由与 `GET /api/quiz/subjects/{subject}/info` 的 HTTP 组合、移除旧 GET 内 tag DDL/DML，以及缓存和故障策略差异。
 3. 两条后台题型、两条单题详情、两条后台题目集合、一条后台科目库存、两条后台科目上下文与两条后台题目导出 HTTP operation 延后到 4H；实现前必须正式批准并机器化 `operations -> catalog::api`（当前 `operations` 只允许依赖 `sharedkernel`），再由适配层分别复现题型的 Python Unicode whitespace/故障差异、详情的鉴权/路径整数/modern/legacy 投影、集合的原始查询解析/用户名/PQF/题型投影、科目库存的全局 gate/角色/裸数组/null、科目上下文页面的 Session gate/404/模板渲染，以及导出的鉴权、首个原始参数、JSON safe-load/default、modern/legacy 信封和 HTML/JSON 故障语义。当前内部 API 不授权 route/OpenAPI delta。
 4. 公共题库生产 Redis、HMAC Secret、真实数据、刷新调度、即时撤回事件桥接和入口切换仍需另行获批；本地 shadow 证据不授权生产操作。

@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "contract_id": "phase6-web-foundation-acceptance-v1",
+  "status": "complete",
+  "accepted_at": "2026-07-19T00:39:04+08:00",
+  "scope": "public-bank-read-only-web-foundation",
+  "integration": {
+    "lane": "web-foundation",
+    "worker_branch": "codex/parallel-web-foundation",
+    "base_sha": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+    "implementation_sha": "c7fd40dad2340c320c31281e29608f33d0ee26fe",
+    "implementation_parent_sha": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+    "implementation_tree_sha": "07f33244439563faa31aa962037edb0bdd1a2d67",
+    "handoff_sha": "528ccb759d269fb1a2655e9c14838dc1b621c863",
+    "handoff_tree_sha": "923d41eebcd1025f4428d5ba6eacaf51a80e93cd",
+    "main_predecessor_sha": "bd2ed3946487d27abffc81d966e7adfaab1fe433",
+    "ownership": "Ti-Java/web/**",
+    "integration_method": "fixed-sha-cherry-pick-no-commit",
+    "handoff_integrated": false,
+    "changed_file_count": 102,
+    "added_line_count": 18040,
+    "deleted_line_count": 0,
+    "central_authority_files_modified_by_worker": false
+  },
+  "web_content": {
+    "root": "Ti-Java/web",
+    "file_count": 102,
+    "byte_count": 558898,
+    "manifest_algorithm": "sha256(sorted(relative_path + NUL + file_sha256 + NUL + byte_count + LF))",
+    "manifest_sha256": "e92634ecb328edecce27fea97ec8d9e2ceb5fdc9e7a1aa8e74f378e5ea407752",
+    "ignored_generated_directories": [
+      "coverage",
+      "dist",
+      "node_modules",
+      "playwright-report",
+      "test-results",
+      ".vite"
+    ]
+  },
+  "runtime_scope": {
+    "spa_routes": [
+      "/public/banks",
+      "/public/banks/card/{system|user}/{bankId}"
+    ],
+    "openapi_sources": [
+      {
+        "path": "Ti-Java/openapi/phase3-authentication.openapi.json",
+        "sha256": "7b014165a027ae3dbdbf8597ca910db8ab153b0437156f6d0fdd07985f348fab"
+      },
+      {
+        "path": "Ti-Java/openapi/phase4a-subject-directory.openapi.json",
+        "sha256": "8344f0173f523939abae203430cf92455d6240404e3d8ffe7a002507cadd2169"
+      },
+      {
+        "path": "Ti-Java/openapi/phase4a-public-bank.openapi.json",
+        "sha256": "1f163574d9fb5b25d58df4a4a75ffca6b74b874dfbf66551cf46408d67110a34"
+      }
+    ],
+    "public_bank_runtime_operation_ids": [
+      "legacy_b7e49e77a026_get",
+      "legacy_db1ac691d6fb_get",
+      "legacy_a473896ff467_get",
+      "legacy_f3644c1474f3_get",
+      "legacy_8cfb837021af_get"
+    ],
+    "runtime_operation_count": 5,
+    "runtime_methods": [
+      "GET"
+    ],
+    "same_origin_api": true,
+    "same_origin_credentials": true,
+    "request_id_header": "X-Request-ID",
+    "read_timeout_milliseconds": 12000,
+    "server_state_owner": "TanStack Vue Query",
+    "client_state_owner": "Pinia",
+    "production_cutover": false
+  },
+  "phase6_disposition": {
+    "foundation_complete": true,
+    "phase6_complete": false,
+    "page_shell_candidates": [
+      {
+        "route_id": "6a8ad5f06651",
+        "method": "GET",
+        "legacy_path": "/public/banks",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "cda75caa95a8",
+        "method": "GET",
+        "legacy_path": "/public/banks/card/<source_type>/<int:bank_id>",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "4289bc27d0bb",
+        "method": "GET",
+        "legacy_path": "/search",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "1267362d8beb",
+        "method": "GET",
+        "legacy_path": "/subjects/<int:subject_id>",
+        "migration_status": "pending",
+        "production_cutover": false
+      }
+    ],
+    "blocked_journeys": [
+      "join",
+      "practice",
+      "personal-banks",
+      "user-counts",
+      "write"
+    ],
+    "route_migration_delta_created": false,
+    "operator_authorized": false,
+    "schema_or_index_change_authorized": false,
+    "real_data_migration_authorized": false,
+    "gateway_or_production_cutover_authorized": false
+  },
+  "effective_authority": {
+    "route_status_path": "Ti-Java/docs/refactor/phase4c/effective-route-parity-successor-status.json",
+    "route_status_sha256": "c0e96472533d0bbe7d67ac1416a91f3e9a3bfcef8c27e1170b0e9939c46b358a",
+    "migrated_operations": 13,
+    "pending_operations": 598,
+    "production_cutover_operations": 0,
+    "legacy_flask_remains_production_owner": true
+  },
+  "int_verification": {
+    "openapi_boundary_and_generated_drift": "passed",
+    "eslint": "passed",
+    "typescript_strict_typecheck": "passed",
+    "unit_test_files": 4,
+    "unit_tests": 7,
+    "unit_failures": 0,
+    "vite_transformed_modules": 160,
+    "production_build": "passed",
+    "playwright_scenarios": 3,
+    "playwright_failures": 0,
+    "npm_audit_high_or_greater_vulnerabilities": 0,
+    "maven_testcontainers_docker_compose_run": false,
+    "heavy_verify_lock_required": false
+  }
+}
