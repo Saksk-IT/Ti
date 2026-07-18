@@ -1,0 +1,747 @@
+{
+  "schema_version": 1,
+  "artifact_id": "ti.phase4c.personal-bank-user-counts-target-execution-junit-manifest",
+  "status": "passed_normalized_sensitive_runtime_output_removed",
+  "scope": "phase4c-personal-bank-user-counts-target-execution-junit",
+  "source_anchor": {
+    "git_commit_sha1": "0531b3c9272f9743a374edcf5c8bbeb72643eb1b",
+    "git_parent_sha1": "67dddb831bac8499e80f4af57c959e9c6b244519",
+    "git_root_tree_sha1": "816e2a7376d147f4a4d1478586cd384edf2c2a8a",
+    "ti_java_tree_sha1": "1d24e46d33c25170caddf6e25247a7b2945390e4",
+    "remote_ref": "origin/main",
+    "commit_was_pushed_before_capture": true,
+    "head_equaled_origin_main_at_capture": true,
+    "ti_java_tracked_clean_at_capture": true,
+    "ti_java_untracked_file_count_at_capture": 0,
+    "capture_state_is_declared_metadata": true,
+    "normalizer_does_not_revalidate_mutable_remote_ref": true
+  },
+  "source_inputs": {
+    "target_execution_contract": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+      "sha256": "9f6c37c4217da83199403da8207ed4f89a3999fafd149f069afb520dee4d2460"
+    },
+    "python_successor_bridge": {
+      "path": "tools/phase4c_http_target_execution_successor_acceptance.py",
+      "sha256": "891e4c7c48c76b76697b064e8e6fd55f5cb549b751a7bff3562868f62d76c75c"
+    },
+    "java_successor_bridge": {
+      "path": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+      "sha256": "76c2c4ef54061f85339ad8f5cb1f1bab21d2f71b7bbcf8fde44cdd4d563cdf15"
+    },
+    "target_execution_test": {
+      "path": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsGoldenTargetExecutionIT.java",
+      "sha256": "45b1a96fcc66a436551a8ce7604b304f2a479cece87c431a3a3c003da01d5ca1"
+    },
+    "target_execution_evidence": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-execution-evidence.json",
+      "sha256": "947737b496168385b07db3d71a3bcf99d0940b1b52da4188ebf64516257b4002",
+      "case_payload_sha256": "75be10b21c2c006d978575dda314003536ac8920ecd6c6fbe64cfdd264d2b17f",
+      "document_payload_sha256": "5ca521f808aa67ea4589d044d04a0037e448dc9d2a519e3b6af7d776b2cb89de"
+    },
+    "phase4b_golden": {
+      "path": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1",
+      "ordered_case_ids_sha256": "d8c9aa1c8fdcfd833f2d7bbba3e21adcc3e696954b8756ace69405428bbdfad8"
+    },
+    "historical_mapping": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-mapping-evidence.json",
+      "sha256": "d039193c2ecfb644fdd356b196f6551440e63ee27eba0645d9f8e5bef923b4d3"
+    },
+    "maven_runner": {
+      "path": "infra/phase2/verify-in-maven-container.sh",
+      "sha256": "2a9fa5d2e7b17f2f8d691b3d8e9e7e615e6c960c12c351525baae4251a56090e"
+    },
+    "maven_project": {
+      "path": "server/pom.xml",
+      "sha256": "24b45d68c44c64a6b2fda2fbf6f342889640f7c3dbc088015703cd1a68ff916b"
+    },
+    "maven_wrapper": {
+      "path": "server/.mvn/wrapper/maven-wrapper.properties",
+      "sha256": "ec15e462d862b9ba5dc9d8cdf249576bfdad7c70ccd441d64117d9abcd808dab"
+    }
+  },
+  "runner": {
+    "report_format": "maven-failsafe-junit-xml",
+    "report_schema_version": "3.0.2",
+    "maven_image": "maven:3.9.16-eclipse-temurin-25@sha256:7e461cec477077c1d9e50b13df8aef9018764410f4c4cd7c34803f10c4c99e4c",
+    "postgresql_image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "redis_image": "redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf",
+    "test_class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT"
+  },
+  "raw_report": {
+    "expected_filename": "TEST-io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT.xml",
+    "sha256": "bb114a5571ef645ba37864dae1862a3657d92755a60479d734ce3c72f8de24ab",
+    "byte_count": 63450,
+    "tracked": false,
+    "committed": false,
+    "content_embedded": false
+  },
+  "normalization_policy": {
+    "canonical_json": "utf8;ensure_ascii=false;sort_keys=true;separators=comma-colon",
+    "suite_allowlist": [
+      "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT"
+    ],
+    "testcase_identity_source": "fixed target-execution evidence plus Failsafe factory index",
+    "discarded_elements": [
+      "properties",
+      "system-out",
+      "system-err"
+    ],
+    "discarded_attributes": [
+      "testsuite@time",
+      "testcase@time",
+      "testsuite@xsi:noNamespaceSchemaLocation"
+    ],
+    "arbitrary_xml_text_copied": false,
+    "failure_error_skip_or_flake_allowed": false,
+    "unknown_xml_nodes_allowed": false,
+    "duplicate_logical_or_xml_ids_allowed": false,
+    "raw_report_hash_role": "single_execution_binding_not_cross_run_stability"
+  },
+  "result": {
+    "suite": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+    "totals": {
+      "tests": 60,
+      "passed": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "flakes": 0
+    },
+    "group_counts": {
+      "non_fault_http": 46,
+      "postgres_abort_http": 11,
+      "supplementary_auth_probe": 1,
+      "typed_postgresql": 2
+    },
+    "disposition_counts": {
+      "EXECUTED_FULL_CONTEXT_HTTP": 46,
+      "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT": 11,
+      "EXECUTED_TYPED_COLLAPSE": 1,
+      "EXECUTED_TYPED_REJECTION": 1
+    },
+    "leaves": [
+      {
+        "ordinal": 1,
+        "xml_name": "realFlaskExchangeAndAuthoritativeTargetSessionBothReachApplicationJdbc",
+        "logical_id": "realFlaskExchangeAndAuthoritativeTargetSessionBothReachApplicationJdbc",
+        "group": "supplementary_auth_probe",
+        "leaf_type": "test",
+        "factory_or_method": "realFlaskExchangeAndAuthoritativeTargetSessionBothReachApplicationJdbc",
+        "execution_disposition": null,
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 2,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[1]",
+        "logical_id": "auth-session-owner-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 3,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[2]",
+        "logical_id": "auth-bearer-owner-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 4,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[3]",
+        "logical_id": "auth-bearer-precedes-session-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 5,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[4]",
+        "logical_id": "auth-invalid-bearer-falls-back-session-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 6,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[5]",
+        "logical_id": "auth-state-invalid-bearer-does-not-fallback-session-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 7,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[6]",
+        "logical_id": "auth-anonymous-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 8,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[7]",
+        "logical_id": "data-empty-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 9,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[8]",
+        "logical_id": "access-status-zero-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 10,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[9]",
+        "logical_id": "access-missing-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 11,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[10]",
+        "logical_id": "access-public-other-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 12,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[11]",
+        "logical_id": "filter-source-favorites-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 13,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[12]",
+        "logical_id": "tag-normalized-sa2-empty-api-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 14,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[13]",
+        "logical_id": "auth-session-owner-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 15,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[14]",
+        "logical_id": "auth-bearer-owner-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 16,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[15]",
+        "logical_id": "auth-bearer-precedes-session-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 17,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[16]",
+        "logical_id": "auth-invalid-bearer-falls-back-session-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 18,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[17]",
+        "logical_id": "auth-state-invalid-bearer-does-not-fallback-session-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 19,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[18]",
+        "logical_id": "auth-anonymous-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 20,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[19]",
+        "logical_id": "data-empty-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 21,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[20]",
+        "logical_id": "access-status-zero-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 22,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[21]",
+        "logical_id": "access-missing-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 23,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[22]",
+        "logical_id": "access-public-other-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 24,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[23]",
+        "logical_id": "filter-source-favorites-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 25,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[24]",
+        "logical_id": "tag-normalized-sa2-empty-web-alias",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 26,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[25]",
+        "logical_id": "access-status-null-owner",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 27,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[26]",
+        "logical_id": "access-status-two-owner",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 28,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[27]",
+        "logical_id": "access-private-other-forbidden",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 29,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[28]",
+        "logical_id": "access-shared-future",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 30,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[29]",
+        "logical_id": "access-shared-null-expiry",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 31,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[30]",
+        "logical_id": "access-shared-equal-now-forbidden",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 32,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[31]",
+        "logical_id": "access-shared-expired-forbidden",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 33,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[32]",
+        "logical_id": "access-shared-inactive-forbidden",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 34,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[33]",
+        "logical_id": "access-shared-empty-expiry",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 35,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[34]",
+        "logical_id": "access-shared-fetchone-first-row",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 36,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[35]",
+        "logical_id": "access-shared-cross-bank-record",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 37,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[36]",
+        "logical_id": "filter-q-type-choice",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 38,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[37]",
+        "logical_id": "filter-q-type-all-uppercase",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 39,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[38]",
+        "logical_id": "filter-q-type-unknown-maps-essay",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 40,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[39]",
+        "logical_id": "filter-source-mistakes",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 41,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[40]",
+        "logical_id": "filter-source-case-sensitive-fallback",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 42,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[41]",
+        "logical_id": "filter-q-type-duplicate-first-wins",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 43,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[42]",
+        "logical_id": "filter-source-duplicate-first-wins",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 44,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[43]",
+        "logical_id": "tag-all-bypasses-store",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 45,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[44]",
+        "logical_id": "filter-tag-duplicate-first-all-wins",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 46,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[45]",
+        "logical_id": "tag-case-sensitive-all-enters-store",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 47,
+        "xml_name": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget()[46]",
+        "logical_id": "tag-legacy-migration-sa2-empty",
+        "group": "non_fault_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 48,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[1]",
+        "logical_id": "fault-total-default-api-alias",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 49,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[2]",
+        "logical_id": "fault-total-json-api-alias",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 50,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[3]",
+        "logical_id": "fault-total-default-web-alias",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 51,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[4]",
+        "logical_id": "fault-total-json-web-alias",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 52,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[5]",
+        "logical_id": "fault-favorites-sqlite-continues",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 53,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[6]",
+        "logical_id": "fault-favorites-postgresql-poison-simulation",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 54,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[7]",
+        "logical_id": "fault-mistakes-sqlite-continues",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 55,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[8]",
+        "logical_id": "fault-mistakes-postgresql-poison-simulation",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 56,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[9]",
+        "logical_id": "fault-types-degrades",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 57,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[10]",
+        "logical_id": "fault-source-favorites-second-count-postgresql-poison-simulation",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 58,
+        "xml_name": "executesAllElevenFaultCasesWithRealPostgresqlFailures()[11]",
+        "logical_id": "fault-share-access-hard-failure",
+        "group": "postgres_abort_http",
+        "leaf_type": "dynamic_test",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 59,
+        "xml_name": "rejectsTheMalformedExpiryTypedDispositionWithoutPersistingARow",
+        "logical_id": "access-shared-malformed-expiry-value-error",
+        "group": "typed_postgresql",
+        "leaf_type": "test",
+        "factory_or_method": "rejectsTheMalformedExpiryTypedDispositionWithoutPersistingARow",
+        "execution_disposition": "EXECUTED_TYPED_REJECTION",
+        "outcome": "passed"
+      },
+      {
+        "ordinal": 60,
+        "xml_name": "provesTheAwareExpiryCollapseAndApprovedNullExpiryRepresentation",
+        "logical_id": "access-shared-aware-expiry-type-error",
+        "group": "typed_postgresql",
+        "leaf_type": "test",
+        "factory_or_method": "provesTheAwareExpiryCollapseAndApprovedNullExpiryRepresentation",
+        "execution_disposition": "EXECUTED_TYPED_COLLAPSE",
+        "outcome": "passed"
+      }
+    ],
+    "execution_order_case_ids_sha256": "4f953b182d2c8fd4fecf2f47876b2b649f41209a6b338e1e9eec689eb910f649",
+    "ordered_logical_leaf_ids_sha256": "ef35ab8704312f3f5056e572cd2584c7f4b3431274f5ec5abb25561cc4f6956c",
+    "ordered_xml_names_sha256": "e7b1582e0e6166ca34876c54e5a1fefb1e22eeda6cbeb430bbe50f1042b220c8",
+    "raw_projection_sha256": "483c6a52d6cebbc8fd3b69cf31cbccfe5aca3c20a50577bf8324e0a376a127a1",
+    "leaf_payload_sha256": "77b0f4955931f2ad3206b7a1c0f9c9649b25a18c49bf1b259c452d169e5f0e04"
+  },
+  "confidentiality": {
+    "properties_removed": true,
+    "stdout_removed": true,
+    "stderr_removed": true,
+    "timings_removed": true,
+    "absolute_paths_removed": true,
+    "credentials_tokens_cookies_and_urls_removed": true,
+    "sensitive_output_scan_passed": true,
+    "repository_tamper_evident": false,
+    "manifest_bytes_external_git_anchor_complete": false,
+    "post_push_successor_anchor_required": true,
+    "independently_signed_provenance": false,
+    "claim_boundary": "Inputs are fixed by pushed predecessor 0531b3c9272f9743a374edcf5c8bbeb72643eb1b; this manifest's bytes still require a post-push successor anchor and are not an independently signed execution attestation"
+  },
+  "document_payload_sha256": "9f53234730888c5e3bcd682390093331daca61814c1111c195ea3def4fbe543c"
+}
