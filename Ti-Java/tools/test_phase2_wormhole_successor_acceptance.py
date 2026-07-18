@@ -528,6 +528,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -559,6 +561,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: None),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -594,6 +598,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=reject_tamper),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -661,6 +667,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: None),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -716,6 +724,80 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                     self.successor_build,
                 )
 
+    def test_fixed_acceptance_requires_typed_normalization_successor(self) -> None:
+        modules = {
+            phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
+                load_read_successor_contract=lambda root: {"validated": True},
+            ),
+            phase2_acceptance.TARGET_EXECUTION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(
+                    load_http_target_execution_successor_contract=lambda root: {
+                        "validated": True,
+                    },
+                ),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: None),
+        }
+        with mock.patch.object(
+            phase2_acceptance.importlib,
+            "import_module",
+            side_effect=lambda name: modules[name],
+        ):
+            with self.assertRaisesRegex(
+                EvidenceValidationError,
+                "fixed HTTP typed-normalization successor contract is required",
+            ):
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                )
+
+    def test_fixed_acceptance_fails_when_typed_normalization_module_is_missing(
+        self,
+    ) -> None:
+        modules = {
+            phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
+                load_read_successor_contract=lambda root: {"validated": True},
+            ),
+            phase2_acceptance.TARGET_EXECUTION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(
+                    load_http_target_execution_successor_contract=lambda root: {
+                        "validated": True,
+                    },
+                ),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+        }
+
+        def import_or_reject(name: str) -> object:
+            if name in modules:
+                return modules[name]
+            raise ModuleNotFoundError(name=name)
+
+        with mock.patch.object(
+            phase2_acceptance.importlib,
+            "import_module",
+            side_effect=import_or_reject,
+        ):
+            with self.assertRaisesRegex(
+                EvidenceValidationError,
+                "fixed HTTP typed-normalization successor acceptance module is required",
+            ):
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                )
+
     def test_import_and_fixed_chain_do_not_import_successor_modules(self) -> None:
         script = r'''
 import importlib.abc
@@ -727,6 +809,7 @@ blocked = {
     "tools.phase4c_http_target_execution_successor_acceptance",
     "tools.phase4c_http_target_execution_post_push_successor_acceptance",
     "tools.phase4c_http_target_execution_post_push_anchor_successor_acceptance",
+    "tools.phase4c_http_typed_normalization_successor_acceptance",
 }
 
 class Blocker(importlib.abc.MetaPathFinder):

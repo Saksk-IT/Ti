@@ -160,9 +160,15 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractPari
             assertThat(Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
                     .acceptedHash(entry.getKey())).as(entry.getKey())
                     .isEqualTo(entry.getValue().accepted());
+            String expectedSuccessor =
+                    Phase4cHttpTypedNormalizationSuccessorAcceptance
+                            .acceptedHash(entry.getKey()) == null
+                    ? entry.getValue().successor()
+                    : Phase4cHttpTypedNormalizationSuccessorAcceptance
+                            .successorHash(root(), entry.getKey());
             assertThat(Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
                     .successorHash(root(), entry.getKey())).as(entry.getKey())
-                    .isEqualTo(entry.getValue().successor());
+                    .isEqualTo(expectedSuccessor);
         }
         for (String forbidden : Set.of(
                 CONTRACT_PATH,
@@ -189,7 +195,8 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractPari
                         + "post-push-contract");
         assertThat(Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
                 .successorHash(root(), "README.md"))
-                .isEqualTo(SUCCESSORS.get("README.md").successor());
+                .isEqualTo(Phase4cHttpTypedNormalizationSuccessorAcceptance
+                        .successorHash(root(), "README.md"));
         assertThat(Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
                 .successorHash(root(), "unknown/source")).isNull();
     }
@@ -299,6 +306,8 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractPari
         Set<String> relatives = new LinkedHashSet<>(Set.of(
                 CONTRACT_PATH, PREDECESSOR_PATH, MANIFEST_PATH, WORM_PATH));
         relatives.addAll(SUCCESSORS.keySet());
+        relatives.addAll(
+                Phase4cHttpTypedNormalizationSuccessorAcceptance.minimalFixturePaths());
         for (String relative : relatives) {
             Path source = root().resolve(relative);
             Path target = targetRoot.resolve(relative);

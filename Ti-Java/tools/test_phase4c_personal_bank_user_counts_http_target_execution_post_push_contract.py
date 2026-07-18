@@ -27,12 +27,18 @@ try:
         phase4c_http_target_execution_post_push_anchor_successor_acceptance
         as post_push_anchor,
     )
+    from tools import (
+        phase4c_http_typed_normalization_successor_acceptance
+        as typed_acceptance,
+    )
     from tools import phase4c_http_target_execution_successor_acceptance as target
 except ModuleNotFoundError:  # Direct discovery from tools/.
     import build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract as builder
     import phase4c_http_target_execution_post_push_successor_acceptance as acceptance
     import phase4c_http_target_execution_post_push_anchor_successor_acceptance \
         as post_push_anchor
+    import phase4c_http_typed_normalization_successor_acceptance \
+        as typed_acceptance
     import phase4c_http_target_execution_successor_acceptance as target
 
 
@@ -234,6 +240,9 @@ print("post-push-import-isolation=ok")
             post_push_anchor.JUNIT_MANIFEST_RELATIVE,
             post_push_anchor.WORM_RELATIVE,
             *post_push_anchor.SUCCESSOR_SOURCES,
+            typed_acceptance.CONTRACT_RELATIVE,
+            typed_acceptance.PREDECESSOR_RELATIVE,
+            *typed_acceptance.LOCAL_SOURCES,
         }
         with tempfile.TemporaryDirectory() as directory:
             isolated = Path(directory) / "Ti-Java"

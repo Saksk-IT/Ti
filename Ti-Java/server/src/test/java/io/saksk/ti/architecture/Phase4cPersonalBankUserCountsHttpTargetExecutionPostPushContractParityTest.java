@@ -136,9 +136,15 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
             assertThat(Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
                     .acceptedHash(entry.getKey())).as(entry.getKey())
                     .isEqualTo(entry.getValue().accepted());
+            String expectedSuccessor =
+                    Phase4cHttpTypedNormalizationSuccessorAcceptance
+                            .acceptedHash(entry.getKey()) == null
+                    ? entry.getValue().successor()
+                    : Phase4cHttpTypedNormalizationSuccessorAcceptance
+                            .successorHash(root(), entry.getKey());
             assertThat(Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
                     .successorHash(root(), entry.getKey())).as(entry.getKey())
-                    .isEqualTo(entry.getValue().successor());
+                    .isEqualTo(expectedSuccessor);
         }
         for (String forbidden : Set.of(
                 CONTRACT_PATH,
@@ -164,7 +170,8 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
                 "ti.phase4c.personal-bank-user-counts-http-target-execution-contract");
         assertThat(Phase4cHttpTargetExecutionSuccessorAcceptance
                 .successorHash(root(), "README.md")).isEqualTo(
-                SUCCESSORS.get("README.md").successor());
+                Phase4cHttpTypedNormalizationSuccessorAcceptance
+                        .successorHash(root(), "README.md"));
         assertThat(Phase4cHttpTargetExecutionSuccessorAcceptance
                 .successorHash(root(), "unknown/source")).isNull();
         assertThat(Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
@@ -279,6 +286,8 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
                 POST_PUSH_ANCHOR_CONTRACT_PATH));
         relatives.addAll(SUCCESSORS.keySet());
         relatives.addAll(POST_PUSH_ANCHOR_SUCCESSOR_PATHS);
+        relatives.addAll(
+                Phase4cHttpTypedNormalizationSuccessorAcceptance.minimalFixturePaths());
         for (String relative : relatives) {
             Path source = root().resolve(relative);
             Path target = targetRoot.resolve(relative);

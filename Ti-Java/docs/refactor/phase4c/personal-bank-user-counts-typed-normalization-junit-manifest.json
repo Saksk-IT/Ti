@@ -1,0 +1,230 @@
+{
+  "artifact_id": "ti.phase4c.personal-bank-user-counts-typed-normalization-junit-manifest",
+  "authorization": {
+    "current_manifest_and_source_bytes_external_git_anchor_complete": false,
+    "full_target_parity_closed": false,
+    "production_cutover": false,
+    "route_migration_eligible": false,
+    "typed_normalization_execution_complete": true,
+    "typed_parity_review_complete": false
+  },
+  "confidentiality": {
+    "absolute_paths_removed": true,
+    "credentials_tokens_cookies_and_urls_removed": true,
+    "independently_signed_provenance": false,
+    "properties_removed": true,
+    "sensitive_output_scan_passed": true,
+    "stderr_removed": true,
+    "stdout_removed": true,
+    "timings_removed": true
+  },
+  "document_payload_sha256": "08bdcc19ee0f3607d4e367a135d9a6544a5a9b5e5e999a2738180bc3258c8236",
+  "normalization_policy": {
+    "arbitrary_xml_text_copied": false,
+    "discarded_attributes": [
+      "testsuite@time",
+      "testcase@time"
+    ],
+    "discarded_elements": [
+      "properties",
+      "system-out",
+      "system-err"
+    ],
+    "failure_error_skip_or_flake_allowed": false,
+    "raw_report_hash_role": "single_execution_binding_not_cross_run_stability",
+    "suite_and_testcase_allowlist_exact": true
+  },
+  "raw_report": {
+    "byte_count": 51169,
+    "committed": false,
+    "content_embedded": false,
+    "expected_filename": "TEST-io.saksk.ti.integration.LegacyPersonalBankUserCountsTypedNormalizationIT.xml",
+    "sha256": "e1d5caebd6dfc7c792c8e4b4af337081246f718da5d1c4c82e072f46d6a1603b",
+    "tracked": false
+  },
+  "result": {
+    "effective_evidence": {
+      "logical_disposition_count": 59,
+      "selected_effective_proof_leaf_count": 60,
+      "superseded_historical_representation_leaf_count": 1,
+      "superseded_leaf_double_counted": false,
+      "supplementary_authentication_leaf_count": 1
+    },
+    "effective_override": {
+      "case_id": "access-shared-aware-expiry-type-error",
+      "difference_id": "P4C-LEARNING-013",
+      "effective_execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "historical_execution_disposition": "EXECUTED_TYPED_COLLAPSE",
+      "historical_source_status": 500,
+      "postgresql_projection": {
+        "canonical_local_datetime": "2026-07-17T13:00:00",
+        "cast_compatibility_versions": [
+          "16.14",
+          "18.4"
+        ],
+        "cast_session_time_zones": [
+          "UTC",
+          "America/Los_Angeles"
+        ],
+        "column_type": "timestamp without time zone",
+        "fixture_share_id": 99661,
+        "fixture_share_record_id": 99681,
+        "full_filter_http_version": "18.4",
+        "http_fixture_origin": "java_string_bind_explicit_cast_insert_before_request_trace",
+        "http_fixture_sql_literal_seeded": false,
+        "input": "2026-07-17T13:00:00+08:00",
+        "input_kind": "string_bind_explicit_cast",
+        "offset_provenance_erased": true
+      },
+      "proof_scope": "Java String CAST compatibility on PostgreSQL 16.14 and 18.4 across UTC and America/Los_Angeles; full-production-filter-chain MockMvc HTTP on PostgreSQL 18.4 and Redis 7.4.7; not random-port Tomcat network evidence",
+      "request": {
+        "accept": "application/json",
+        "bearer_actor": "none",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "route_id": "6858f6fa506f",
+        "session_actor": "shared_aware"
+      },
+      "target_data": {
+        "favorites": 0,
+        "mistakes": 0,
+        "shuffle_options_available": false,
+        "total": 9,
+        "types": [
+          "判断题",
+          "简答题",
+          "填空题",
+          "多选题",
+          "选择题",
+          "选择题",
+          "简答题"
+        ]
+      },
+      "target_status": 200
+    },
+    "effective_summary": {
+      "api_alias_http_count": 44,
+      "business_jdbc_http_count": 50,
+      "http_disposition_count": 58,
+      "http_status_counts": {
+        "200": 35,
+        "302": 5,
+        "401": 3,
+        "403": 10,
+        "500": 5
+      },
+      "logical_disposition_count": 59,
+      "non_fault_http_count": 47,
+      "postgres_abort_http_count": 11,
+      "pre_business_http_count": 8,
+      "typed_rejection_count": 1,
+      "web_alias_http_count": 14
+    },
+    "new_leaf": {
+      "business_jdbc_reached": true,
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "group": "non_fault_http",
+      "logical_id": "access-shared-aware-expiry-type-error",
+      "outcome": "passed",
+      "physical_ordinal": 61,
+      "suite": "io.saksk.ti.integration.LegacyPersonalBankUserCountsTypedNormalizationIT",
+      "target_status": 200,
+      "xml_name": "executesAwareExpiryAsARealFullFilterChainHttpRead"
+    },
+    "physical_evidence": {
+      "aggregate_leaf_count": 61,
+      "failed_error_skipped_or_flaky": 0,
+      "historical_leaf_count": 60,
+      "new_leaf_count": 1,
+      "passed": 61
+    },
+    "proof_payload_sha256": "8ea42f371664c6a664b0cd8b408c292a8a2a57524215a718a71c634a0bc93047",
+    "raw_projection_sha256": "bcd34346c05cd51e1c19570b12e666cead2eb09eba8ceec697743dcca6e79b9c",
+    "runtime_scope": {
+      "full_filter_http": {
+        "fixture_dml_before_request_trace": true,
+        "fixture_origin": "java_string_bind_explicit_cast_insert_before_request_trace",
+        "fixture_sql_literal_seeded": false,
+        "postgresql_version": "18.4",
+        "redis_version": "7.4.7"
+      },
+      "typed_cast_compatibility": {
+        "canonical_local_datetime": "2026-07-17T13:00:00",
+        "cross_version_equal": true,
+        "negative_offset_input": "2026-07-17T13:00:00-05:00",
+        "positive_offset_input": "2026-07-17T13:00:00+08:00",
+        "postgresql_versions": [
+          "16.14",
+          "18.4"
+        ],
+        "session_time_zones": [
+          "UTC",
+          "America/Los_Angeles"
+        ],
+        "session_timezone_independent": true
+      }
+    },
+    "superseded_historical_leaf": {
+      "execution_disposition": "EXECUTED_TYPED_COLLAPSE",
+      "factory_or_method": "provesTheAwareExpiryCollapseAndApprovedNullExpiryRepresentation",
+      "group": "typed_postgresql",
+      "leaf_type": "test",
+      "logical_id": "access-shared-aware-expiry-type-error",
+      "ordinal": 60,
+      "outcome": "passed",
+      "xml_name": "provesTheAwareExpiryCollapseAndApprovedNullExpiryRepresentation"
+    }
+  },
+  "runner": {
+    "java_release": 25,
+    "maven_version": "3.9.16",
+    "postgresql_images": {
+      "16.14_cast_compatibility": "postgres:16.14-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "18.4_cast_and_full_filter_http": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15"
+    },
+    "redis_image": "redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf",
+    "report_format": "maven-failsafe-junit-xml",
+    "report_schema_version": "3.0.2",
+    "test_class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsTypedNormalizationIT"
+  },
+  "schema_version": 1,
+  "scope": "phase4c-personal-bank-user-counts-typed-normalization-junit",
+  "source_anchor": {
+    "current_manifest_and_source_bytes_external_git_anchor_complete": false,
+    "new_evidence_was_executed_after_predecessor": true,
+    "post_push_external_anchor_required": true,
+    "predecessor_commit_sha1": "c38defa703b358a280122a09019031c040c58ea7",
+    "predecessor_parent_sha1": "1dae013e11c76ad858d6695f166a32631eb1525e",
+    "predecessor_root_tree_sha1": "5ac75d896171039f34650c92829282d8a5e3c3f8",
+    "predecessor_ti_java_tree_sha1": "07086dc62157018ec1c989832e5e63bfefbae0f0"
+  },
+  "source_inputs": {
+    "historical_junit_manifest": {
+      "document_payload_sha256": "9f53234730888c5e3bcd682390093331daca61814c1111c195ea3def4fbe543c",
+      "leaf_payload_sha256": "77b0f4955931f2ad3206b7a1c0f9c9649b25a18c49bf1b259c452d169e5f0e04",
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+      "sha256": "64ff60cd56bf60f585af3d55b4ed4b4f7ee30b6a4c9e3e840688a1caaa45664b"
+    },
+    "historical_target_execution_evidence": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-execution-evidence.json",
+      "sha256": "947737b496168385b07db3d71a3bcf99d0940b1b52da4188ebf64516257b4002"
+    },
+    "phase4b_golden": {
+      "path": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1"
+    },
+    "typed_normalization_difference": {
+      "difference_id": "P4C-LEARNING-013",
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-approved-difference.md",
+      "sha256": "3c6ecb59cae4e8a2f31e7dd0ed74bcca56e0cf61830339254523f3f824e652be"
+    },
+    "typed_normalization_seed": {
+      "path": "server/src/test/resources/db/phase4c/072-personal-bank-user-counts-typed-normalization-seed.sql",
+      "sha256": "089b795d6e6a3efdb1af86641701bd1bf9d30e2c1a94c65a0a32865bdfca29c6"
+    },
+    "typed_normalization_test": {
+      "path": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsTypedNormalizationIT.java",
+      "sha256": "f9bd7dbd51e65abe8f01e80d0d564b9dfdba6856f95c4b06ad21b3705a2f025f"
+    }
+  },
+  "status": "passed_aware_http_normalized_malformed_typed_rejection_retained"
+}

@@ -1,0 +1,1394 @@
+{
+  "acceptance": {
+    "api_alias_http_execution_count": 44,
+    "bound_only_case_count": 0,
+    "business_jdbc_reached_http_count": 50,
+    "execution_disposition_counts": {
+      "EXECUTED_FULL_CONTEXT_HTTP": 47,
+      "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT": 11,
+      "EXECUTED_TYPED_REJECTION": 1
+    },
+    "full_target_parity_closed": false,
+    "http_execution_count": 58,
+    "http_status_counts": {
+      "200": 35,
+      "302": 5,
+      "401": 3,
+      "403": 10,
+      "500": 5
+    },
+    "implemented_pending_get_count": 2,
+    "junit_physical_leaf_count": 61,
+    "junit_selected_effective_leaf_count": 60,
+    "logical_disposition_count": 59,
+    "migrated_operation_count": 11,
+    "mocked_application_result_case_count": 0,
+    "next_gate": "pg16_pg18_termination_identity_sql_nine_table_fingerprints_then_real_tomcat_complete_response_headers_then_same_service_redis_refusal_interruption_and_recovery_before_route_migration",
+    "non_fault_http_execution_count": 47,
+    "pending_operation_count": 600,
+    "postgres_abort_http_execution_count": 11,
+    "pre_business_jdbc_termination_http_count": 8,
+    "production_cutover": false,
+    "production_cutover_operation_count": 0,
+    "route_migration_eligible": false,
+    "typed_parity_review_complete": false,
+    "typed_rejection_count": 1,
+    "web_alias_http_execution_count": 14
+  },
+  "authorization": {
+    "behavior_difference_adr_documented": true,
+    "current_node_sources_external_git_anchor_complete": false,
+    "derived_head_and_options_count_as_migrated": false,
+    "full_target_parity_closed": false,
+    "pg16_pg18_termination_fingerprints_complete": false,
+    "production_cutover": false,
+    "real_tomcat_complete_response_header_matrix_complete": false,
+    "route_migration_eligible": false,
+    "same_service_redis_outage_and_recovery_complete": false,
+    "two_legacy_get_routes_migrated": false,
+    "typed_execution_normalization_complete": true,
+    "typed_parity_review_complete": false
+  },
+  "captured_at": "2026-07-18T15:28:17+08:00",
+  "contract_id": "ti.phase4c.personal-bank-user-counts-http-typed-normalization-contract",
+  "current_node_trust_boundary": {
+    "dynamic_source_discovery_forbidden": true,
+    "independently_signed_provenance": false,
+    "post_push_external_anchor_required": true,
+    "source_bytes_external_git_anchor_complete": false,
+    "source_count": 6,
+    "source_path_allowlist_exact": true,
+    "source_paths": [
+      "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_typed_normalization_contract.py",
+      "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_contract.py"
+    ],
+    "sources_excluded_from_self_authority": true
+  },
+  "disposition_ledger": {
+    "case_id_set_equal_to_historical_predecessor": true,
+    "ledger_payload_sha256": "332953b40ac71157e20ff322a37e8abf8fc308b12d5997bd0343b5674f0c0654",
+    "ordered_by": "canonical_case_ordinal",
+    "ordered_case_ids_sha256": "d8c9aa1c8fdcfd833f2d7bbba3e21adcc3e696954b8756ace69405428bbdfad8",
+    "rows": [
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 1,
+        "case_id": "auth-session-owner-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 1,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 2,
+          "xml_name": "auth-session-owner-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 2,
+        "case_id": "auth-bearer-owner-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 2,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 3,
+          "xml_name": "auth-bearer-owner-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 3,
+        "case_id": "auth-bearer-precedes-session-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 3,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 4,
+          "xml_name": "auth-bearer-precedes-session-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 4,
+        "case_id": "auth-invalid-bearer-falls-back-session-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 4,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 5,
+          "xml_name": "auth-invalid-bearer-falls-back-session-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 401
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 5,
+        "case_id": "auth-state-invalid-bearer-does-not-fallback-session-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 5,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 6,
+          "xml_name": "auth-state-invalid-bearer-does-not-fallback-session-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 401
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 6,
+        "case_id": "auth-anonymous-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 6,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 7,
+          "xml_name": "auth-anonymous-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 401
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 7,
+        "case_id": "data-empty-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 7,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 8,
+          "xml_name": "data-empty-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 8,
+        "case_id": "access-status-zero-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 8,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 9,
+          "xml_name": "access-status-zero-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 9,
+        "case_id": "access-missing-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 9,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 10,
+          "xml_name": "access-missing-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 10,
+        "case_id": "access-public-other-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 10,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 11,
+          "xml_name": "access-public-other-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 11,
+        "case_id": "filter-source-favorites-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 11,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 12,
+          "xml_name": "filter-source-favorites-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 12,
+        "case_id": "tag-normalized-sa2-empty-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 12,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 13,
+          "xml_name": "tag-normalized-sa2-empty-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 13,
+        "case_id": "fault-total-default-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 47,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 48,
+          "xml_name": "fault-total-default-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 500
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 14,
+        "case_id": "fault-total-json-api-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 48,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 49,
+          "xml_name": "fault-total-json-api-alias"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 500
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 15,
+        "case_id": "auth-session-owner-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 13,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 14,
+          "xml_name": "auth-session-owner-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 200
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 16,
+        "case_id": "auth-bearer-owner-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 14,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 15,
+          "xml_name": "auth-bearer-owner-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 302
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 17,
+        "case_id": "auth-bearer-precedes-session-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 15,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 16,
+          "xml_name": "auth-bearer-precedes-session-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 302
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 18,
+        "case_id": "auth-invalid-bearer-falls-back-session-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 16,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 17,
+          "xml_name": "auth-invalid-bearer-falls-back-session-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 302
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 19,
+        "case_id": "auth-state-invalid-bearer-does-not-fallback-session-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 17,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 18,
+          "xml_name": "auth-state-invalid-bearer-does-not-fallback-session-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 302
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 20,
+        "case_id": "auth-anonymous-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 18,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 19,
+          "xml_name": "auth-anonymous-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 302
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 21,
+        "case_id": "data-empty-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 19,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 20,
+          "xml_name": "data-empty-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 200
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 22,
+        "case_id": "access-status-zero-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 20,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 21,
+          "xml_name": "access-status-zero-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 403
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 23,
+        "case_id": "access-missing-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 21,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 22,
+          "xml_name": "access-missing-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 403
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 24,
+        "case_id": "access-public-other-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 22,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 23,
+          "xml_name": "access-public-other-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 200
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 25,
+        "case_id": "filter-source-favorites-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 23,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 24,
+          "xml_name": "filter-source-favorites-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 200
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 26,
+        "case_id": "tag-normalized-sa2-empty-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 24,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 25,
+          "xml_name": "tag-normalized-sa2-empty-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 200
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 27,
+        "case_id": "fault-total-default-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 49,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 50,
+          "xml_name": "fault-total-default-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 500
+      },
+      {
+        "alias": "web",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 28,
+        "case_id": "fault-total-json-web-alias",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 50,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 51,
+          "xml_name": "fault-total-json-web-alias"
+        },
+        "route_id": "006913d0d956",
+        "target_status": 500
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 29,
+        "case_id": "access-status-null-owner",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 25,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 26,
+          "xml_name": "access-status-null-owner"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 30,
+        "case_id": "access-status-two-owner",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 26,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 27,
+          "xml_name": "access-status-two-owner"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 31,
+        "case_id": "access-private-other-forbidden",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 27,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 28,
+          "xml_name": "access-private-other-forbidden"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 32,
+        "case_id": "access-shared-future",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 28,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 29,
+          "xml_name": "access-shared-future"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 33,
+        "case_id": "access-shared-null-expiry",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 29,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 30,
+          "xml_name": "access-shared-null-expiry"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 34,
+        "case_id": "access-shared-equal-now-forbidden",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 30,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 31,
+          "xml_name": "access-shared-equal-now-forbidden"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 35,
+        "case_id": "access-shared-expired-forbidden",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 31,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 32,
+          "xml_name": "access-shared-expired-forbidden"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 36,
+        "case_id": "access-shared-inactive-forbidden",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 32,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 33,
+          "xml_name": "access-shared-inactive-forbidden"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": false,
+        "canonical_case_ordinal": 37,
+        "case_id": "access-shared-malformed-expiry-value-error",
+        "execution_disposition": "EXECUTED_TYPED_REJECTION",
+        "execution_ordinal": 58,
+        "http_execution": false,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 59,
+          "xml_name": "rejectsTheMalformedExpiryTypedDispositionWithoutPersistingARow"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": null
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 38,
+        "case_id": "access-shared-aware-expiry-type-error",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 59,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-junit-manifest.json",
+          "replaces_historical_leaf_ordinal": 60,
+          "suite_leaf_ordinal": 1,
+          "xml_name": "executesAwareExpiryAsARealFullFilterChainHttpRead"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 39,
+        "case_id": "access-shared-empty-expiry",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 33,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 34,
+          "xml_name": "access-shared-empty-expiry"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 40,
+        "case_id": "access-shared-fetchone-first-row",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 34,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 35,
+          "xml_name": "access-shared-fetchone-first-row"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 41,
+        "case_id": "access-shared-cross-bank-record",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 35,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 36,
+          "xml_name": "access-shared-cross-bank-record"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 403
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 42,
+        "case_id": "filter-q-type-choice",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 36,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 37,
+          "xml_name": "filter-q-type-choice"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 43,
+        "case_id": "filter-q-type-all-uppercase",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 37,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 38,
+          "xml_name": "filter-q-type-all-uppercase"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 44,
+        "case_id": "filter-q-type-unknown-maps-essay",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 38,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 39,
+          "xml_name": "filter-q-type-unknown-maps-essay"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 45,
+        "case_id": "filter-source-mistakes",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 39,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 40,
+          "xml_name": "filter-source-mistakes"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 46,
+        "case_id": "filter-source-case-sensitive-fallback",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 40,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 41,
+          "xml_name": "filter-source-case-sensitive-fallback"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 47,
+        "case_id": "filter-q-type-duplicate-first-wins",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 41,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 42,
+          "xml_name": "filter-q-type-duplicate-first-wins"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 48,
+        "case_id": "filter-source-duplicate-first-wins",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 42,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 43,
+          "xml_name": "filter-source-duplicate-first-wins"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 49,
+        "case_id": "tag-all-bypasses-store",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 43,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 44,
+          "xml_name": "tag-all-bypasses-store"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 50,
+        "case_id": "filter-tag-duplicate-first-all-wins",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 44,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 45,
+          "xml_name": "filter-tag-duplicate-first-all-wins"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 51,
+        "case_id": "tag-case-sensitive-all-enters-store",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 45,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 46,
+          "xml_name": "tag-case-sensitive-all-enters-store"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 52,
+        "case_id": "tag-legacy-migration-sa2-empty",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+        "execution_ordinal": 46,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 47,
+          "xml_name": "tag-legacy-migration-sa2-empty"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 53,
+        "case_id": "fault-favorites-sqlite-continues",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 51,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 52,
+          "xml_name": "fault-favorites-sqlite-continues"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 54,
+        "case_id": "fault-favorites-postgresql-poison-simulation",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 52,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 53,
+          "xml_name": "fault-favorites-postgresql-poison-simulation"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 55,
+        "case_id": "fault-mistakes-sqlite-continues",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 53,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 54,
+          "xml_name": "fault-mistakes-sqlite-continues"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 56,
+        "case_id": "fault-mistakes-postgresql-poison-simulation",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 54,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 55,
+          "xml_name": "fault-mistakes-postgresql-poison-simulation"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 57,
+        "case_id": "fault-types-degrades",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 55,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 56,
+          "xml_name": "fault-types-degrades"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 58,
+        "case_id": "fault-source-favorites-second-count-postgresql-poison-simulation",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 56,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 57,
+          "xml_name": "fault-source-favorites-second-count-postgresql-poison-simulation"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 200
+      },
+      {
+        "alias": "api",
+        "business_jdbc_reached": true,
+        "canonical_case_ordinal": 59,
+        "case_id": "fault-share-access-hard-failure",
+        "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+        "execution_ordinal": 57,
+        "http_execution": true,
+        "proof": {
+          "manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+          "suite_leaf_ordinal": 58,
+          "xml_name": "fault-share-access-hard-failure"
+        },
+        "route_id": "6858f6fa506f",
+        "target_status": 500
+      }
+    ],
+    "single_effective_override_case_id": "access-shared-aware-expiry-type-error",
+    "summary": {
+      "api_alias_http_execution_count": 44,
+      "bound_only_case_count": 0,
+      "business_jdbc_reached_http_count": 50,
+      "execution_disposition_counts": {
+        "EXECUTED_FULL_CONTEXT_HTTP": 47,
+        "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT": 11,
+        "EXECUTED_TYPED_REJECTION": 1
+      },
+      "http_execution_count": 58,
+      "http_status_counts": {
+        "200": 35,
+        "302": 5,
+        "401": 3,
+        "403": 10,
+        "500": 5
+      },
+      "logical_disposition_count": 59,
+      "mocked_application_result_case_count": 0,
+      "non_fault_http_execution_count": 47,
+      "postgres_abort_http_execution_count": 11,
+      "pre_business_jdbc_termination_http_count": 8,
+      "typed_rejection_count": 1,
+      "web_alias_http_execution_count": 14
+    }
+  },
+  "document_payload_sha256": "eeb2b6dd9be091950867cfe8040c486b867179c49f0a0861c700864ec773eb99",
+  "junit_execution": {
+    "aggregate_physical_leaf_count": 61,
+    "failed_error_skipped_or_flaky_leaf_count": 0,
+    "historical_manifest": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+    "historical_physical_leaf_count": 60,
+    "logical_disposition_leaf_count": 59,
+    "new_manifest_document_payload_sha256": "08bdcc19ee0f3607d4e367a135d9a6544a5a9b5e5e999a2738180bc3258c8236",
+    "new_manifest_proof_payload_sha256": "8ea42f371664c6a664b0cd8b408c292a8a2a57524215a718a71c634a0bc93047",
+    "new_physical_leaf_count": 1,
+    "new_raw_report_byte_count": 51169,
+    "new_raw_report_sha256": "e1d5caebd6dfc7c792c8e4b4af337081246f718da5d1c4c82e072f46d6a1603b",
+    "replacement_leaf_count": 1,
+    "selected_effective_proof_leaf_count": 60,
+    "superseded_historical_representation_leaf_count": 1,
+    "superseded_leaf_double_counted": false,
+    "supplementary_authentication_leaf_count": 1,
+    "typed_normalization_manifest": "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-junit-manifest.json"
+  },
+  "malformed_typed_rejection": {
+    "case_id": "access-shared-malformed-expiry-value-error",
+    "execution_disposition": "EXECUTED_TYPED_REJECTION",
+    "http_execution": false,
+    "no_row_http_forbidden_from_claiming_malformed_semantics": true,
+    "persisted_bank_share_row_count": 0,
+    "sqlstate": "22007",
+    "target_status": null
+  },
+  "predecessor": {
+    "byte_count": 32763,
+    "captured_at": "2026-07-18T14:04:12+08:00",
+    "contract_id": "ti.phase4c.personal-bank-user-counts-http-target-execution-post-push-anchor-contract",
+    "document_payload_sha256": "b38abd80403536c7e6db2ec9b8a8920dc06e9f740ed9c065941e483a0b5a30e2",
+    "immutable": true,
+    "scope": "phase4c-personal-bank-user-counts-http-target-execution-post-push-external-anchor",
+    "sha256": "1aa86e7cd8fe4f6c6c808eee166ff0ed30f7e228e707941efde87323b9ae057a",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+    "status": "target_execution_post_push_checkpoint_externally_anchored_typed_parity_pending_routes_pending"
+  },
+  "predecessor_external_git_anchor": {
+    "added_path_count": 6,
+    "anchored_source_count": 6,
+    "anchored_source_total_bytes": 196595,
+    "anchored_sources": {
+      "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json": {
+        "byte_count": 32763,
+        "git_blob_oid": "a010939ba208dd03387595ba191807eca5612ee8",
+        "mode": "100644",
+        "repository_path": "Ti-Java/docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "sha256": "1aa86e7cd8fe4f6c6c808eee166ff0ed30f7e228e707941efde87323b9ae057a",
+        "ti_java_relative_path": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.java": {
+        "byte_count": 54058,
+        "git_blob_oid": "67ad65a5d482128549df3b5d012e5314cd5cb173",
+        "mode": "100644",
+        "repository_path": "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.java",
+        "sha256": "0042ca6deb05498b2d363c81843d7ec39e3f2cb6af2d43376b24b1d24b03940a",
+        "ti_java_relative_path": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.java"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractParityTest.java": {
+        "byte_count": 18477,
+        "git_blob_oid": "c275b712c210a21560bb2a91238ca4500eb4b907",
+        "mode": "100644",
+        "repository_path": "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractParityTest.java",
+        "sha256": "4824d1aa3ecb5208277066731b16efe33eadf2748348071f04e43c6e5887b520",
+        "ti_java_relative_path": "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractParityTest.java"
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py": {
+        "byte_count": 37163,
+        "git_blob_oid": "70951075267e29b9cb354f7f03888b23adc504c9",
+        "mode": "100644",
+        "repository_path": "Ti-Java/tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+        "sha256": "4f97c2fcdfd36ac943fce4a1e948d99bf52cb8418519602141d40614ce78af44",
+        "ti_java_relative_path": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py"
+      },
+      "tools/phase4c_http_target_execution_post_push_anchor_successor_acceptance.py": {
+        "byte_count": 35451,
+        "git_blob_oid": "2a5ec91d4709d11709571805786a8c641dfeba04",
+        "mode": "100644",
+        "repository_path": "Ti-Java/tools/phase4c_http_target_execution_post_push_anchor_successor_acceptance.py",
+        "sha256": "fe074402bcb58cfd3a681769050dd80174c584a082b462047d9684950b60e363",
+        "ti_java_relative_path": "tools/phase4c_http_target_execution_post_push_anchor_successor_acceptance.py"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py": {
+        "byte_count": 18683,
+        "git_blob_oid": "368af3c122f52e35b66525f5e01362acbc956c20",
+        "mode": "100644",
+        "repository_path": "Ti-Java/tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+        "sha256": "f51784ae1831b54e630150af2af12d3692397f3191d74314f3f0816b847cdfae",
+        "ti_java_relative_path": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py"
+      }
+    },
+    "authored_at": "2026-07-18T15:06:30+08:00",
+    "changed_path_count": 18,
+    "commit_oid": "c38defa703b358a280122a09019031c040c58ea7",
+    "committed_at": "2026-07-18T15:06:30+08:00",
+    "deleted_line_count": 40,
+    "deleted_path_count": 0,
+    "exact_changed_paths": [
+      "Ti-Java/README.md",
+      "Ti-Java/docs/refactor/05-progress.md",
+      "Ti-Java/docs/refactor/phase4c/README.md",
+      "Ti-Java/docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+      "Ti-Java/infra/phase2/README.md",
+      "Ti-Java/infra/phase2/verify-static.sh",
+      "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushAnchorContractParityTest.java",
+      "Ti-Java/server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest.java",
+      "Ti-Java/tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+      "Ti-Java/tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "Ti-Java/tools/phase2_wormhole_successor_acceptance.py",
+      "Ti-Java/tools/phase4c_http_target_execution_post_push_anchor_successor_acceptance.py",
+      "Ti-Java/tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+      "Ti-Java/tools/test_phase2_wormhole_successor_acceptance.py",
+      "Ti-Java/tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+      "Ti-Java/tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py"
+    ],
+    "explicit_git_replay_supported": true,
+    "inserted_line_count": 4544,
+    "modified_path_count": 12,
+    "mutable_ref_is_validation_authority": false,
+    "non_ti_java_path_count": 0,
+    "object_format": "sha1",
+    "ordinary_contract_load_requires_git": false,
+    "parent_oid": "1dae013e11c76ad858d6695f166a32631eb1525e",
+    "predecessor_current_anchor_sources_external_git_anchor_complete": true,
+    "raw_delta_sha256": "66bb02a32b94b858606b965b55c01cc1f09c7c6ded72ff7dcc639bb7c8284f72",
+    "root_tree_oid": "5ac75d896171039f34650c92829282d8a5e3c3f8",
+    "subject": "test(java): externally anchor user counts handoff",
+    "ti_java_tree_oid": "07086dc62157018ec1c989832e5e63bfefbae0f0"
+  },
+  "production_surface": {
+    "client_changed": false,
+    "gateway_or_proxy_changed": false,
+    "openapi_sha256": "076957f391fd9aed65861d0633ad4b21d88b391df5217b10e2105b88b56605c9",
+    "operator_changed": false,
+    "production_build_context_changed": false,
+    "production_schema_or_index_changed": false,
+    "production_source_changed": false,
+    "route_delta_sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b"
+  },
+  "schema_version": 1,
+  "scope": "phase4c-personal-bank-user-counts-http-typed-normalization",
+  "source_contracts": {
+    "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json": {
+      "byte_count": 1200690,
+      "path": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1"
+    },
+    "docs/refactor/phase4c/personal-bank-user-counts-golden-target-execution-evidence.json": {
+      "byte_count": 173397,
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-execution-evidence.json",
+      "sha256": "947737b496168385b07db3d71a3bcf99d0940b1b52da4188ebf64516257b4002"
+    },
+    "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json": {
+      "byte_count": 1442,
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json",
+      "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39"
+    },
+    "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json": {
+      "byte_count": 33246,
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-target-execution-junit-manifest.json",
+      "sha256": "64ff60cd56bf60f585af3d55b4ed4b4f7ee30b6a4c9e3e840688a1caaa45664b"
+    },
+    "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-approved-difference.md": {
+      "byte_count": 3730,
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-approved-difference.md",
+      "sha256": "3c6ecb59cae4e8a2f31e7dd0ed74bcca56e0cf61830339254523f3f824e652be"
+    },
+    "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-junit-manifest.json": {
+      "byte_count": 9342,
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-junit-manifest.json",
+      "sha256": "b6c619ee1ed4be44fd68903c2449188fd6a65ee39b7c855b1796c901d3a0268c"
+    },
+    "docs/refactor/phase4c/route-parity-delta.csv": {
+      "byte_count": 2230,
+      "path": "docs/refactor/phase4c/route-parity-delta.csv",
+      "sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b"
+    },
+    "infra/phase2/verify-in-maven-container.sh": {
+      "byte_count": 3131,
+      "path": "infra/phase2/verify-in-maven-container.sh",
+      "sha256": "2a9fa5d2e7b17f2f8d691b3d8e9e7e615e6c960c12c351525baae4251a56090e"
+    },
+    "openapi/phase4c-personal-bank-user-counts.openapi.json": {
+      "byte_count": 87401,
+      "path": "openapi/phase4c-personal-bank-user-counts.openapi.json",
+      "sha256": "076957f391fd9aed65861d0633ad4b21d88b391df5217b10e2105b88b56605c9"
+    },
+    "server/.mvn/wrapper/maven-wrapper.properties": {
+      "byte_count": 446,
+      "path": "server/.mvn/wrapper/maven-wrapper.properties",
+      "sha256": "ec15e462d862b9ba5dc9d8cdf249576bfdad7c70ccd441d64117d9abcd808dab"
+    },
+    "server/Dockerfile": {
+      "byte_count": 1850,
+      "path": "server/Dockerfile",
+      "sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+    },
+    "server/pom.xml": {
+      "byte_count": 9582,
+      "path": "server/pom.xml",
+      "sha256": "24b45d68c44c64a6b2fda2fbf6f342889640f7c3dbc088015703cd1a68ff916b"
+    },
+    "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsTypedNormalizationIT.java": {
+      "byte_count": 30716,
+      "path": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsTypedNormalizationIT.java",
+      "sha256": "f9bd7dbd51e65abe8f01e80d0d564b9dfdba6856f95c4b06ad21b3705a2f025f"
+    },
+    "server/src/test/java/io/saksk/ti/support/Phase2ContainerImages.java": {
+      "byte_count": 1220,
+      "path": "server/src/test/java/io/saksk/ti/support/Phase2ContainerImages.java",
+      "sha256": "c3bcd6b78ed2606ddc1e7a685774b9d0c2969c93502b6983d5f8352e27c29f50"
+    },
+    "server/src/test/java/io/saksk/ti/support/Phase2PostgresContainers.java": {
+      "byte_count": 1698,
+      "path": "server/src/test/java/io/saksk/ti/support/Phase2PostgresContainers.java",
+      "sha256": "c5ecf36dc5e943f9baa34b61be65bf73cf4502b1e8bdccc0a012a8db55c29ffe"
+    },
+    "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsFaultInjectingDataSource.java": {
+      "byte_count": 20783,
+      "path": "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsFaultInjectingDataSource.java",
+      "sha256": "83f381e0766ebeb0c71aa3b8f3f024d9af1a0099776b2d8923082947d6116dae"
+    },
+    "server/src/test/resources/db/phase3/030-auth-schema.sql": {
+      "byte_count": 934,
+      "path": "server/src/test/resources/db/phase3/030-auth-schema.sql",
+      "sha256": "9f9546be5f32bd1babcb9a4711c2cc9b3641e4c22ff051738ba9d735a150c87e"
+    },
+    "server/src/test/resources/db/phase4b/062-personal-bank-share-list-schema.sql": {
+      "byte_count": 1654,
+      "path": "server/src/test/resources/db/phase4b/062-personal-bank-share-list-schema.sql",
+      "sha256": "d0e51e7cd16d0275611a82c984a52538beb14b10b19c50925646dd48a4d1c29d"
+    },
+    "server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql": {
+      "byte_count": 1291,
+      "path": "server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql",
+      "sha256": "90d94b6c90c09586908e3108626ddbace04a83b56ed2018a55709ccdc7a2f684"
+    },
+    "server/src/test/resources/db/phase4b/067-personal-bank-user-counts-schema.sql": {
+      "byte_count": 2951,
+      "path": "server/src/test/resources/db/phase4b/067-personal-bank-user-counts-schema.sql",
+      "sha256": "32367c8795654e0ae2f5e2f1d6d4e42fb70e354f745a7f06894e28ac4a45f934"
+    },
+    "server/src/test/resources/db/phase4c/071-personal-bank-user-counts-golden-target-seed.sql": {
+      "byte_count": 9672,
+      "path": "server/src/test/resources/db/phase4c/071-personal-bank-user-counts-golden-target-seed.sql",
+      "sha256": "5fbdc1da8e15072995baffba15b3a430b1ddd93e4788237a44bc3a5965e7556e"
+    },
+    "server/src/test/resources/db/phase4c/072-personal-bank-user-counts-typed-normalization-seed.sql": {
+      "byte_count": 363,
+      "path": "server/src/test/resources/db/phase4c/072-personal-bank-user-counts-typed-normalization-seed.sql",
+      "sha256": "089b795d6e6a3efdb1af86641701bd1bf9d30e2c1a94c65a0a32865bdfca29c6"
+    },
+    "tools/normalize_phase4c_personal_bank_user_counts_typed_normalization_junit.py": {
+      "byte_count": 22318,
+      "path": "tools/normalize_phase4c_personal_bank_user_counts_typed_normalization_junit.py",
+      "sha256": "3ff33e3ef1ad3171ea2ca97f9b70fc49db1c3dd92d97a5d8c634497d78285acc"
+    },
+    "tools/test_normalize_phase4c_personal_bank_user_counts_typed_normalization_junit.py": {
+      "byte_count": 10366,
+      "path": "tools/test_normalize_phase4c_personal_bank_user_counts_typed_normalization_junit.py",
+      "sha256": "51b316b9370da51b3c4f93b601ffb600451494d2743c0f08fbe17335e8d8bdcd"
+    }
+  },
+  "status": "typed_normalization_executed_external_anchor_pending_routes_pending",
+  "typed_normalization": {
+    "behavior_difference_decision": "documented_local_adr_pending_current_node_external_git_anchor",
+    "business_jdbc_reached": true,
+    "canonical_local_datetime": "2026-07-17T13:00:00",
+    "case_id": "access-shared-aware-expiry-type-error",
+    "cast_compatibility_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "cast_session_time_zones": [
+      "UTC",
+      "America/Los_Angeles"
+    ],
+    "cross_version_equal": true,
+    "difference_document": "docs/refactor/phase4c/personal-bank-user-counts-typed-normalization-approved-difference.md",
+    "difference_id": "P4C-LEARNING-013",
+    "effective_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+    "fixture_and_session_exchange_occur_before_request_trace": true,
+    "fixture_share_id": 99661,
+    "fixture_share_record_id": 99681,
+    "full_filter_http_version": "18.4",
+    "historical_disposition": "EXECUTED_TYPED_COLLAPSE",
+    "http_fixture_origin": "java_string_bind_explicit_cast_insert_before_request_trace",
+    "http_fixture_sql_literal_seeded": false,
+    "input": "2026-07-17T13:00:00+08:00",
+    "input_kind": "string_bind_explicit_cast",
+    "negative_offset_input": "2026-07-17T13:00:00-05:00",
+    "offset_provenance_erased": true,
+    "postgresql_type": "timestamp without time zone",
+    "proof_scope": "Java String CAST compatibility on PostgreSQL 16.14 and 18.4 across UTC and America/Los_Angeles; full production filter chain MockMvc HTTP on PostgreSQL 18.4 and Redis 7.4.7; not random-port Tomcat network evidence",
+    "request_interval_assertions": {
+      "authority_users_sql_count": 1,
+      "bank_access_sql_count": 5,
+      "each_route_rate_key_value": 1,
+      "favorite_membership_sql_count": 1,
+      "hmac_route_rate_key_count": 3,
+      "mistake_membership_sql_count": 1,
+      "nine_table_fingerprint_unchanged": true,
+      "question_summary_sql_count": 2,
+      "schema_mutation_count": 0,
+      "share_access_sql_count": 5,
+      "tag_membership_sql_count": 0,
+      "users_last_active_write_dml_count": 0,
+      "write_dml_count": 0
+    },
+    "session_timezone_independent": true,
+    "source_status": 500,
+    "target_data": {
+      "favorites": 0,
+      "mistakes": 0,
+      "shuffle_options_available": false,
+      "total": 9,
+      "types": [
+        "判断题",
+        "简答题",
+        "填空题",
+        "多选题",
+        "选择题",
+        "选择题",
+        "简答题"
+      ]
+    },
+    "target_status": 200,
+    "whole_test_lifecycle_zero_dml_claimed": false
+  },
+  "worm_evidence": {
+    "canonical_schema_dump_sha256": "96a5fda32a6ac4cb1e09cbb8bb0c1c5b33ff6d479cdaefb1d02fcf655a84d38b",
+    "dockerfile_sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+    "fixed_chain_node_count": 5,
+    "java_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+    "new_worm_report_created": false,
+    "predecessor_sha256": "a393e79afb76c53a1aca8be1e4709506b58ad062e3c6536c26c12f10b29d1ec6",
+    "reused": true,
+    "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json"
+  }
+}

@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -455,6 +456,56 @@ def document_payload_sha256(document: dict[str, Any]) -> str:
     })
 
 
+def _load_typed_normalization_successor_acceptance() -> object:
+    """Lazily load the sole reviewed successor for advanced Phase2 bytes."""
+
+    qualified_name = "tools.phase4c_http_typed_normalization_successor_acceptance"
+    direct_name = "phase4c_http_typed_normalization_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed HTTP typed-normalization successor is required"
+        ) from error
+
+
+def _validate_current_or_typed_normalization_successor(
+        root: Path,
+        relative: str,
+        accepted_sha256: str,
+        payload: bytes,
+) -> None:
+    """Require unchanged c38 bytes or one exact code-fixed third hop."""
+
+    physical_sha256 = sha256_bytes(payload)
+    if physical_sha256 == accepted_sha256:
+        if len(payload) != SUCCESSOR_BYTE_COUNT[relative]:
+            raise AssertionError(
+                f"post-push anchor successor size drifted: {relative}"
+            )
+        return
+    acceptance = _load_typed_normalization_successor_acceptance()
+    accepted_lookup = getattr(acceptance, "accepted_sha256", None)
+    successor_lookup = getattr(acceptance, "successor_sha256", None)
+    if not callable(accepted_lookup) or not callable(successor_lookup):
+        raise AssertionError("typed-normalization successor API is incomplete")
+    if accepted_lookup(relative) != accepted_sha256:
+        raise AssertionError(
+            f"typed-normalization successor does not accept historical bytes: {relative}"
+        )
+    if successor_lookup(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"typed-normalization successor does not bind current bytes: {relative}"
+        )
+
+
 def serialized_contract(document: dict[str, Any]) -> bytes:
     return (
         json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
@@ -605,10 +656,12 @@ def _validate_local_successors(root: Path) -> None:
         return
     for relative in SUCCESSOR_SOURCES:
         payload = fixed_regular_file(root, relative).read_bytes()
-        if sha256_bytes(payload) != SUCCESSOR_SHA256[relative]:
-            raise AssertionError(f"post-push anchor successor hash drifted: {relative}")
-        if len(payload) != SUCCESSOR_BYTE_COUNT[relative]:
-            raise AssertionError(f"post-push anchor successor size drifted: {relative}")
+        _validate_current_or_typed_normalization_successor(
+            root,
+            relative,
+            SUCCESSOR_SHA256[relative],
+            payload,
+        )
 
 
 def _successor_overrides() -> dict[str, dict[str, Any]]:

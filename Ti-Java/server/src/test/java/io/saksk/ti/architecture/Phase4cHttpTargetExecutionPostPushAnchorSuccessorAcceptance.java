@@ -389,9 +389,33 @@ final class Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance {
                         .path("overrides").path(relative));
         Path path = fixedRegularFile(root, relative);
         String physical = sha256(path);
-        require(source.successorSha256().equals(physical)
-                        && Files.size(path) == source.successorByteCount(),
+        String transitioned = currentOrTypedNormalizationSuccessorHash(
+                root, relative, source.successorSha256(), physical);
+        require(!source.successorSha256().equals(physical)
+                        || Files.size(path) == source.successorByteCount(),
                 "post-push anchor successor physical bytes drifted: " + relative);
+        return transitioned;
+    }
+
+    private static String currentOrTypedNormalizationSuccessorHash(
+            Path root,
+            String relative,
+            String declared,
+            String physical
+    ) throws IOException {
+        if (declared.equals(physical)) {
+            return physical;
+        }
+        require(declared.equals(
+                        Phase4cHttpTypedNormalizationSuccessorAcceptance
+                                .acceptedHash(relative)),
+                "typed-normalization successor does not accept historical bytes: "
+                        + relative);
+        require(physical.equals(
+                        Phase4cHttpTypedNormalizationSuccessorAcceptance
+                                .successorHash(root, relative)),
+                "typed-normalization successor does not bind current bytes: "
+                        + relative);
         return physical;
     }
 
@@ -804,8 +828,11 @@ final class Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance {
         for (Map.Entry<String, SuccessorSource> entry : SUCCESSOR_SOURCES.entrySet()) {
             Path path = fixedRegularFile(root, entry.getKey());
             SuccessorSource expected = entry.getValue();
-            require(expected.successorSha256().equals(sha256(path))
-                            && Files.size(path) == expected.successorByteCount(),
+            String physical = sha256(path);
+            currentOrTypedNormalizationSuccessorHash(
+                    root, entry.getKey(), expected.successorSha256(), physical);
+            require(!expected.successorSha256().equals(physical)
+                            || Files.size(path) == expected.successorByteCount(),
                     "post-push anchor successor source drifted: " + entry.getKey());
         }
     }

@@ -1,0 +1,6 @@
+-- Phase 4C typed-normalization fixture boundary.
+--
+-- This initializer intentionally performs no DML.  The integration test creates
+-- the share consumed by HTTP through a Java String bind and an explicit
+-- CAST(? AS timestamp without time zone).  Keeping the row out of this file
+-- prevents a SQL literal from being mistaken for evidence about JDBC binding.

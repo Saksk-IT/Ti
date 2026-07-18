@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -415,6 +416,54 @@ def _payload_sha256(document: dict[str, Any]) -> str:
     })
 
 
+def _load_typed_normalization_successor_acceptance() -> object:
+    """Lazily import the sole fixed successor for advanced Phase2 bytes."""
+
+    qualified_name = "tools.phase4c_http_typed_normalization_successor_acceptance"
+    direct_name = "phase4c_http_typed_normalization_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed HTTP typed-normalization successor is required"
+        ) from error
+
+
+def _current_or_typed_normalization_successor_sha256(
+        root: Path,
+        relative: str,
+        declared_sha256: str,
+        physical_sha256: str,
+        *,
+        label: str,
+) -> str:
+    """Accept c38 bytes directly or one exact code-fixed third hop."""
+
+    if declared_sha256 == physical_sha256:
+        return physical_sha256
+    acceptance = _load_typed_normalization_successor_acceptance()
+    accepted_lookup = getattr(acceptance, "accepted_sha256", None)
+    successor_lookup = getattr(acceptance, "successor_sha256", None)
+    if not callable(accepted_lookup) or not callable(successor_lookup):
+        raise AssertionError("typed-normalization successor API is incomplete")
+    if accepted_lookup(relative) != declared_sha256:
+        raise AssertionError(
+            f"typed-normalization successor does not accept historical {label}: {relative}"
+        )
+    if successor_lookup(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"typed-normalization successor does not bind current {label}: {relative}"
+        )
+    return physical_sha256
+
+
 def _fixed_regular_file(root: Path, relative: str) -> Path:
     resolved_root = root.resolve(strict=True)
     candidate = Path(relative)
@@ -521,9 +570,17 @@ def _validate_local_inputs(root: Path) -> None:
     if successor_constants_settled():
         for relative in SUCCESSOR_PATHS:
             payload = _fixed_regular_file(root, relative).read_bytes()
+            physical_sha256 = _sha256_bytes(payload)
+            _current_or_typed_normalization_successor_sha256(
+                root,
+                relative,
+                SUCCESSOR_SHA256[relative],
+                physical_sha256,
+                label="post-push anchor successor source",
+            )
             if (
-                _sha256_bytes(payload) != SUCCESSOR_SHA256[relative]
-                or len(payload) != SUCCESSOR_BYTE_COUNT[relative]
+                physical_sha256 == SUCCESSOR_SHA256[relative]
+                and len(payload) != SUCCESSOR_BYTE_COUNT[relative]
             ):
                 raise AssertionError(
                     f"post-push anchor successor source drifted: {relative}"
@@ -759,12 +816,18 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
         raise AssertionError(f"post-push anchor successor override drifted: {relative}")
     payload = _fixed_regular_file(ti_java_root, relative).read_bytes()
     physical = _sha256_bytes(payload)
-    if (
-        physical != SUCCESSOR_SHA256[relative]
-        or len(payload) != SUCCESSOR_BYTE_COUNT[relative]
+    transitioned = _current_or_typed_normalization_successor_sha256(
+        ti_java_root,
+        relative,
+        SUCCESSOR_SHA256[relative],
+        physical,
+        label="post-push anchor successor physical hash",
+    )
+    if physical == SUCCESSOR_SHA256[relative] and (
+        len(payload) != SUCCESSOR_BYTE_COUNT[relative]
     ):
         raise AssertionError(f"post-push anchor successor bytes drifted: {relative}")
-    return physical
+    return transitioned
 
 
 def _run_read_only_git(repository_root: Path, *arguments: str) -> bytes:

@@ -102,6 +102,9 @@ TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE = (
 TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE = (
     "tools.phase4c_http_target_execution_post_push_anchor_successor_acceptance"
 )
+TYPED_NORMALIZATION_SUCCESSOR_MODULE = (
+    "tools.phase4c_http_typed_normalization_successor_acceptance"
+)
 
 
 class EvidenceValidationError(ValueError):
@@ -584,6 +587,11 @@ def validate_fixed_acceptance(
         "phase4c_http_target_execution_post_push_anchor_successor_acceptance",
         "Phase4C fixed target-execution post-push anchor successor acceptance",
     )
+    typed_normalization_successor = _load_fixed_successor_module(
+        TYPED_NORMALIZATION_SUCCESSOR_MODULE,
+        "phase4c_http_typed_normalization_successor_acceptance",
+        "Phase4C fixed HTTP typed-normalization successor acceptance",
+    )
 
     load_read_successor_contract = _required_loader(
         read_successor,
@@ -604,6 +612,11 @@ def validate_fixed_acceptance(
         post_push_anchor_successor,
         "load",
         "Phase4C fixed target-execution post-push anchor successor acceptance",
+    )
+    load_http_typed_normalization_successor = _required_loader(
+        typed_normalization_successor,
+        "load",
+        "Phase4C fixed HTTP typed-normalization successor acceptance",
     )
 
     require(
@@ -630,6 +643,10 @@ def validate_fixed_acceptance(
             dict,
         ),
         "Phase4C fixed target-execution post-push anchor successor contract is required",
+    )
+    require(
+        isinstance(load_http_typed_normalization_successor(ti_java_root), dict),
+        "Phase4C fixed HTTP typed-normalization successor contract is required",
     )
 
     return validate_fixed_chain(

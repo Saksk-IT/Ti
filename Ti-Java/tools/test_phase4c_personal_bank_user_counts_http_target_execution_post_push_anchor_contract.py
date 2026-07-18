@@ -26,9 +26,14 @@ try:
         phase4c_http_target_execution_post_push_anchor_successor_acceptance
         as acceptance,
     )
+    from tools import (
+        phase4c_http_typed_normalization_successor_acceptance
+        as typed_acceptance,
+    )
 except ModuleNotFoundError:  # Direct discovery from tools/.
     import build_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract as builder
     import phase4c_http_target_execution_post_push_anchor_successor_acceptance as acceptance
+    import phase4c_http_typed_normalization_successor_acceptance as typed_acceptance
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -147,10 +152,12 @@ class Phase4cTargetExecutionPostPushAnchorContractTest(unittest.TestCase):
             self.assertEqual(
                 descriptor["accepted_sha256"], acceptance.accepted_sha256(relative)
             )
-            self.assertEqual(
-                acceptance.SUCCESSOR_SHA256[relative],
-                acceptance.successor_sha256(ROOT, relative),
+            expected = (
+                typed_acceptance.successor_sha256(ROOT, relative)
+                if relative in typed_acceptance.THIRD_HOP_SOURCES
+                else acceptance.SUCCESSOR_SHA256[relative]
             )
+            self.assertEqual(expected, acceptance.successor_sha256(ROOT, relative))
         for relative in acceptance.CURRENT_ANCHOR_SOURCES + [
             "unknown/source",
             "../escape",
@@ -265,6 +272,9 @@ class Phase4cTargetExecutionPostPushAnchorContractTest(unittest.TestCase):
             acceptance.PREDECESSOR_RELATIVE,
             acceptance.JUNIT_MANIFEST_RELATIVE,
             acceptance.WORM_RELATIVE,
+            typed_acceptance.CONTRACT_RELATIVE,
+            typed_acceptance.PREDECESSOR_RELATIVE,
+            *typed_acceptance.LOCAL_SOURCES,
         }
         if acceptance.successor_constants_settled():
             relatives.update(acceptance.SUCCESSOR_SOURCES)
