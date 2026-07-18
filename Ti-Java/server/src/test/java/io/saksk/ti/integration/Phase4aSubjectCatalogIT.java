@@ -14,9 +14,12 @@ import io.saksk.ti.TiApplication;
 import io.saksk.ti.support.Phase2ContainerImages;
 import io.saksk.ti.support.Phase2PostgresContainers;
 import jakarta.servlet.http.Cookie;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,14 +29,20 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.zip.DeflaterOutputStream;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,18 +86,17 @@ import tools.jackson.databind.node.ObjectNode;
 class Phase4aSubjectCatalogIT {
 
     private static final String REDIS_PASSWORD = "phase4a-ephemeral-redis";
-    private static final String ORDINARY_JWT =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-                    + "eyJ1c2VyX2lkIjo0MTAxLCJvcGVuaWQiOiIiLCJzZXNzaW9uX3ZlcnNpb24iOjMs"
-                    + "ImV4cCI6MTc4NTQ1NjAwMCwiaWF0IjoxNzg0MTYwMDAwLCJqdGkiOiI0MTAxMDAw"
-                    + "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9."
-                    + "NSc7AU2c4cDNz-4sOwzeDt_TNtXFmtK4POoUdStgor0";
-    private static final String ADMINISTRATOR_JWT =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-                    + "eyJ1c2VyX2lkIjo0MTAyLCJvcGVuaWQiOiIiLCJzZXNzaW9uX3ZlcnNpb24iOjUs"
-                    + "ImV4cCI6MTc4NTQ1NjAwMCwiaWF0IjoxNzg0MTYwMDAwLCJqdGkiOiI0MTAyMDAw"
-                    + "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9."
-                    + "rfgOlTyDvpS39UvUTBCK1ycCCLl_hj0i_w5OY_vaVZo";
+    private static final String LEGACY_AUTH_SECRET =
+            "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum";
+    private static final byte[] LEGACY_AUTH_SECRET_BYTES =
+            LEGACY_AUTH_SECRET.getBytes(StandardCharsets.UTF_8);
+    private static final Instant FIXED_NOW = Instant.now();
+    private static final Instant CREDENTIAL_EXPIRES_AT = FIXED_NOW.plus(Duration.ofHours(1));
+    private static final String ORDINARY_JWT = signedLegacyJwt(
+            4101, 3, "00000000000000000000000000004101");
+    private static final String ADMINISTRATOR_JWT = signedLegacyJwt(
+            4102, 5, "00000000000000000000000000004102");
+    private static final String LEGACY_FLASK_COOKIE = signedLegacyFlaskCookie();
 
     @Container
     static final PostgreSQLContainer POSTGRES = Phase2PostgresContainers.reference18()
@@ -128,9 +136,10 @@ class Phase4aSubjectCatalogIT {
         registry.add("ti.security.subject-read-rate-limit.requests-per-hour", () -> "600");
         registry.add("ti.security.subject-read-rate-limit.multiplier", () -> "1");
         registry.add("ti.security.legacy-auth.enabled", () -> "true");
-        registry.add("ti.security.legacy-auth.accept-until", () -> "2026-07-18T00:00:00Z");
-        registry.add("ti.security.legacy-auth.secret",
-                () -> "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum");
+        registry.add(
+                "ti.security.legacy-auth.accept-until",
+                () -> FIXED_NOW.plus(Duration.ofDays(1)).toString());
+        registry.add("ti.security.legacy-auth.secret", () -> LEGACY_AUTH_SECRET);
     }
 
     @Autowired
@@ -291,18 +300,13 @@ class Phase4aSubjectCatalogIT {
     void flaskSessionExchangeAndAuthoritativeTargetSessionBothProtectCatalogReads()
             throws Exception {
         Map<String, String> databaseBefore = databaseFingerprint();
-        String flaskCookie = legacyVectors()
-                .path("flask_sessions")
-                .get(1)
-                .path("cookie")
-                .asString();
 
         MvcResult exchanged;
         List<String> exchangeSql = null;
         sqlCounter.start();
         try {
             exchanged = mockMvc.perform(get("/api/quiz/subjects")
-                            .cookie(new Cookie("session", flaskCookie))
+                            .cookie(new Cookie("session", LEGACY_FLASK_COOKIE))
                             .header("X-Request-ID", "phase4a-flask-session"))
                     .andExpect(status().isOk())
                     .andReturn();
@@ -393,12 +397,74 @@ class Phase4aSubjectCatalogIT {
                 .noneMatch(key -> key.contains("session") || key.contains("cache:quiz"));
     }
 
-    private JsonNode legacyVectors() throws Exception {
-        try (var stream = getClass().getClassLoader()
-                .getResourceAsStream("compat/legacy-auth-vectors.json")) {
-            assertThat(stream).isNotNull();
-            return json.readTree(stream);
+    private static String signedLegacyJwt(long userId, int sessionVersion, String jti) {
+        String header = encodeBase64Url(
+                "{\"alg\":\"HS256\",\"typ\":\"JWT\"}"
+                        .getBytes(StandardCharsets.UTF_8));
+        String payload = encodeBase64Url(("{\"user_id\":" + userId
+                + ",\"openid\":\"\",\"session_version\":" + sessionVersion
+                + ",\"exp\":" + CREDENTIAL_EXPIRES_AT.getEpochSecond()
+                + ",\"iat\":" + FIXED_NOW.getEpochSecond()
+                + ",\"jti\":\"" + jti + "\"}").getBytes(StandardCharsets.UTF_8));
+        String signingInput = header + "." + payload;
+        return signingInput + "." + encodeBase64Url(hmac(
+                "HmacSHA256",
+                LEGACY_AUTH_SECRET_BYTES,
+                signingInput.getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    private static String signedLegacyFlaskCookie() {
+        String json = "{\"_permanent\":true,\"user_id\":4242,"
+                + "\"username\":\"public-test-user\",\"is_admin\":true,"
+                + "\"is_subject_admin\":true,\"is_notification_admin\":false,"
+                + "\"session_version\":7,\"remember\":true,"
+                + "\"csrf_token\":\"public-test-only-csrf-token\"}";
+        String payload = "." + encodeBase64Url(compress(json.getBytes(StandardCharsets.UTF_8)));
+        String timestamp = encodeBase64Url(minimalBigEndian(FIXED_NOW.getEpochSecond()));
+        String unsigned = payload + "." + timestamp;
+        byte[] derivedKey = hmac(
+                "HmacSHA1",
+                LEGACY_AUTH_SECRET_BYTES,
+                "cookie-session".getBytes(StandardCharsets.UTF_8));
+        byte[] signature = hmac(
+                "HmacSHA1", derivedKey, unsigned.getBytes(StandardCharsets.US_ASCII));
+        Arrays.fill(derivedKey, (byte) 0);
+        return unsigned + "." + encodeBase64Url(signature);
+    }
+
+    private static byte[] minimalBigEndian(long value) {
+        byte[] full = ByteBuffer.allocate(Long.BYTES).putLong(value).array();
+        int first = 0;
+        while (first < full.length - 1 && full[first] == 0) {
+            first++;
         }
+        return Arrays.copyOfRange(full, first, full.length);
+    }
+
+    private static byte[] compress(byte[] value) {
+        try {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            try (DeflaterOutputStream deflater = new DeflaterOutputStream(output)) {
+                deflater.write(value);
+            }
+            return output.toByteArray();
+        } catch (IOException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static byte[] hmac(String algorithm, byte[] key, byte[] value) {
+        try {
+            Mac mac = Mac.getInstance(algorithm);
+            mac.init(new SecretKeySpec(key, algorithm));
+            return mac.doFinal(value);
+        } catch (Exception exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static String encodeBase64Url(byte[] value) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
     }
 
     @org.springframework.boot.test.context.TestConfiguration(proxyBeanMethods = false)
@@ -407,7 +473,7 @@ class Phase4aSubjectCatalogIT {
         @Bean
         @Primary
         Clock phase4aClock() {
-            return Clock.fixed(Instant.parse("2026-07-16T01:00:00Z"), ZoneOffset.UTC);
+            return Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
         }
     }
 

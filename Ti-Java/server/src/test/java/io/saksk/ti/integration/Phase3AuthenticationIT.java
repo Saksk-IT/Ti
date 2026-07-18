@@ -19,16 +19,22 @@ import io.saksk.ti.web.security.LoginRateLimiter;
 import io.saksk.ti.web.security.LegacySessionExchangeGuard;
 import io.saksk.ti.web.security.TargetSessionRegistry;
 import jakarta.servlet.http.Cookie;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +42,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
+import java.util.zip.DeflaterOutputStream;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,8 +88,16 @@ class Phase3AuthenticationIT {
     private static final String LEGACY_PASSWORD = "PUBLIC-TEST-ONLY-Passw0rd!";
     private static final String LEGACY_HASH =
             "scrypt:32768:8:1$PublicSalt123456$1cfde846b842e31ba36d7c9a7f55beb23395332274230dae40c8d89d7660651da42fff3d8b5918d898465e477379787c9523da58e804edb352688c0af428bb9c";
-    private static final Instant FIXED_NOW = Instant.now();
-    private static final Instant CREDENTIAL_EXPIRES_AT = FIXED_NOW.plus(Duration.ofHours(1));
+    private static final String LEGACY_SECRET =
+            "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum";
+    private static final byte[] LEGACY_SECRET_BYTES =
+            LEGACY_SECRET.getBytes(StandardCharsets.UTF_8);
+    private static final Instant CAPTURED_NOW =
+            Instant.ofEpochSecond(Instant.now().getEpochSecond());
+    private static final Instant CREDENTIAL_EXPIRES_AT =
+            CAPTURED_NOW.plus(Duration.ofHours(1));
+    private static final String LEGACY_JWT = signedLegacyJwt();
+    private static final String LEGACY_FLASK_COOKIE = signedLegacyFlaskCookie();
 
     @Container
     static final PostgreSQLContainer POSTGRES = Phase2PostgresContainers.reference18()
@@ -119,9 +136,8 @@ class Phase3AuthenticationIT {
         registry.add("ti.security.legacy-auth.enabled", () -> "true");
         registry.add(
                 "ti.security.legacy-auth.accept-until",
-                () -> FIXED_NOW.plus(Duration.ofDays(1)).toString());
-        registry.add("ti.security.legacy-auth.secret",
-                () -> "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum");
+                () -> CAPTURED_NOW.plus(Duration.ofDays(1)).toString());
+        registry.add("ti.security.legacy-auth.secret", () -> LEGACY_SECRET);
     }
 
     @Autowired
@@ -345,22 +361,16 @@ class Phase3AuthenticationIT {
     @Test
     void legacyJwtIsRequestScopedWhileFlaskCookieExchangesForAnAuthoritativeTargetSession()
             throws Exception {
-        String token = legacyVectors().path("jwt").path("token").stringValue();
         MvcResult jwt = mockMvc.perform(get("/api/auth/login-methods")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + LEGACY_JWT))
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(jwt.getResponse().getCookie("ti_dev_session")).isNull();
         assertThat(redis.keys("*"))
                 .noneMatch(key -> key.contains("identity:sessions"));
 
-        String flaskCookie = legacyVectors()
-                .path("flask_sessions")
-                .get(1)
-                .path("cookie")
-                .stringValue();
         MvcResult exchanged = mockMvc.perform(get("/api/auth/login-methods")
-                        .cookie(new Cookie("session", flaskCookie)))
+                        .cookie(new Cookie("session", LEGACY_FLASK_COOKIE)))
                 .andExpect(status().isOk())
                 .andExpect(header().stringValues("Set-Cookie", hasItem(containsString(
                         "session=;"))))
@@ -385,7 +395,7 @@ class Phase3AuthenticationIT {
                         "sessionAttr:csrf_token");
 
         MvcResult replay = mockMvc.perform(get("/api/auth/login-methods")
-                        .cookie(new Cookie("session", flaskCookie)))
+                        .cookie(new Cookie("session", LEGACY_FLASK_COOKIE)))
                 .andExpect(status().isOk())
                 .andExpect(header().stringValues("Set-Cookie", hasItem(containsString(
                         "session=;"))))
@@ -393,11 +403,11 @@ class Phase3AuthenticationIT {
         assertThat(replay.getResponse().getCookie("ti_dev_session")).isNull();
         for (int index = 0; index < 8; index++) {
             mockMvc.perform(get("/api/auth/login-methods")
-                            .cookie(new Cookie("session", flaskCookie)))
+                            .cookie(new Cookie("session", LEGACY_FLASK_COOKIE)))
                     .andExpect(status().isOk());
         }
         mockMvc.perform(get("/api/auth/login-methods")
-                        .cookie(new Cookie("session", flaskCookie)))
+                        .cookie(new Cookie("session", LEGACY_FLASK_COOKIE)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().string("X-RateLimit-Remaining", "0"));
         assertThat(redis.keys("*").stream()
@@ -491,13 +501,8 @@ class Phase3AuthenticationIT {
     @Test
     void oneLegacyExchangeAndThreePasswordLoginsShareTheSameIdentitySessionIndex()
             throws Exception {
-        String flaskCookie = legacyVectors()
-                .path("flask_sessions")
-                .get(1)
-                .path("cookie")
-                .stringValue();
         MvcResult exchanged = mockMvc.perform(get("/api/auth/login-methods")
-                        .cookie(new Cookie("session", flaskCookie)))
+                        .cookie(new Cookie("session", LEGACY_FLASK_COOKIE)))
                 .andExpect(status().isOk())
                 .andReturn();
         Cookie legacyTarget = exchanged.getResponse().getCookie("ti_dev_session");
@@ -841,11 +846,11 @@ class Phase3AuthenticationIT {
                 .stream()
                 .findFirst()
                 .orElseThrow();
-        long fixedNow = FIXED_NOW.getEpochSecond();
+        long capturedNow = CAPTURED_NOW.getEpochSecond();
         redis.opsForHash().put(
                 sessionKey,
                 "sessionAttr:anonymous_expires_at",
-                "l:" + (fixedNow + 60));
+                "l:" + (capturedNow + 60));
 
         mockMvc.perform(get("/api/auth/login-methods").cookie(csrf.sessionCookie()))
                 .andExpect(status().isOk());
@@ -854,7 +859,7 @@ class Phase3AuthenticationIT {
         redis.opsForHash().put(
                 sessionKey,
                 "sessionAttr:anonymous_expires_at",
-                "l:" + (fixedNow - 1));
+                "l:" + (capturedNow - 1));
 
         mockMvc.perform(get("/api/auth/login-methods").cookie(csrf.sessionCookie()))
                 .andExpect(status().isOk());
@@ -891,12 +896,78 @@ class Phase3AuthenticationIT {
                 response.getCookie("ti_dev_session"));
     }
 
-    private tools.jackson.databind.JsonNode legacyVectors() throws Exception {
-        try (var stream = getClass().getClassLoader()
-                .getResourceAsStream("compat/legacy-auth-vectors.json")) {
-            assertThat(stream).isNotNull();
-            return objectMapper.readTree(stream);
+    private static String signedLegacyJwt() {
+        String header = encodeBase64Url(
+                "{\"alg\":\"HS256\",\"typ\":\"JWT\"}"
+                        .getBytes(StandardCharsets.UTF_8));
+        String payload = encodeBase64Url(("{\"user_id\":4242,"
+                + "\"openid\":\"o-public-test-only-openid-0001\","
+                + "\"session_version\":7,"
+                + "\"exp\":" + CREDENTIAL_EXPIRES_AT.getEpochSecond()
+                + ",\"iat\":" + CAPTURED_NOW.getEpochSecond()
+                + ",\"jti\":\"0123456789abcdef0123456789abcdef\"}")
+                .getBytes(StandardCharsets.UTF_8));
+        String signingInput = header + "." + payload;
+        return signingInput + "." + encodeBase64Url(hmac(
+                "HmacSHA256",
+                LEGACY_SECRET_BYTES,
+                signingInput.getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    private static String signedLegacyFlaskCookie() {
+        String json = "{\"_permanent\":true,\"user_id\":4242,"
+                + "\"username\":\"public-test-"
+                + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\","
+                + "\"is_admin\":true,\"is_subject_admin\":true,"
+                + "\"is_notification_admin\":false,\"session_version\":7,"
+                + "\"remember\":true,\"csrf_token\":\"public-test-only-csrf-token\"}";
+        String payload = "." + encodeBase64Url(compress(json.getBytes(StandardCharsets.UTF_8)));
+        String timestamp = encodeBase64Url(minimalBigEndian(CAPTURED_NOW.getEpochSecond()));
+        String unsigned = payload + "." + timestamp;
+        byte[] derivedKey = hmac(
+                "HmacSHA1",
+                LEGACY_SECRET_BYTES,
+                "cookie-session".getBytes(StandardCharsets.UTF_8));
+        byte[] signature = hmac(
+                "HmacSHA1", derivedKey, unsigned.getBytes(StandardCharsets.US_ASCII));
+        Arrays.fill(derivedKey, (byte) 0);
+        return unsigned + "." + encodeBase64Url(signature);
+    }
+
+    private static byte[] minimalBigEndian(long value) {
+        byte[] full = ByteBuffer.allocate(Long.BYTES).putLong(value).array();
+        int first = 0;
+        while (first < full.length - 1 && full[first] == 0) {
+            first++;
         }
+        return Arrays.copyOfRange(full, first, full.length);
+    }
+
+    private static byte[] compress(byte[] value) {
+        try {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            try (DeflaterOutputStream deflater = new DeflaterOutputStream(output)) {
+                deflater.write(value);
+            }
+            return output.toByteArray();
+        } catch (IOException exception) {
+            throw new IllegalStateException("legacy Flask payload compression failed", exception);
+        }
+    }
+
+    private static byte[] hmac(String algorithm, byte[] key, byte[] value) {
+        try {
+            Mac mac = Mac.getInstance(algorithm);
+            mac.init(new SecretKeySpec(key, algorithm));
+            return mac.doFinal(value);
+        } catch (GeneralSecurityException exception) {
+            throw new IllegalStateException(algorithm + " unavailable", exception);
+        }
+    }
+
+    private static String encodeBase64Url(byte[] value) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
     }
 
     private List<Map<String, Object>> databaseFingerprint() {
@@ -954,7 +1025,7 @@ class Phase3AuthenticationIT {
         @Bean
         @Primary
         Clock phase3AuthenticationClock() {
-            return Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
+            return Clock.fixed(CAPTURED_NOW, ZoneOffset.UTC);
         }
     }
 }

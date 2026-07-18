@@ -21,8 +21,10 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -94,13 +96,21 @@ class LegacyPersonalBankUserCountsGoldenTargetExecutionIT {
     private static final String REDIS_PASSWORD = "phase4c-target-execution-redis";
     private static final String LEGACY_SECRET =
             "PUBLIC-TEST-ONLY-ti-legacy-secret-32-bytes-minimum";
+    private static final byte[] LEGACY_SECRET_BYTES =
+            LEGACY_SECRET.getBytes(StandardCharsets.UTF_8);
     private static final String RATE_NAMESPACE =
             "ti-java:learning:personal-bank-user-counts-target-execution";
     private static final Pattern RATE_KEY = Pattern.compile(
             "^" + Pattern.quote(RATE_NAMESPACE)
                     + ":(?:api|web):(?:identity:v1|ip:v1):[0-9a-f]{64}:"
                     + "(?:second|hour|day)$");
-    private static final Instant FIXED_NOW = Instant.parse("2026-07-17T04:00:00Z");
+    private static final ZoneId BEIJING = ZoneId.of("Asia/Shanghai");
+    private static final LocalDateTime GOLDEN_REFERENCE_NOW =
+            LocalDateTime.parse("2026-07-17T12:00:00");
+    private static final Instant CAPTURED_NOW =
+            Instant.ofEpochSecond(Instant.now().getEpochSecond());
+    private static final Instant CREDENTIAL_EXPIRES_AT =
+            CAPTURED_NOW.plus(Duration.ofHours(1));
     private static final int PUBLIC_BANK_ID = 99_555;
     private static final List<String> NORMAL_TYPES =
             List.of("判断题", "简答题", "填空题", "多选题", "选择题", "选择题", "简答题");
@@ -157,7 +167,7 @@ class LegacyPersonalBankUserCountsGoldenTargetExecutionIT {
                 () -> "phase4c-target-login-rate-key-secret-0001");
         registry.add("ti.security.legacy-auth.enabled", () -> "true");
         registry.add("ti.security.legacy-auth.accept-until",
-                () -> "2026-07-19T00:00:00Z");
+                () -> CAPTURED_NOW.plus(Duration.ofDays(1)).toString());
         registry.add("ti.security.legacy-auth.secret", () -> LEGACY_SECRET);
         registry.add("ti.security.personal-bank-user-counts-read-rate-limit.namespace",
                 () -> RATE_NAMESPACE);
@@ -215,6 +225,7 @@ class LegacyPersonalBankUserCountsGoldenTargetExecutionIT {
                 .isEqualTo(Phase2ContainerImages.POSTGRES_18_REFERENCE);
         assertThat(jdbc.queryForObject("SHOW server_version", String.class)).isEqualTo("18.4");
 
+        anchorShareExpirySemanticsToCapturedNow();
         clearRedis();
         Set<String> sessionActors = new LinkedHashSet<>();
         goldenCases.values().forEach(goldenCase -> {
@@ -562,12 +573,11 @@ class LegacyPersonalBankUserCountsGoldenTargetExecutionIT {
                 + "\",\"session_version\":11"
                 + ",\"remember\":false,\"csrf_token\":\"" + nonce + "\"}";
         String encodedPayload = encode(payload.getBytes(StandardCharsets.UTF_8));
-        String encodedTimestamp = encode(minimalBigEndian(
-                FIXED_NOW.minusSeconds(60).getEpochSecond()));
+        String encodedTimestamp = encode(minimalBigEndian(CAPTURED_NOW.getEpochSecond()));
         String unsigned = encodedPayload + "." + encodedTimestamp;
         byte[] derived = hmac(
                 "HmacSHA1",
-                LEGACY_SECRET.getBytes(StandardCharsets.UTF_8),
+                LEGACY_SECRET_BYTES,
                 "cookie-session".getBytes(StandardCharsets.UTF_8));
         byte[] signature = hmac(
                 "HmacSHA1", derived, unsigned.getBytes(StandardCharsets.US_ASCII));
@@ -581,14 +591,75 @@ class LegacyPersonalBankUserCountsGoldenTargetExecutionIT {
         String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
         String payload = "{\"user_id\":" + identityId
                 + ",\"openid\":\"\",\"session_version\":" + claimVersion
-                + ",\"exp\":" + FIXED_NOW.plusSeconds(86_400).getEpochSecond()
-                + ",\"iat\":" + FIXED_NOW.minusSeconds(60).getEpochSecond()
+                + ",\"exp\":" + CREDENTIAL_EXPIRES_AT.getEpochSecond()
+                + ",\"iat\":" + CAPTURED_NOW.getEpochSecond()
                 + ",\"jti\":\"" + String.format("%032x", identityId) + "\"}";
         String unsigned = base64Url(header) + "." + base64Url(payload);
         return unsigned + "." + encode(hmac(
                 "HmacSHA256",
-                LEGACY_SECRET.getBytes(StandardCharsets.UTF_8),
+                LEGACY_SECRET_BYTES,
                 unsigned.getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    private void anchorShareExpirySemanticsToCapturedNow() {
+        LocalDateTime capturedBeijingNow = LocalDateTime.ofInstant(CAPTURED_NOW, BEIJING);
+        Map<Integer, LocalDateTime> expected = Map.of(
+                99651, shiftedExpiry(capturedBeijingNow, "2026-07-17T13:00:00"),
+                99653, shiftedExpiry(capturedBeijingNow, "2026-07-17T12:00:00"),
+                99654, shiftedExpiry(capturedBeijingNow, "2026-07-17T11:59:59"),
+                99655, shiftedExpiry(capturedBeijingNow, "2027-01-01T00:00:00"),
+                99657, shiftedExpiry(capturedBeijingNow, "2026-07-17T11:00:00"),
+                99658, shiftedExpiry(capturedBeijingNow, "2026-07-17T14:00:00"));
+        expected.forEach((shareId, expiresAt) -> jdbc.update(
+                "UPDATE bank_shares SET expires_at = ? WHERE id = ?",
+                expiresAt,
+                shareId));
+
+        Map<Integer, LocalDateTime> actual = jdbc.query(
+                """
+                SELECT id, expires_at
+                FROM bank_shares
+                WHERE id IN (99651, 99653, 99654, 99655, 99657, 99658)
+                ORDER BY id
+                """,
+                resultSet -> {
+                    Map<Integer, LocalDateTime> values = new LinkedHashMap<>();
+                    while (resultSet.next()) {
+                        values.put(
+                                resultSet.getInt("id"),
+                                resultSet.getObject("expires_at", LocalDateTime.class));
+                    }
+                    return values;
+                });
+        assertThat(actual).isEqualTo(expected);
+        assertThat(actual.get(99651)).isAfter(capturedBeijingNow);
+        assertThat(actual.get(99653)).isEqualTo(capturedBeijingNow);
+        assertThat(actual.get(99654)).isBefore(capturedBeijingNow);
+        assertThat(actual.get(99655)).isAfter(capturedBeijingNow);
+        assertThat(actual.get(99657)).isBefore(capturedBeijingNow);
+        assertThat(actual.get(99658)).isAfter(capturedBeijingNow);
+        assertThat(jdbc.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM bank_shares
+                WHERE id IN (99652, 99659, 99660) AND expires_at IS NULL
+                """,
+                Long.class)).isEqualTo(3L);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM bank_shares WHERE id IN (99656, 99661)",
+                Long.class)).isZero();
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM bank_share_records WHERE id IN (99676, 99681)",
+                Long.class)).isZero();
+    }
+
+    private static LocalDateTime shiftedExpiry(
+            LocalDateTime capturedBeijingNow,
+            String goldenExpiry
+    ) {
+        return capturedBeijingNow.plus(Duration.between(
+                GOLDEN_REFERENCE_NOW,
+                LocalDateTime.parse(goldenExpiry)));
     }
 
     private static String base64Url(String value) {
@@ -865,7 +936,7 @@ class LegacyPersonalBankUserCountsGoldenTargetExecutionIT {
         @Bean
         @Primary
         Clock phase4cTargetExecutionClock() {
-            return Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
+            return Clock.fixed(CAPTURED_NOW, ZoneOffset.UTC);
         }
     }
 

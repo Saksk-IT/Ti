@@ -27,6 +27,7 @@
 - 在临时 SQLite 上补充应用导入/创建、RSS 和核心请求 SQL 次数样本：公共题库摘要 7 条、题目计数 1 条、`/hub` 2 条、浅健康 0 条；全部 5/5 为 HTTP 200。
 - 建立旧工作区与嵌套小程序仓库的禁触碰清单。
 - 建立可重复的阶段 0 强门禁：路由、数据、页面入口、源码副本、黄金样本和性能证据均结构化校验，且在临时目录重生成后逐字节比对。
+- 2026-07-18 测试稳定性检查点移除了三处集成测试日历炸弹：Phase3、Phase4A catalog 与 Phase4C user-counts 的旧 JWT/Flask Session 在单次 JVM 内按秒级当前时刻动态签发，固定跨语言 vector 单元测试保持不变；user-counts 的六个非空分享期限在指纹前按北京时间幂等重锚，保留原 future/equal/past 分类。原全量轮唯一失败的 Phase4A 方法定向 1/1 通过，Phase3 16/16 与 target-execution 60/60 联合通过；带额外 Maven 参数的 `clean verify` 现会继续执行 JAR 分发审计。
 
 ## 阶段 1 已完成
 

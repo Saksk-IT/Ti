@@ -31,10 +31,13 @@ fi
 verify_distribution=false
 if [ "$#" -eq 0 ]; then
     set -- clean verify
-    verify_distribution=true
-elif [ "$#" -eq 2 ] && [ "$1" = clean ] && [ "$2" = verify ]; then
-    verify_distribution=true
 fi
+for maven_argument in "$@"; do
+    if [ "$maven_argument" = "verify" ]; then
+        verify_distribution=true
+        break
+    fi
+done
 
 echo "WARNING: this verification mounts /var/run/docker.sock into Maven." >&2
 echo "WARNING: Docker-socket access is root-equivalent; run only trusted repository code." >&2
