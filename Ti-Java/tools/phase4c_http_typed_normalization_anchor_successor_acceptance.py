@@ -9,6 +9,7 @@ The six sources of this acceptance node remain outside their own authority.
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -176,6 +177,18 @@ SUCCESSOR_BYTE_COUNT = {
     "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_contract.py": 25_018,
 }
 
+PHASE6_SOURCE_SUCCESSOR_MODULE = (
+    "tools.phase6_web_foundation_source_successor_acceptance"
+)
+PHASE6_SOURCE_SUCCESSOR_SCRIPT_MODULE = (
+    "phase6_web_foundation_source_successor_acceptance"
+)
+PHASE6_SOURCE_SUCCESSOR_PATHS = (
+    "README.md",
+    "docs/refactor/05-progress.md",
+    "docs/refactor/phase4c/README.md",
+)
+
 
 def _canonical_json(value: Any) -> str:
     return json.dumps(
@@ -244,6 +257,51 @@ def _validate_physical(
     return payload
 
 
+def _load_phase6_source_successor_acceptance() -> object:
+    try:
+        return importlib.import_module(PHASE6_SOURCE_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as package_error:
+        try:
+            return importlib.import_module(PHASE6_SOURCE_SUCCESSOR_SCRIPT_MODULE)
+        except (ImportError, ModuleNotFoundError) as script_error:
+            raise AssertionError(
+                "fixed Phase6 Web-foundation source-successor module is unavailable"
+            ) from script_error
+    except ImportError as error:
+        raise AssertionError(
+            "fixed Phase6 Web-foundation source-successor module is unavailable"
+        ) from error
+
+
+def _validate_current_successor(root: Path, relative: str) -> str:
+    expected_sha = SUCCESSOR_SHA256[relative]
+    expected_bytes = SUCCESSOR_BYTE_COUNT[relative]
+    if expected_sha == "0" * 64 or expected_bytes <= 0:
+        raise AssertionError("typed anchor successor constants are unsettled")
+    payload = _fixed_regular_file(root, relative).read_bytes()
+    physical_sha = _sha256_bytes(payload)
+    if physical_sha == expected_sha and len(payload) == expected_bytes:
+        return physical_sha
+    if relative not in PHASE6_SOURCE_SUCCESSOR_PATHS:
+        raise AssertionError(f"typed anchor fixed bytes drifted: {relative}")
+    successor = _load_phase6_source_successor_acceptance()
+    accepted = getattr(successor, "accepted_sha256", None)
+    terminal = getattr(successor, "successor_sha256", None)
+    if not callable(accepted) or not callable(terminal):
+        raise AssertionError("fixed Phase6 source-successor API drifted")
+    if accepted(relative) != expected_sha:
+        raise AssertionError("Phase6 successor rejected typed-anchor historical hash")
+    try:
+        terminal_sha = terminal(root, relative)
+    except AssertionError as error:
+        raise AssertionError(
+            f"typed anchor Phase6 successor rejected current bytes: {relative}"
+        ) from error
+    if terminal_sha != physical_sha:
+        raise AssertionError("Phase6 successor did not bind current bytes")
+    return physical_sha
+
+
 def _validate_contract_physical_bytes(root: Path) -> dict[str, Any]:
     if CONTRACT_BYTE_COUNT <= 0 or CONTRACT_SHA256 == "0" * 64:
         raise AssertionError("typed anchor acceptance constants are unsettled")
@@ -274,21 +332,21 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
         return None
     root = ti_java_root.resolve(strict=True)
     _validate_contract_physical_bytes(root)
-    expected_sha = SUCCESSOR_SHA256[relative]
-    expected_bytes = SUCCESSOR_BYTE_COUNT[relative]
-    if expected_sha == "0" * 64 or expected_bytes <= 0:
-        raise AssertionError("typed anchor successor constants are unsettled")
-    _validate_physical(root, relative, expected_sha, expected_bytes)
-    return expected_sha
+    return _validate_current_successor(root, relative)
 
 
 def minimal_fixture_paths() -> tuple[str, ...]:
+    successor = _load_phase6_source_successor_acceptance()
+    successor_fixture_paths = getattr(successor, "minimal_fixture_paths", None)
+    if not callable(successor_fixture_paths):
+        raise AssertionError("fixed Phase6 source-successor fixture API drifted")
     return tuple(sorted({
         CONTRACT_RELATIVE,
         PREDECESSOR_RELATIVE,
         TYPED_MANIFEST_RELATIVE,
         WORM_RELATIVE,
         *SUCCESSOR_PATHS,
+        *successor_fixture_paths(),
     }))
 
 
@@ -413,6 +471,11 @@ def validate(contract: dict[str, Any], ti_java_root: Path) -> None:
     ):
         raise AssertionError("typed anchor successor boundary drifted")
     expected_overrides: dict[str, dict[str, Any]] = {}
+    phase6_successor = _load_phase6_source_successor_acceptance()
+    phase6_load = getattr(phase6_successor, "load", None)
+    if not callable(phase6_load):
+        raise AssertionError("fixed Phase6 source-successor load API drifted")
+    phase6_load(root)
     for relative in sorted(SUCCESSOR_PATHS):
         accepted = CHECKPOINT_CHANGES[relative]
         expected_overrides[relative] = {
@@ -426,12 +489,7 @@ def validate(contract: dict[str, Any], ti_java_root: Path) -> None:
             "successor_sha256": SUCCESSOR_SHA256[relative],
             "successor_byte_count": SUCCESSOR_BYTE_COUNT[relative],
         }
-        _validate_physical(
-            root,
-            relative,
-            SUCCESSOR_SHA256[relative],
-            SUCCESSOR_BYTE_COUNT[relative],
-        )
+        _validate_current_successor(root, relative)
     if successors.get("overrides") != expected_overrides:
         raise AssertionError("typed anchor successor overrides drifted")
 

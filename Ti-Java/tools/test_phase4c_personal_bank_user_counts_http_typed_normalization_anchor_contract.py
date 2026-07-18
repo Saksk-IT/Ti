@@ -135,20 +135,44 @@ class TypedNormalizationAnchorContractTest(unittest.TestCase):
                 acceptance.CHECKPOINT_CHANGES[relative]["sha256"],
                 acceptance.accepted_sha256(relative),
             )
-            self.assertEqual(
-                acceptance.SUCCESSOR_SHA256[relative],
-                acceptance.successor_sha256(ROOT, relative),
-            )
+            expected = acceptance.SUCCESSOR_SHA256[relative]
+            if relative in acceptance.PHASE6_SOURCE_SUCCESSOR_PATHS:
+                expected = (
+                    acceptance
+                    ._load_phase6_source_successor_acceptance()
+                    .successor_sha256(ROOT, relative)
+                )
+            self.assertEqual(expected, acceptance.successor_sha256(ROOT, relative))
         self.assertIsNone(acceptance.accepted_sha256("tools/unknown.py"))
         self.assertIsNone(acceptance.successor_sha256(ROOT, "tools/unknown.py"))
 
         temporary, root = self._minimal_copy()
         with temporary:
-            relative = acceptance.SUCCESSOR_PATHS[0]
+            relative = "infra/phase2/README.md"
             path = root / relative
             path.write_bytes(path.read_bytes() + b"\n")
             with self.assertRaisesRegex(AssertionError, "fixed bytes drifted"):
                 acceptance.successor_sha256(root, relative)
+
+    def test_05b_only_three_paths_delegate_to_fixed_phase6_successor(self) -> None:
+        self.assertEqual(
+            {
+                "README.md",
+                "docs/refactor/05-progress.md",
+                "docs/refactor/phase4c/README.md",
+            },
+            set(acceptance.PHASE6_SOURCE_SUCCESSOR_PATHS),
+        )
+        successor = acceptance._load_phase6_source_successor_acceptance()
+        for relative in acceptance.PHASE6_SOURCE_SUCCESSOR_PATHS:
+            self.assertEqual(
+                acceptance.SUCCESSOR_SHA256[relative],
+                successor.accepted_sha256(relative),
+            )
+            self.assertNotEqual(
+                acceptance.SUCCESSOR_SHA256[relative],
+                acceptance.successor_sha256(ROOT, relative),
+            )
 
     def test_06_gitless_minimal_fixture_passes(self) -> None:
         temporary, root = self._minimal_copy()

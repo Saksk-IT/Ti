@@ -20,6 +20,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Cross-language parity gate for the typed-normalization external anchor. */
 class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest {
 
+    private static final Map<String, String> PHASE6_CURRENT_SUCCESSORS = Map.of(
+            "README.md",
+            "5e3f2b7da26c3edf0f791e99110dcc4e53e1cb64dfdd78b46fe4e276406a1e59",
+            "docs/refactor/05-progress.md",
+            "657ca0e5fec6d0a70fbcfd8b81da6815a46be395a2cd3230520fe036b584144b",
+            "docs/refactor/phase4c/README.md",
+            "dbf542c042b3ee96663cb39c049bc44deb1790cf4c6e0345f208ea6c27cc2d0c");
+
     @Test
     void loadsTheCanonicalFixedAnchorAndKeepsRoutesPending() throws Exception {
         JsonNode contract =
@@ -95,6 +103,9 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
 
     @Test
     void exposesOnlyTheThirteenCodeFixedSuccessorTransitions() throws Exception {
+        JsonNode fixedAnchor =
+                Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                        .load(root());
         Set<String> paths =
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                         .successorPaths();
@@ -114,6 +125,20 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
                         .successorHash(root(), relative)).as(relative)
                         .isEqualTo(successor);
             }
+        }
+        for (Map.Entry<String, String> entry
+                : PHASE6_CURRENT_SUCCESSORS.entrySet()) {
+            String relative = entry.getKey();
+            assertThat(Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                    .successorHash(root(), relative)).as(relative)
+                    .isEqualTo(entry.getValue())
+                    .isEqualTo(Phase6WebFoundationSourceSuccessorAcceptance
+                            .successorHash(root(), relative));
+            assertThat(Phase6WebFoundationSourceSuccessorAcceptance
+                    .acceptedHash(relative)).as(relative)
+                    .isEqualTo(fixedAnchor.path("historical_source_successors")
+                            .path("overrides").path(relative)
+                            .path("successor_sha256").asString());
         }
         for (String relative : Set.of(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
@@ -145,7 +170,9 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
     @Test
     void rehashesTheContractAndRequestedSuccessor(@TempDir Path temporary)
             throws Exception {
-        String relative = "README.md";
+        String relative =
+                "tools/test_phase4c_personal_bank_user_counts_http_"
+                        + "target_execution_post_push_contract.py";
         for (String source : Set.of(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                         .contractRelative(),

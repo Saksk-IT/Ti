@@ -305,10 +305,52 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
         Path root = tiJavaRoot.toRealPath();
         validateContractPhysicalBytes(root);
         Path path = fixedRegularFile(root, relative);
-        require(successor.successorSha256().equals(sha256(path))
-                        && Files.size(path) == successor.successorBytes(),
-                "typed-normalization anchor successor bytes drifted: " + relative);
-        return successor.successorSha256();
+        return currentOrPhase6SourceSuccessorHash(
+                root,
+                relative,
+                successor,
+                sha256(path),
+                Files.size(path));
+    }
+
+    private static String currentOrPhase6SourceSuccessorHash(
+            Path root,
+            String relative,
+            Successor declared,
+            String physicalSha256,
+            long physicalBytes
+    ) throws IOException {
+        if (declared.successorSha256().equals(physicalSha256)) {
+            require(declared.successorBytes() == physicalBytes,
+                    "typed-normalization anchor successor bytes drifted: "
+                            + relative);
+            return physicalSha256;
+        }
+        String phase6Accepted =
+                Phase6WebFoundationSourceSuccessorAcceptance
+                        .acceptedHash(relative);
+        require(phase6Accepted != null,
+                "typed-normalization anchor successor bytes drifted: "
+                        + relative);
+        require(declared.successorSha256().equals(
+                        phase6Accepted),
+                "Phase6 source successor does not accept typed-anchor bytes: "
+                        + relative);
+        String phase6Successor;
+        try {
+            phase6Successor =
+                    Phase6WebFoundationSourceSuccessorAcceptance
+                            .successorHash(root, relative);
+        } catch (AssertionError error) {
+            throw new AssertionError(
+                    "typed-normalization anchor Phase6 successor rejected: "
+                            + relative,
+                    error);
+        }
+        require(physicalSha256.equals(phase6Successor),
+                "Phase6 source successor does not bind current bytes: "
+                        + relative);
+        return physicalSha256;
     }
 
     static Set<String> minimalFixturePaths() {
@@ -318,6 +360,8 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
         paths.add(TYPED_MANIFEST);
         paths.add(WORM_RELATIVE);
         paths.addAll(SUCCESSORS.keySet());
+        paths.addAll(Phase6WebFoundationSourceSuccessorAcceptance
+                .minimalFixturePaths());
         return Set.copyOf(paths);
     }
 
@@ -495,6 +539,7 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
 
     private static void validateSuccessors(JsonNode successors, Path root)
             throws IOException {
+        Phase6WebFoundationSourceSuccessorAcceptance.load(root);
         require(successors.path("successor_allowlist_count").asInt()
                         == SUCCESSORS.size()
                         && strings(successors.path("successor_allowlist")).equals(
@@ -524,8 +569,13 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
                     "typed-normalization anchor successor descriptor drifted: "
                             + relative);
             Path path = fixedRegularFile(root, relative);
-            require(expected.successorBytes() == Files.size(path)
-                            && expected.successorSha256().equals(sha256(path)),
+            String physicalSha256 = sha256(path);
+            require(physicalSha256.equals(currentOrPhase6SourceSuccessorHash(
+                            root,
+                            relative,
+                            expected,
+                            physicalSha256,
+                            Files.size(path))),
                     "typed-normalization anchor successor source drifted: "
                             + relative);
         }

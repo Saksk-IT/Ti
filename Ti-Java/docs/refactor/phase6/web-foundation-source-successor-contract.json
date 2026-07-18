@@ -1,0 +1,159 @@
+{
+  "authorization": {
+    "gateway_authorized": false,
+    "operator_authorized": false,
+    "production_cutover": false,
+    "real_data_migration_authorized": false,
+    "route_delta_created": false,
+    "schema_or_index_change_authorized": false
+  },
+  "captured_at": "2026-07-19T01:20:00+08:00",
+  "contract_id": "ti.phase6.web-foundation-source-successor-contract",
+  "current_node_trust_boundary": {
+    "control_source_allowlist_exact": true,
+    "control_source_count": 6,
+    "control_sources": [
+      "docs/refactor/phase6/web-foundation-source-successor-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java",
+      "tools/build_phase6_web_foundation_source_successor_contract.py",
+      "tools/phase6_web_foundation_source_successor_acceptance.py",
+      "tools/test_phase6_web_foundation_source_successor_contract.py"
+    ],
+    "control_sources_excluded_from_self_authority": true,
+    "control_sources_external_git_anchor_complete": false,
+    "independently_signed_provenance": false,
+    "next_gate": "fixed_post_push_external_git_anchor"
+  },
+  "document_payload_sha256": "93e2eccb5bd3cdcc95addac0d09bef26d25ae3676c1ffd1b9c10c337c1b1b693",
+  "effective_authority": {
+    "byte_count": 5340,
+    "document_payload_sha256": "3788d541c027ba7f9c397afee1d006ea92da300845557ca35bdd513b920a0637",
+    "legacy_flask_remains_production_owner": true,
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "sha256": "c0e96472533d0bbe7d67ac1416a91f3e9a3bfcef8c27e1170b0e9939c46b358a",
+    "source": "docs/refactor/phase4c/effective-route-parity-successor-status.json"
+  },
+  "git_checkpoint": {
+    "added_count": 105,
+    "added_total_bytes": 572363,
+    "authored_at": "2026-07-19T00:40:39+08:00",
+    "changed_path_count": 107,
+    "commit_oid": "c563ac655077e69306c34d163f63a4da50569e01",
+    "committed_at": "2026-07-19T00:40:39+08:00",
+    "current_total_bytes": 718109,
+    "deleted_count": 0,
+    "deleted_line_count": 4,
+    "exact_raw_delta_fixed": true,
+    "inserted_line_count": 18384,
+    "modified_count": 2,
+    "modified_current_bytes": 145746,
+    "modified_parent_bytes": 143265,
+    "net_byte_increase": 574844,
+    "non_web_changed_paths": [
+      "Ti-Java/README.md",
+      "Ti-Java/docs/refactor/05-progress.md",
+      "Ti-Java/docs/refactor/phase6/README.md",
+      "Ti-Java/docs/refactor/phase6/verify_web_foundation_acceptance.py",
+      "Ti-Java/docs/refactor/phase6/web-foundation-acceptance.json"
+    ],
+    "object_format": "sha1",
+    "parent_oid": "bd2ed3946487d27abffc81d966e7adfaab1fe433",
+    "parent_server_tree_oid": "57cda4d266fd1416853a6996e395c0fb2fb353eb",
+    "raw_delta_sha256": "7c1621f8e44520ccb0f04a5250cd7003b5d5a8a0d5cf0db35549a10b6fa4ffd4",
+    "root_tree_oid": "37c0029466f358795c58c5418573fa11ef57bcc6",
+    "server_tree_oid": "57cda4d266fd1416853a6996e395c0fb2fb353eb",
+    "subject": "feat(web): integrate Phase 6 public bank foundation",
+    "ti_java_tree_oid": "f5d5c5f8248213863730e0355780b12512203696",
+    "web_changed_path_count": 102,
+    "web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215"
+  },
+  "java_build_context_boundary": {
+    "dockerfile_byte_count": 1850,
+    "dockerfile_sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+    "dockerfile_source": "server/Dockerfile",
+    "hasher_byte_count": 1011,
+    "hasher_sha256": "e8e618ce08128e4fbf7b090b5b0709ed1d6bc5d1638f1f2838ff6d7409a0dea6",
+    "hasher_source": "infra/phase2/hash-java-build-context.sh",
+    "java_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+    "new_worm_node_required": false,
+    "server_tree_unchanged_from_parent": true,
+    "web_in_java_build_context": false,
+    "worm_byte_count": 1442,
+    "worm_sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+    "worm_source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json"
+  },
+  "phase6_foundation": {
+    "byte_count": 4932,
+    "contract_id": "phase6-web-foundation-acceptance-v1",
+    "foundation_complete": true,
+    "git_blob_oid": "4508d911a8f9fc4cf694608988a0aae7fceb6105",
+    "phase6_complete": false,
+    "sha256": "6289e15ec68a332566539df46e5b7b3143c3c58ed9c60b35c2d736ed762d8e1f",
+    "source": "docs/refactor/phase6/web-foundation-acceptance.json",
+    "web_byte_count": 558898,
+    "web_file_count": 102,
+    "web_manifest_sha256": "e92634ecb328edecce27fea97ec8d9e2ceb5fdc9e7a1aa8e74f378e5ea407752"
+  },
+  "predecessor_typed_anchor": {
+    "byte_count": 43737,
+    "contract_id": "ti.phase4c.personal-bank-user-counts-http-typed-normalization-anchor-contract",
+    "document_payload_sha256": "430ef24103006265001ecd1f2f6aa5e4b24a886e82fcc1391cc516eba5dbde7c",
+    "immutable": true,
+    "sha256": "c713aa04a82f340ea04fdd5ae870bd5cfae82f099101431c664f047c2d5218ca",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json"
+  },
+  "schema_version": 1,
+  "scope": "phase6-web-foundation-source-successor",
+  "source_successors": {
+    "overrides": {
+      "README.md": {
+        "accepted_byte_count": 38265,
+        "accepted_sha256": "524f03e89122b4d8a9af4ed805596a3b315a4859dac2777b0ab989ac25e82b47",
+        "successor_byte_count": 40323,
+        "successor_git_blob_oid": "a18ef8e66e1213b4e7ab47e20fb63278c264ba4e",
+        "successor_sha256": "5e3f2b7da26c3edf0f791e99110dcc4e53e1cb64dfdd78b46fe4e276406a1e59",
+        "successor_snapshot_fixed_by_checkpoint_tree": true,
+        "transition_is_direct_parent_delta": true
+      },
+      "docs/refactor/05-progress.md": {
+        "accepted_byte_count": 103256,
+        "accepted_sha256": "62ff84e2cc3b525855f0a0eb07a1820c231ad50864956329d0da08a3d86b697c",
+        "successor_byte_count": 105423,
+        "successor_git_blob_oid": "74974ed6ca408e90846ab90b90e965d8fc9faa5b",
+        "successor_sha256": "657ca0e5fec6d0a70fbcfd8b81da6815a46be395a2cd3230520fe036b584144b",
+        "successor_snapshot_fixed_by_checkpoint_tree": true,
+        "transition_is_direct_parent_delta": true
+      },
+      "docs/refactor/phase4c/README.md": {
+        "accepted_byte_count": 19511,
+        "accepted_sha256": "dd0f41f78466636d09d3afa7669e507814aa78a04cb94d62bf7e96596c18e85a",
+        "successor_byte_count": 23309,
+        "successor_git_blob_oid": "8659b84a26ea0b7182c4e375bcb1a1ee185e58b6",
+        "successor_sha256": "dbf542c042b3ee96663cb39c049bc44deb1790cf4c6e0345f208ea6c27cc2d0c",
+        "successor_snapshot_fixed_by_checkpoint_tree": true,
+        "transition_is_direct_parent_delta": false
+      }
+    },
+    "path_count": 3,
+    "paths": [
+      "README.md",
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md"
+    ]
+  },
+  "status": "bootstrap_complete_external_git_anchor_pending",
+  "typed_anchor_delegation": {
+    "delegated_path_count": 3,
+    "delegated_paths": [
+      "README.md",
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md"
+    ],
+    "delegation_allowlist_exact": true,
+    "dynamic_source_discovery_forbidden": true,
+    "unknown_path_rejected": true
+  }
+}

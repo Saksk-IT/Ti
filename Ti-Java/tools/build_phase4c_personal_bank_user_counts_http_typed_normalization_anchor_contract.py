@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -197,6 +198,18 @@ SUCCESSOR_BYTE_COUNT = {
     "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py": 12_208,
     "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_contract.py": 25_018,
 }
+
+PHASE6_SOURCE_SUCCESSOR_MODULE = (
+    "tools.phase6_web_foundation_source_successor_acceptance"
+)
+PHASE6_SOURCE_SUCCESSOR_SCRIPT_MODULE = (
+    "phase6_web_foundation_source_successor_acceptance"
+)
+PHASE6_SOURCE_SUCCESSOR_PATHS = (
+    "README.md",
+    "docs/refactor/05-progress.md",
+    "docs/refactor/phase4c/README.md",
+)
 
 
 def canonical_json(value: Any) -> str:
@@ -402,12 +415,38 @@ def _successor_descriptor(relative: str) -> dict[str, Any]:
 def _validate_local_successors(root: Path) -> None:
     if not successor_constants_settled():
         return
+    try:
+        phase6_successor = importlib.import_module(PHASE6_SOURCE_SUCCESSOR_MODULE)
+    except ModuleNotFoundError:
+        try:
+            phase6_successor = importlib.import_module(
+                PHASE6_SOURCE_SUCCESSOR_SCRIPT_MODULE
+            )
+        except (ImportError, ModuleNotFoundError) as error:
+            raise AssertionError(
+                "fixed Phase6 source-successor module is unavailable"
+            ) from error
+    except ImportError as error:
+        raise AssertionError(
+            "fixed Phase6 source-successor module is unavailable"
+        ) from error
+    phase6_load = getattr(phase6_successor, "load", None)
+    if not callable(phase6_load):
+        raise AssertionError("fixed Phase6 source-successor load API drifted")
+    phase6_load(root)
     for relative in SUCCESSOR_PATHS:
         payload = fixed_regular_file(root, relative).read_bytes()
-        if (
-            len(payload) != SUCCESSOR_BYTE_COUNT[relative]
-            or sha256_bytes(payload) != SUCCESSOR_SHA256[relative]
-        ):
+        physical_sha = sha256_bytes(payload)
+        if (len(payload) == SUCCESSOR_BYTE_COUNT[relative]
+                and physical_sha == SUCCESSOR_SHA256[relative]):
+            continue
+        if relative not in PHASE6_SOURCE_SUCCESSOR_PATHS:
+            raise AssertionError(f"typed anchor successor drifted: {relative}")
+        accepted = getattr(phase6_successor, "accepted_sha256", None)
+        terminal = getattr(phase6_successor, "successor_sha256", None)
+        if (not callable(accepted) or not callable(terminal)
+                or accepted(relative) != SUCCESSOR_SHA256[relative]
+                or terminal(root, relative) != physical_sha):
             raise AssertionError(f"typed anchor successor drifted: {relative}")
 
 
