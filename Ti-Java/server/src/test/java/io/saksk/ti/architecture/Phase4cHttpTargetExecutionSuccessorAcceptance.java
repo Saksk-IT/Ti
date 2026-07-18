@@ -255,9 +255,8 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
         String successor = reference.path("successor_sha256").asString();
         require(isSha256(successor),
                 "target-execution successor hash is invalid: " + relative);
-        require(successor.equals(sha256(fixedRegularFile(root, relative))),
-                "target-execution successor file drifted: " + relative);
-        return successor;
+        return validateTerminalSource(
+                root, relative, successor, "target-execution successor");
     }
 
     private static JsonNode loadSuccessorEnvelope(Path root) throws IOException {
@@ -268,9 +267,11 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
 
     private static JsonNode validatePredecessor(Path root, JsonNode contract)
             throws IOException {
-        Path path = fixedRegularFile(root, PREDECESSOR_RELATIVE);
-        require(PREDECESSOR_SHA256.equals(sha256(path)),
-                "target-execution predecessor physical hash drifted");
+        validateTerminalSource(
+                root,
+                PREDECESSOR_RELATIVE,
+                PREDECESSOR_SHA256,
+                "target-execution predecessor");
         JsonNode predecessor = readFixedJson(root, PREDECESSOR_RELATIVE);
         require(PREDECESSOR_ID.equals(predecessor.path("contract_id").asString()),
                 "unexpected physical implementation predecessor id");
@@ -286,9 +287,11 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
         require(PREDECESSOR_TRUST_PAYLOAD_SHA256.equals(
                         canonicalPayloadSha256(predecessor, true)),
                 "implementation predecessor independent trust payload drifted");
-        require(contract.path("predecessor").path("sha256").asString()
-                        .equals(sha256(path)),
-                "contract does not bind the physical implementation predecessor");
+        validateTerminalSource(
+                root,
+                PREDECESSOR_RELATIVE,
+                contract.path("predecessor").path("sha256").asString(),
+                "contract implementation predecessor binding");
         return predecessor;
     }
 
@@ -296,9 +299,11 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
             throws IOException {
         JsonNode sources = contract.path("source_contracts");
         for (Map.Entry<String, String> entry : SOURCE_PATHS.entrySet()) {
-            require(sources.path(entry.getKey()).path("sha256").asString().equals(
-                            sha256(fixedRegularFile(root, entry.getValue()))),
-                    "fixed target-execution source hash drifted: " + entry.getKey());
+            validateTerminalSource(
+                    root,
+                    entry.getValue(),
+                    sources.path(entry.getKey()).path("sha256").asString(),
+                    "fixed target-execution source " + entry.getKey());
         }
     }
 
@@ -414,10 +419,13 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
                             && accepted.equals(
                             reference.path("accepted_sha256").asString())
                             && provenance.equals(reference.path(
-                            "accepted_hash_provenance").asString())
-                            && sha256(fixedRegularFile(root, relative)).equals(
-                            reference.path("successor_sha256").asString()),
+                            "accepted_hash_provenance").asString()),
                     "historical successor entry drifted: " + relative);
+            validateTerminalSource(
+                    root,
+                    relative,
+                    reference.path("successor_sha256").asString(),
+                    "historical successor override");
         }
     }
 
@@ -429,9 +437,7 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
             String expectedId,
             String expectedStatus
     ) throws IOException {
-        Path path = fixedRegularFile(root, relative);
-        require(expectedSha256.equals(sha256(path)),
-                "historical anchor bytes drifted: " + relative);
+        validateTerminalSource(root, relative, expectedSha256, "historical anchor");
         JsonNode document = readFixedJson(root, relative);
         require(expectedId.equals(document.path("contract_id").asString()),
                 "historical anchor id drifted: " + relative);
@@ -523,9 +529,11 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
 
     private static void validateExecutionEvidence(Path root, JsonNode contract)
             throws IOException {
-        Path evidencePath = fixedRegularFile(root, EVIDENCE_RELATIVE);
-        require(EVIDENCE_SHA256.equals(sha256(evidencePath)),
-                "target-execution evidence physical hash drifted");
+        validateTerminalSource(
+                root,
+                EVIDENCE_RELATIVE,
+                EVIDENCE_SHA256,
+                "target-execution evidence");
         JsonNode evidence = readFixedJson(root, EVIDENCE_RELATIVE);
         require(evidence.path("schema_version").asInt() == 1
                         && EVIDENCE_ID.equals(evidence.path("evidence_id").asString()),
@@ -554,15 +562,17 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
                 "target-execution checkpoint artifact set drifted");
         for (Map.Entry<String, String> entry : checkpointSources.entrySet()) {
             JsonNode reference = checkpointArtifacts.path(entry.getKey());
-            require(entry.getValue().equals(reference.path("path").asString())
-                            && sha256(fixedRegularFile(root, entry.getValue())).equals(
-                            reference.path("sha256").asString()),
+            require(entry.getValue().equals(reference.path("path").asString()),
                     "target-execution checkpoint artifact drifted: " + entry.getKey());
+            validateTerminalSource(
+                    root,
+                    entry.getValue(),
+                    reference.path("sha256").asString(),
+                    "target-execution checkpoint artifact " + entry.getKey());
         }
 
         JsonNode golden = readFixedJson(root, GOLDEN_RELATIVE);
-        require(GOLDEN_SHA256.equals(sha256(fixedRegularFile(root, GOLDEN_RELATIVE))),
-                "Phase 4B golden bytes drifted");
+        validateTerminalSource(root, GOLDEN_RELATIVE, GOLDEN_SHA256, "Phase 4B golden");
         require(GOLDEN_CASE_PAYLOAD_SHA256.equals(
                         golden.path("case_payload_sha256").asString())
                         && GOLDEN_CASE_PAYLOAD_SHA256.equals(
@@ -575,8 +585,11 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
                 "Phase 4B golden case order drifted");
 
         JsonNode mapping = readFixedJson(root, MAPPING_RELATIVE);
-        require(MAPPING_SHA256.equals(sha256(fixedRegularFile(root, MAPPING_RELATIVE))),
-                "historical target mapping bytes drifted");
+        validateTerminalSource(
+                root,
+                MAPPING_RELATIVE,
+                MAPPING_SHA256,
+                "historical target mapping");
         require("PARTIAL_EXECUTION_MAPPING_LEDGER".equals(
                         mapping.path("claim").path("classification").asString()),
                 "historical target mapping classification drifted");
@@ -1094,30 +1107,59 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
     private static void validateRoutesOwnershipAndWorm(Path root, JsonNode contract)
             throws IOException {
         JsonNode routes = contract.path("routes_and_openapi");
-        require(routes.path("route_delta").path("sha256").asString().equals(
-                        sha256(fixedRegularFile(
-                                root, SOURCE_PATHS.get("route_delta"))))
-                        && routes.path("openapi_overlay").path("sha256").asString()
-                        .equals(sha256(fixedRegularFile(
-                                root, SOURCE_PATHS.get("openapi_overlay")))),
-                "route/OpenAPI physical binding drifted");
+        validateTerminalSource(
+                root,
+                SOURCE_PATHS.get("route_delta"),
+                routes.path("route_delta").path("sha256").asString(),
+                "route-delta physical binding");
+        validateTerminalSource(
+                root,
+                SOURCE_PATHS.get("openapi_overlay"),
+                routes.path("openapi_overlay").path("sha256").asString(),
+                "OpenAPI physical binding");
         JsonNode ownership = contract.path("data_ownership");
         require(ownership.path("resource_count").asInt() == 160
                         && ownership.path("resources_with_exactly_one_owner").asInt() == 160
-                        && ownership.path("unchanged_from_predecessor").asBoolean()
-                        && ownership.path("sha256").asString().equals(
-                        sha256(fixedRegularFile(
-                                root, SOURCE_PATHS.get("ownership_effective")))),
+                        && ownership.path("unchanged_from_predecessor").asBoolean(),
                 "target-execution data ownership drifted");
+        validateTerminalSource(
+                root,
+                SOURCE_PATHS.get("ownership_effective"),
+                ownership.path("sha256").asString(),
+                "target-execution data ownership");
         JsonNode worm = readFixedJson(root, WORM_RELATIVE);
-        require(WORM_SHA256.equals(sha256(fixedRegularFile(root, WORM_RELATIVE)))
-                        && BUILD_CONTEXT_SHA256.equals(
+        validateTerminalSource(root, WORM_RELATIVE, WORM_SHA256, "implementation WORM");
+        require(BUILD_CONTEXT_SHA256.equals(
                         worm.path("java").path("buildContextSha256").asString())
                         && "validate".equals(
                         worm.path("java").path("hibernateDdlAuto").asString()),
                 "physical implementation WORM drifted");
         require(BUILD_CONTEXT_SHA256.equals(javaBuildContextSha256(root)),
                 "physical Java build context drifted");
+    }
+
+    private static String validateTerminalSource(
+            Path root,
+            String relative,
+            String declaredSha256,
+            String label
+    ) throws IOException {
+        require(isSha256(declaredSha256),
+                label + " declared hash is invalid: " + relative);
+        String physicalSha256 = sha256(fixedRegularFile(root, relative));
+        if (declaredSha256.equals(physicalSha256)) {
+            return physicalSha256;
+        }
+        require(declaredSha256.equals(
+                        Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
+                                .acceptedHash(relative)),
+                "post-push successor did not accept exact " + label + ": " + relative);
+        String successorSha256 =
+                Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.successorHash(
+                        root, relative);
+        require(physicalSha256.equals(successorSha256),
+                "post-push successor file hash drift for " + label + ": " + relative);
+        return physicalSha256;
     }
 
     private static String javaBuildContextSha256(Path root) throws IOException {

@@ -102,6 +102,14 @@ HTTP 生产适配已经存在：双 alias Controller、安全错误投影、严�
 
 本轮只有 `src/test`、测试 seed、证据与门禁变化，生产 build-context 仍为 `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。固定 WORM 链禁止重复 build-context，因此不伪造第六份报告；target-execution contract 显式复用第五节点 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，并记录 `new_worm_report_created=false`、`production_build_context_unchanged=true`。
 
-当前 target-execution 合同与两份 bridge 是诚实的 bootstrap，而不是外部前驱已固定的独立信任根。合同文档记录两份 bridge 的当前物理 SHA，但 bridge-normalized trust payload 会把这两个 source hash 替换为固定 sentinel 以打破递归哈希环；因此 `external_bridge_bytes_anchor_complete=false`、`route_promotion_blocked_by_bridge_bootstrap=true`。本节点提交并推送后，下一节点必须固定该 Git commit、合同物理 SHA 和两份 bridge 物理 SHA，才能移除此阻断；当前 bridge 也继续不能从历史 `accepted_sha256` allowlist 获得 authority。
+target-execution 合同与两份 bridge 在 `0531b3c9272f9743a374edcf5c8bbeb72643eb1b` 提交时是诚实的 bootstrap，而不是外部前驱已固定的独立信任根。合同文档记录两份 bridge 的物理 SHA，但 bridge-normalized trust payload 会把这两个 source hash 替换为固定 sentinel 以打破递归哈希环；该历史节点因此记录 `external_bridge_bytes_anchor_complete=false`、`route_promotion_blocked_by_bridge_bootstrap=true`。`0531b3c` 已提交并推送，后续 `6c1b03dd7fa9cde7a6dcdbf6b555452e9a6d9e53` anchor checkpoint 也已推送，并从 Git 固定 `0531b3c` 及其合同和两份 bridge 的精确字节。
 
-因此两条 GET 继续保持 pending，有效账本仍为 **11 migrated、600 pending、0 production cutover**。下一门禁首先是提交推送本 bootstrap 节点并由下一节点完成外部 Git/合同/bridge 锚定，同时加入归一化 JUnit 执行产物；随后才是 typed parity 评审、真实 Tomcat 全响应矩阵、Redis 真实故障恢复和 PG16/18 关键终止指纹。operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+因此 target-execution bootstrap 的“等待首次提交”动作已完成，但两条 GET 仍保持 pending，有效账本仍为 **11 migrated、600 pending、0 production cutover**。operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+
+## User-counts HTTP target-execution post-push anchor successor（当前）
+
+`6c1b03d` anchor checkpoint 包含九个精确文件，其中包括由原始 60-leaf JUnit XML 归一化得到的 60/60 manifest；它不是只记录一个摘要的松散交接。当前 post-push successor 固定整个 `6c1b03dd7fa9cde7a6dcdbf6b555452e9a6d9e53` Git checkpoint、提交/树元数据和九个文件的精确身份，并把 normalized JUnit manifest 与同一 checkpoint 绑定。target-execution bootstrap `0531b3c9272f9743a374edcf5c8bbeb72643eb1b` 与 anchor checkpoint `6c1b03d` 均已推送到 `main`。
+
+这一检查点已经通过全部 source tools 533/533、Phase 2 静态门禁，以及完整 Maven 675 个 surefire + 153 个 failsafe，0 failure/error/skip。post-push successor 只解决前驱 checkpoint 的固定交接；它自身仍是需要未来后继外锚的 bootstrap，不能自授权 typed parity、full target parity、route migration 或 production cutover。有效账本因此继续是 **11 migrated、600 pending、0 production cutover**。
+
+下一验收门禁是 typed parity 评审、真实 Tomcat 的 HEAD/Location/Vary/CORS/安全头/Request ID/全部限流头完整矩阵、Redis 真实连接拒绝/中断/同实例恢复，以及 PostgreSQL 16.14/18.4 关键前置终止的 identity/业务 SQL 与九表指纹。上述门禁完成前，operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。

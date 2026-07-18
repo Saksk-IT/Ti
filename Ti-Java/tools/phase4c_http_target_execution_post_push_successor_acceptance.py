@@ -1,0 +1,744 @@
+#!/usr/bin/env python3
+"""Fail-closed acceptance for the Phase 4C post-push Git checkpoint.
+
+The ordinary API validates only fixed files below ``Ti-Java``.  It does not
+import Phase 2 or either historical target-execution bridge and does not need
+a Git directory.  Optional Git replay validates the fixed ``6c1b03d`` object;
+no mutable ref is an authority.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+from typing import Any
+
+
+CONTRACT_RELATIVE = (
+    "docs/refactor/phase4c/"
+    "personal-bank-user-counts-http-target-execution-post-push-contract.json"
+)
+CONTRACT_ID = (
+    "ti.phase4c.personal-bank-user-counts-http-target-execution-post-push-contract"
+)
+CONTRACT_STATUS = (
+    "target_execution_anchor_checkpoint_externally_anchored_"
+    "typed_parity_pending_routes_pending"
+)
+CONTRACT_SCOPE = (
+    "phase4c-personal-bank-user-counts-http-target-execution-post-push"
+)
+CONTRACT_CAPTURED_AT = "2026-07-18T13:10:47+08:00"
+CONTRACT_SHA256 = (
+    "3d7208eb2f70b9eb2b559e15acb4cc7882dacecf8cad941f2978678f93b12628"
+)
+CONTRACT_PAYLOAD_SHA256 = (
+    "c2382550719d97e74f93db97bf74e70e246cca1e35ac6cc9c6c9e8d13b964dba"
+)
+NEXT_GATE = (
+    "typed_parity_real_tomcat_complete_response_headers_redis_refusal_"
+    "interruption_same_instance_recovery_and_pg16_pg18_termination_identity_"
+    "sql_nine_table_fingerprints_before_route_migration"
+)
+
+PREDECESSOR_RELATIVE = (
+    "docs/refactor/phase4c/"
+    "personal-bank-user-counts-http-target-execution-anchor-contract.json"
+)
+PREDECESSOR_ID = (
+    "ti.phase4c.personal-bank-user-counts-http-target-execution-anchor-contract"
+)
+PREDECESSOR_STATUS = (
+    "target_execution_bootstrap_externally_anchored_"
+    "normalized_junit_manifest_bootstrap_bound_routes_pending"
+)
+PREDECESSOR_SCOPE = (
+    "phase4c-personal-bank-user-counts-http-target-execution-external-anchor"
+)
+PREDECESSOR_CAPTURED_AT = "2026-07-18T12:14:52+08:00"
+PREDECESSOR_SHA256 = (
+    "f966f9229949a37811da2402d3baf05dd78643ec4104a8f921dee10188bcd203"
+)
+PREDECESSOR_PAYLOAD_SHA256 = (
+    "dbfe37e3e0d9b80ebb378a58b58aa7b15371d737b389f06f24f3018adb6b311e"
+)
+
+GIT_OBJECT_FORMAT = "sha1"
+GIT_COMMIT_OID = "6c1b03dd7fa9cde7a6dcdbf6b555452e9a6d9e53"
+GIT_ROOT_TREE_OID = "47a1df74676ff2838bec7d01f371787720aea559"
+GIT_PARENT_OID = "0531b3c9272f9743a374edcf5c8bbeb72643eb1b"
+TI_JAVA_TREE_OID = "7c0e65fa52ffa95567b0d7e266bd4e590af22f5a"
+GIT_AUTHORED_AT = "2026-07-18T13:10:47+08:00"
+GIT_COMMITTED_AT = GIT_AUTHORED_AT
+GIT_SUBJECT = "test(java): anchor user counts target execution"
+GIT_CAPTURE_REF = "origin/main"
+
+JUNIT_MANIFEST_RELATIVE = (
+    "docs/refactor/phase4c/"
+    "personal-bank-user-counts-target-execution-junit-manifest.json"
+)
+JUNIT_MANIFEST_SHA256 = (
+    "64ff60cd56bf60f585af3d55b4ed4b4f7ee30b6a4c9e3e840688a1caaa45664b"
+)
+JUNIT_MANIFEST_PAYLOAD_SHA256 = (
+    "9f53234730888c5e3bcd682390093331daca61814c1111c195ea3def4fbe543c"
+)
+JUNIT_LEAF_PAYLOAD_SHA256 = (
+    "77b0f4955931f2ad3206b7a1c0f9c9649b25a18c49bf1b259c452d169e5f0e04"
+)
+JUNIT_RAW_REPORT_SHA256 = (
+    "bb114a5571ef645ba37864dae1862a3657d92755a60479d734ce3c72f8de24ab"
+)
+JUNIT_RAW_REPORT_BYTE_COUNT = 63450
+
+WORM_RELATIVE = (
+    "docs/refactor/phase4c/"
+    "personal-bank-user-counts-http-implementation-worm-evidence.json"
+)
+WORM_SHA256 = (
+    "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39"
+)
+WORM_PREDECESSOR_SHA256 = (
+    "a393e79afb76c53a1aca8be1e4709506b58ad062e3c6536c26c12f10b29d1ec6"
+)
+DOCKERFILE_SHA256 = (
+    "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+)
+JAVA_BUILD_CONTEXT_SHA256 = (
+    "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3"
+)
+CANONICAL_SCHEMA_DUMP_SHA256 = (
+    "96a5fda32a6ac4cb1e09cbb8bb0c1c5b33ff6d479cdaefb1d02fcf655a84d38b"
+)
+
+
+def _artifact(
+    relative: str,
+    blob_oid: str,
+    sha256: str,
+    byte_count: int,
+    mode: str = "100644",
+) -> dict[str, Any]:
+    return {
+        "ti_java_relative_path": relative,
+        "repository_path": f"Ti-Java/{relative}",
+        "object_type": "blob",
+        "git_blob_oid": blob_oid,
+        "sha256": sha256,
+        "byte_count": byte_count,
+        "mode": mode,
+    }
+
+
+CHECKPOINT_ARTIFACTS = {
+    "anchor_contract": _artifact(
+        PREDECESSOR_RELATIVE,
+        "75a25eacdea16cc2d3349eadad24b1370a9ae4bd",
+        PREDECESSOR_SHA256,
+        10974,
+    ),
+    "junit_manifest": _artifact(
+        JUNIT_MANIFEST_RELATIVE,
+        "da3cef8743dbf436b4d631f081b706c705961bdd",
+        JUNIT_MANIFEST_SHA256,
+        33246,
+    ),
+    "java_anchor_acceptance": _artifact(
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpTargetExecutionAnchorSuccessorAcceptance.java",
+        "4434b28df67afdd682d09e7c091c2007a34a0187",
+        "1e2bd94c5e13389375cee448615149d8409cc311ca97e2fc78ebcafa33cd1030",
+        41210,
+    ),
+    "java_anchor_parity_test": _artifact(
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cPersonalBankUserCountsHttpTargetExecutionAnchorContractParityTest.java",
+        "ac82ead5ba1bce096bcbfa363f1500a447981755",
+        "9b4e885f8c3727081c0cfcd6cd5901f1bf7a1f9059c81e9badd1273133a4676c",
+        12996,
+    ),
+    "anchor_builder": _artifact(
+        "tools/build_phase4c_personal_bank_user_counts_http_"
+        "target_execution_anchor_contract.py",
+        "b3af05cc0a086122e4dd9b0a61f0389bcbe880c3",
+        "b87133b5c187561970c322a92eb22f84cb7a768a9168870cc7517dd973616667",
+        34518,
+    ),
+    "junit_normalizer": _artifact(
+        "tools/normalize_phase4c_personal_bank_user_counts_"
+        "target_execution_junit.py",
+        "470c36c6b18b3573ac4e3aecb6443a1fb5290349",
+        "f6d90113c69d9c1bef2e3d53f839539a481bbcd674c7b598b2fb4aff88a3879a",
+        27174,
+    ),
+    "python_anchor_acceptance": _artifact(
+        "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+        "14cfc16aad7fbae8df09a46c846d890a43663587",
+        "03b411be87bd9f8d4dbb94ddcfb9495ec7523fb5c9482f3c1fb4098d1ab7e455",
+        34568,
+    ),
+    "junit_normalizer_test": _artifact(
+        "tools/test_normalize_phase4c_personal_bank_user_counts_"
+        "target_execution_junit.py",
+        "5e36f76fdca87d1f5fc83e2a1cab1dc3285cb684",
+        "f2397e35c76f063f356edfb9f2491f17157cfaa07cfbc0d3a39a28b4e2957d5d",
+        12068,
+    ),
+    "python_anchor_contract_test": _artifact(
+        "tools/test_phase4c_personal_bank_user_counts_http_"
+        "target_execution_anchor_contract.py",
+        "78ba394d3a5b9b833e5496d685a31f5375280bb0",
+        "3306aed29941fd9703f36443f43bbb65646b48bed1f6f848d6109683057769e5",
+        15921,
+    ),
+}
+
+SUCCESSOR_SOURCES = {
+    "README.md": (
+        "550bc40705fea9b603a3936de9de366ba49849ef",
+        "321d23e47d0df0714ea632b2c8c1d3d05d0e67bf69d53e3a52e387e4a949bda4",
+        37209,
+        "9c7608803dff193b898d14d13de92095ef001dfeb6099fde2a2ba546d4cd867c",
+        37695,
+        "100644",
+    ),
+    "docs/refactor/05-progress.md": (
+        "1bcad604184f31cf24a0047bd248d457dda47402",
+        "e2363a603e9b82368185b6fef3e9882a3e586ce5b5eca14a8b5cddcbca7d6faf",
+        98860,
+        "9ac3b2edaff690f105326aed3c7a87d4049b7f89a1af541038c8f0b032bf79ec",
+        100798,
+        "100644",
+    ),
+    "docs/refactor/phase4c/README.md": (
+        "aa989184d7f0c4dea4fb66284346937269891fe2",
+        "f43ae7ca31038fcc45a05874cfc5c8a460edfe2833936bf4418f37706771d472",
+        13854,
+        "649ad38f868840edf8ca16ce35156dd18ea7336da9869433bdaa0db2f604fec2",
+        15137,
+        "100644",
+    ),
+    "infra/phase2/README.md": (
+        "99a264aa12e44ddf34bda25156877890143d75a3",
+        "55f9d05fa583e581d6a5b92ec4f1e3e53690a40b5087da456a84ef996b4d3f7b",
+        6378,
+        "4a5205e57bad5f54b60fd8ad1f21b8f32f5282bb4938a0244ea9f0977c34157e",
+        6748,
+        "100644",
+    ),
+    "infra/phase2/verify-static.sh": (
+        "c5e3d49701c6e2fa11676fe46b545cc87039b003",
+        "eb01988f26a56293338a7bcd8bc83487b2d8cd0c1c081ae75272bc73dfa28a94",
+        13155,
+        "357cd003b068997cbcb4ed194f785d3a1d1f310871ad1994c5102bcb1839f54d",
+        13541,
+        "100755",
+    ),
+    "tools/phase2_wormhole_successor_acceptance.py": (
+        "1ccfbe8c3b4837165f83bd8f2a85c5bb4c259cd7",
+        "f3a56bd684b508f69bc387d741f1c0277d0c4a7f4130aec984fd359fa8dc0f3a",
+        21178,
+        "b1eabe5dc758e8ff0c2b0d25f7a4878e7a38a4491db7ea3bffbe04018c579464",
+        23319,
+        "100644",
+    ),
+    "tools/test_phase2_wormhole_successor_acceptance.py": (
+        "29f5fed3124d2b76178befed2e53276e3fa6ad75",
+        "ce70d5f35c7725d0f93f27619c5828f294ac259fc20f8594a3ac71b5f5f6f72d",
+        19647,
+        "fae248af8e5b5e61634ac10bb8824d5437fd08c4d168c49faadff3e6983c1b9e",
+        29314,
+        "100644",
+    ),
+    (
+        "tools/"
+        "build_phase4c_personal_bank_user_counts_http_target_execution_contract.py"
+    ): (
+        "9cac3b5c6a3ecd0b98b71122864b5d706007645f",
+        "51d3c9bf425319e7a0cd7a49e7244f058e09f14ac363f9278000192cb4a69d3b",
+        59991,
+        "8f729d39a528cf0c5acb93802e9f6d830d8fc79bc80421c2a80d37a6ead58209",
+        61952,
+        "100644",
+    ),
+    "tools/phase4c_http_target_execution_successor_acceptance.py": (
+        "8c782bafed4b87abe90fb4f4c1f3510d9b4c7c84",
+        "891e4c7c48c76b76697b064e8e6fd55f5cb549b751a7bff3562868f62d76c75c",
+        78481,
+        "95e00e9d136e212cbcb5501d2abae46b9679bb2412d07ba6fcf79cbb9dd4de1a",
+        81902,
+        "100644",
+    ),
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpTargetExecutionSuccessorAcceptance.java"
+    ): (
+        "e9ba94d27cb0ec6a999998518ebeef1b47e4e8f6",
+        "76c2c4ef54061f85339ad8f5cb1f1bab21d2f71b7bbcf8fde44cdd4d563cdf15",
+        88021,
+        "945ddfd83ed4f8e0be4db02b1bd58abf74450eaf8996a92a12554ab8b81da578",
+        89014,
+        "100644",
+    ),
+}
+
+CURRENT_POST_PUSH_SOURCES = [
+    CONTRACT_RELATIVE,
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest.java",
+    "tools/build_phase4c_personal_bank_user_counts_http_"
+    "target_execution_post_push_contract.py",
+    "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_"
+    "target_execution_post_push_contract.py",
+]
+
+
+def _canonical_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _sha256_json(value: Any) -> str:
+    return _sha256_bytes(_canonical_json(value).encode("utf-8"))
+
+
+def _payload_sha256(document: dict[str, Any]) -> str:
+    return _sha256_json({
+        key: value
+        for key, value in document.items()
+        if key != "document_payload_sha256"
+    })
+
+
+def _fixed_regular_file(root: Path, relative: str) -> Path:
+    resolved_root = root.resolve(strict=True)
+    candidate = Path(relative)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise AssertionError(f"fixed post-push path escapes Ti-Java: {relative}")
+    cursor = resolved_root
+    for part in candidate.parts:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            raise AssertionError(f"fixed post-push path contains symlink: {relative}")
+    try:
+        resolved = (resolved_root / candidate).resolve(strict=True)
+        resolved.relative_to(resolved_root)
+    except (FileNotFoundError, RuntimeError, ValueError) as error:
+        raise AssertionError(
+            f"fixed post-push path escaped or vanished: {relative}"
+        ) from error
+    if not resolved.is_file():
+        raise AssertionError(f"fixed post-push path is not a regular file: {relative}")
+    return resolved
+
+
+def _read_json(root: Path, relative: str) -> dict[str, Any]:
+    try:
+        document = json.loads(
+            _fixed_regular_file(root, relative).read_text(encoding="utf-8")
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise AssertionError(f"cannot read fixed post-push JSON: {relative}") from error
+    if not isinstance(document, dict):
+        raise AssertionError(f"fixed post-push JSON is not an object: {relative}")
+    return document
+
+
+def _expected_overrides() -> dict[str, dict[str, Any]]:
+    return {
+        relative: {
+            "source": relative,
+            "accepted_git_commit_oid": GIT_COMMIT_OID,
+            "accepted_git_blob_oid": values[0],
+            "accepted_sha256": values[1],
+            "accepted_byte_count": values[2],
+            "successor_sha256": values[3],
+            "successor_byte_count": values[4],
+            "mode": values[5],
+        }
+        for relative, values in sorted(SUCCESSOR_SOURCES.items())
+    }
+
+
+def _validate_local_files(root: Path) -> None:
+    predecessor_path = _fixed_regular_file(root, PREDECESSOR_RELATIVE)
+    if _sha256_bytes(predecessor_path.read_bytes()) != PREDECESSOR_SHA256:
+        raise AssertionError("post-push predecessor physical hash drifted")
+    predecessor = _read_json(root, PREDECESSOR_RELATIVE)
+    if (
+        predecessor.get("contract_id") != PREDECESSOR_ID
+        or predecessor.get("status") != PREDECESSOR_STATUS
+        or predecessor.get("scope") != PREDECESSOR_SCOPE
+        or predecessor.get("captured_at") != PREDECESSOR_CAPTURED_AT
+        or predecessor.get("document_payload_sha256") != PREDECESSOR_PAYLOAD_SHA256
+        or _payload_sha256(predecessor) != PREDECESSOR_PAYLOAD_SHA256
+    ):
+        raise AssertionError("post-push predecessor identity or payload drifted")
+
+    manifest_path = _fixed_regular_file(root, JUNIT_MANIFEST_RELATIVE)
+    if _sha256_bytes(manifest_path.read_bytes()) != JUNIT_MANIFEST_SHA256:
+        raise AssertionError("post-push JUnit manifest physical hash drifted")
+    manifest = _read_json(root, JUNIT_MANIFEST_RELATIVE)
+    if (
+        manifest.get("document_payload_sha256") != JUNIT_MANIFEST_PAYLOAD_SHA256
+        or _payload_sha256(manifest) != JUNIT_MANIFEST_PAYLOAD_SHA256
+    ):
+        raise AssertionError("post-push JUnit manifest payload drifted")
+    confidentiality = manifest.get("confidentiality", {})
+    if (
+        confidentiality.get("manifest_bytes_external_git_anchor_complete") is not False
+        or confidentiality.get("post_push_successor_anchor_required") is not True
+    ):
+        raise AssertionError("historical JUnit manifest was rewritten")
+
+    worm_path = _fixed_regular_file(root, WORM_RELATIVE)
+    if _sha256_bytes(worm_path.read_bytes()) != WORM_SHA256:
+        raise AssertionError("post-push fifth WORM hash drifted")
+    worm = _read_json(root, WORM_RELATIVE)
+    if (
+        worm.get("java", {}).get("buildContextSha256") != JAVA_BUILD_CONTEXT_SHA256
+        or worm.get("java", {}).get("dockerfileSha256") != DOCKERFILE_SHA256
+        or worm.get("restore", {}).get("canonicalSchemaDumpSha256")
+        != CANONICAL_SCHEMA_DUMP_SHA256
+    ):
+        raise AssertionError("post-push fifth WORM boundary drifted")
+
+    for relative, values in SUCCESSOR_SOURCES.items():
+        payload = _fixed_regular_file(root, relative).read_bytes()
+        if _sha256_bytes(payload) != values[3] or len(payload) != values[4]:
+            raise AssertionError(f"post-push successor source drifted: {relative}")
+
+
+def validate_contract(document: dict[str, Any], ti_java_root: Path) -> None:
+    if not isinstance(document, dict):
+        raise AssertionError("post-push contract is not a JSON object")
+    if set(document) != {
+        "contract_id", "schema_version", "captured_at", "status", "scope",
+        "predecessor", "git_checkpoint", "checkpoint_anchor",
+        "historical_source_successors", "junit_execution", "worm_evidence",
+        "authorization", "acceptance", "document_payload_sha256",
+    }:
+        raise AssertionError("post-push contract top-level shape drifted")
+    if {
+        "contract_id": document.get("contract_id"),
+        "schema_version": document.get("schema_version"),
+        "captured_at": document.get("captured_at"),
+        "status": document.get("status"),
+        "scope": document.get("scope"),
+    } != {
+        "contract_id": CONTRACT_ID,
+        "schema_version": 1,
+        "captured_at": CONTRACT_CAPTURED_AT,
+        "status": CONTRACT_STATUS,
+        "scope": CONTRACT_SCOPE,
+    }:
+        raise AssertionError("post-push contract identity drifted")
+    if (
+        document.get("document_payload_sha256") != CONTRACT_PAYLOAD_SHA256
+        or _payload_sha256(document) != CONTRACT_PAYLOAD_SHA256
+    ):
+        raise AssertionError("post-push contract payload drifted")
+
+    _validate_local_files(ti_java_root)
+    if document.get("predecessor") != {
+        "source": PREDECESSOR_RELATIVE,
+        "sha256": PREDECESSOR_SHA256,
+        "document_payload_sha256": PREDECESSOR_PAYLOAD_SHA256,
+        "contract_id": PREDECESSOR_ID,
+        "status": PREDECESSOR_STATUS,
+        "scope": PREDECESSOR_SCOPE,
+        "captured_at": PREDECESSOR_CAPTURED_AT,
+        "immutable": True,
+    }:
+        raise AssertionError("post-push predecessor reference drifted")
+
+    checkpoint = document.get("git_checkpoint")
+    if not isinstance(checkpoint, dict) or set(checkpoint) != {
+        "object_format", "commit_oid", "root_tree_oid", "parent_oid",
+        "ti_java_tree_oid", "authored_at", "committed_at", "subject",
+        "capture_ref_metadata", "capture_ref_is_validation_authority", "diff",
+        "artifacts",
+    }:
+        raise AssertionError("post-push Git checkpoint shape drifted")
+    if {key: checkpoint.get(key) for key in (
+        "object_format", "commit_oid", "root_tree_oid", "parent_oid",
+        "ti_java_tree_oid", "authored_at", "committed_at", "subject",
+        "capture_ref_metadata",
+    )} != {
+        "object_format": GIT_OBJECT_FORMAT,
+        "commit_oid": GIT_COMMIT_OID,
+        "root_tree_oid": GIT_ROOT_TREE_OID,
+        "parent_oid": GIT_PARENT_OID,
+        "ti_java_tree_oid": TI_JAVA_TREE_OID,
+        "authored_at": GIT_AUTHORED_AT,
+        "committed_at": GIT_COMMITTED_AT,
+        "subject": GIT_SUBJECT,
+        "capture_ref_metadata": GIT_CAPTURE_REF,
+    }:
+        raise AssertionError("post-push Git checkpoint identity drifted")
+    if checkpoint.get("capture_ref_is_validation_authority") is not False:
+        raise AssertionError("post-push mutable ref became authority")
+    if checkpoint.get("diff") != {
+        "added_count": 9,
+        "modified_count": 0,
+        "deleted_count": 0,
+        "non_ti_java_count": 0,
+        "added_total_bytes": 222675,
+        "exact_add_only_delta": True,
+    }:
+        raise AssertionError("post-push Git checkpoint delta drifted")
+    if checkpoint.get("artifacts") != CHECKPOINT_ARTIFACTS:
+        raise AssertionError("post-push checkpoint artifact index drifted")
+
+    if document.get("checkpoint_anchor") != {
+        "whole_commit_object_fixed": True,
+        "root_tree_parent_and_ti_java_subtree_fixed": True,
+        "exact_nine_artifact_blobs_fixed": True,
+        "normalized_junit_manifest_blob_external_git_anchor_complete": True,
+        "anchor_contract_builder_acceptances_and_tests_external_git_anchor_complete": True,
+        "historical_manifest_false_claim_preserved": True,
+        "current_post_push_contract_and_validator_bytes_excluded": True,
+        "origin_ref_is_metadata_not_authority": True,
+        "independently_signed_provenance": False,
+        "tamper_evident_scope": "fixed_git_commit_tree_and_explicit_blobs",
+    }:
+        raise AssertionError("post-push checkpoint anchor boundary drifted")
+
+    successors = document.get("historical_source_successors")
+    if not isinstance(successors, dict) or successors != {
+        "accepted_checkpoint_commit_oid": GIT_COMMIT_OID,
+        "successor_allowlist": sorted(SUCCESSOR_SOURCES),
+        "successor_allowlist_exact": True,
+        "arbitrary_source_lookup_forbidden": True,
+        "accepted_hashes_from_fixed_git_blobs": True,
+        "overrides": _expected_overrides(),
+        "current_post_push_sources": sorted(CURRENT_POST_PUSH_SOURCES),
+        "current_post_push_sources_excluded_from_self_authority": True,
+        "current_successor_bytes_external_git_anchor_complete": False,
+    }:
+        raise AssertionError("post-push historical successor boundary drifted")
+
+    if document.get("junit_execution") != {
+        "source": JUNIT_MANIFEST_RELATIVE,
+        "sha256": JUNIT_MANIFEST_SHA256,
+        "document_payload_sha256": JUNIT_MANIFEST_PAYLOAD_SHA256,
+        "leaf_payload_sha256": JUNIT_LEAF_PAYLOAD_SHA256,
+        "raw_report_sha256": JUNIT_RAW_REPORT_SHA256,
+        "raw_report_byte_count": JUNIT_RAW_REPORT_BYTE_COUNT,
+        "case_leaf_count": 59,
+        "supplementary_leaf_count": 1,
+        "total_leaf_count": 60,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "manifest_blob_external_git_anchor_complete": True,
+        "historical_manifest_document_rewritten": False,
+    }:
+        raise AssertionError("post-push JUnit execution boundary drifted")
+    if document.get("worm_evidence") != {
+        "source": WORM_RELATIVE,
+        "sha256": WORM_SHA256,
+        "predecessor_sha256": WORM_PREDECESSOR_SHA256,
+        "fixed_chain_node_count": 5,
+        "reused": True,
+        "new_worm_report_created": False,
+        "java_build_context_sha256": JAVA_BUILD_CONTEXT_SHA256,
+        "dockerfile_sha256": DOCKERFILE_SHA256,
+        "canonical_schema_dump_sha256": CANONICAL_SCHEMA_DUMP_SHA256,
+    }:
+        raise AssertionError("post-push fifth WORM boundary drifted")
+
+    authorization = document.get("authorization")
+    if authorization != {
+        "target_dispositions_executed": True,
+        "all_59_target_dispositions_executed": True,
+        "bootstrap_and_anchor_checkpoint_bytes_external_git_anchor_complete": True,
+        "junit_manifest_bytes_external_git_anchor_complete": True,
+        "current_handoff_successor_bytes_external_git_anchor_complete": False,
+        "typed_parity_review_complete": False,
+        "full_target_parity_closed": False,
+        "route_migration_eligible": False,
+        "two_legacy_get_routes_migrated": False,
+        "derived_head_and_options_count_as_migrated": False,
+        "operator_migration_implementation": False,
+        "production_schema_or_index": False,
+        "real_data_migration_execution": False,
+        "client_change": False,
+        "gateway_or_proxy_change": False,
+        "production_cutover": False,
+    }:
+        raise AssertionError("post-push authorization boundary drifted")
+    if document.get("acceptance") != {
+        "checkpoint_artifact_count": 9,
+        "checkpoint_added_total_bytes": 222675,
+        "junit_leaf_test_count": 60,
+        "target_case_count": 59,
+        "http_execution_count": 57,
+        "typed_postgresql_disposition_count": 2,
+        "mocked_application_result_case_count": 0,
+        "bound_only_case_count": 0,
+        "typed_parity_review_complete": False,
+        "full_target_parity_closed": False,
+        "route_migration_eligible": False,
+        "implemented_pending_get_count": 2,
+        "migrated_operation_count": 11,
+        "pending_operation_count": 600,
+        "production_cutover_operation_count": 0,
+        "production_cutover": False,
+        "current_handoff_is_bootstrap": True,
+        "next_gate": NEXT_GATE,
+    }:
+        raise AssertionError("post-push acceptance boundary drifted")
+
+
+def load(
+    ti_java_root: Path,
+    *,
+    repository_root: Path | None = None,
+) -> dict[str, Any]:
+    root = ti_java_root.resolve(strict=True)
+    contract_path = _fixed_regular_file(root, CONTRACT_RELATIVE)
+    payload = contract_path.read_bytes()
+    if _sha256_bytes(payload) != CONTRACT_SHA256:
+        raise AssertionError("post-push contract physical SHA-256 drifted")
+    document = _read_json(root, CONTRACT_RELATIVE)
+    validate_contract(document, root)
+    if repository_root is not None:
+        validate_git_checkpoint(repository_root)
+    return document
+
+
+def accepted_sha256(relative: str) -> str | None:
+    values = SUCCESSOR_SOURCES.get(relative)
+    return None if values is None else values[1]
+
+
+def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
+    values = SUCCESSOR_SOURCES.get(relative)
+    if values is None:
+        return None
+    document = load(ti_java_root)
+    override = document["historical_source_successors"]["overrides"].get(relative)
+    if override != _expected_overrides()[relative]:
+        raise AssertionError(f"post-push successor override drifted: {relative}")
+    physical = _sha256_bytes(_fixed_regular_file(ti_java_root, relative).read_bytes())
+    if physical != values[3]:
+        raise AssertionError(f"post-push successor physical hash drifted: {relative}")
+    return physical
+
+
+def _run_read_only_git(repository_root: Path, *arguments: str) -> bytes:
+    environment = os.environ.copy()
+    environment.update({
+        "GIT_NO_REPLACE_OBJECTS": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_PAGER": "cat",
+        "LC_ALL": "C",
+    })
+    completed = subprocess.run(
+        ["git", "-C", str(repository_root), *arguments],
+        capture_output=True,
+        check=False,
+        env=environment,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise AssertionError(f"read-only Git command failed: {detail}")
+    return completed.stdout
+
+
+def _git_text(repository_root: Path, *arguments: str) -> str:
+    return _run_read_only_git(repository_root, *arguments).decode("utf-8").strip()
+
+
+def _validate_git_blob(
+    root: Path,
+    repository_path: str,
+    blob_oid: str,
+    sha256: str,
+    byte_count: int,
+    mode: str,
+) -> None:
+    line = _git_text(root, "ls-tree", GIT_COMMIT_OID, "--", repository_path)
+    parts = line.split(None, 3)
+    if len(parts) != 4 or parts[:3] != [mode, "blob", blob_oid]:
+        raise AssertionError(f"post-push Git tree entry drifted: {repository_path}")
+    payload = _run_read_only_git(root, "cat-file", "blob", blob_oid)
+    if len(payload) != byte_count or _sha256_bytes(payload) != sha256:
+        raise AssertionError(f"post-push Git blob payload drifted: {repository_path}")
+
+
+def validate_git_checkpoint(repository_root: Path) -> None:
+    root = repository_root.resolve(strict=True)
+    if _git_text(root, "rev-parse", "--show-object-format") != GIT_OBJECT_FORMAT:
+        raise AssertionError("post-push Git object format drifted")
+    if _git_text(root, "cat-file", "-t", GIT_COMMIT_OID) != "commit":
+        raise AssertionError("post-push Git checkpoint is not a commit")
+    facts = _git_text(
+        root,
+        "show",
+        "-s",
+        "--format=%T%n%P%n%aI%n%cI%n%s",
+        GIT_COMMIT_OID,
+    ).splitlines()
+    if facts != [
+        GIT_ROOT_TREE_OID,
+        GIT_PARENT_OID,
+        GIT_AUTHORED_AT,
+        GIT_COMMITTED_AT,
+        GIT_SUBJECT,
+    ]:
+        raise AssertionError("post-push Git commit identity drifted")
+    if _git_text(root, "rev-parse", f"{GIT_COMMIT_OID}:Ti-Java") != TI_JAVA_TREE_OID:
+        raise AssertionError("post-push Ti-Java subtree drifted")
+    expected_paths = {
+        descriptor["repository_path"]
+        for descriptor in CHECKPOINT_ARTIFACTS.values()
+    }
+    rows = _git_text(
+        root,
+        "diff-tree",
+        "--no-commit-id",
+        "--name-status",
+        "-r",
+        GIT_COMMIT_OID,
+    ).splitlines()
+    parsed = [row.split("\t", 1) for row in rows if row]
+    if (
+        len(parsed) != 9
+        or any(len(row) != 2 or row[0] != "A" for row in parsed)
+        or {row[1] for row in parsed} != expected_paths
+    ):
+        raise AssertionError("post-push checkpoint delta drifted")
+    for descriptor in CHECKPOINT_ARTIFACTS.values():
+        _validate_git_blob(
+            root,
+            descriptor["repository_path"],
+            descriptor["git_blob_oid"],
+            descriptor["sha256"],
+            descriptor["byte_count"],
+            descriptor["mode"],
+        )
+    for relative, values in SUCCESSOR_SOURCES.items():
+        _validate_git_blob(
+            root,
+            f"Ti-Java/{relative}",
+            values[0],
+            values[1],
+            values[2],
+            values[5],
+        )

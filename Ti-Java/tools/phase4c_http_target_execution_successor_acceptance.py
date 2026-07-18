@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections import Counter
 import csv
 import hashlib
+import importlib
 import json
 from pathlib import Path
 import subprocess
@@ -496,6 +497,70 @@ def _is_sha256(value: object) -> bool:
     )
 
 
+def _load_post_push_successor_acceptance() -> object:
+    """Import the fixed terminal successor only when physical bytes drift.
+
+    Keeping this import out of module initialization prevents the terminal
+    bridge from forming an import cycle while it validates these historical
+    bytes.  Only the two code-fixed module names are ever attempted.
+    """
+    qualified_name = (
+        "tools.phase4c_http_target_execution_post_push_successor_acceptance"
+    )
+    direct_name = "phase4c_http_target_execution_post_push_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed target-execution post-push successor acceptance is required"
+        ) from error
+
+
+def _current_or_post_push_successor_sha256(
+        root: Path,
+        relative: str,
+        declared_sha256: object,
+        physical_sha256: str,
+        *,
+        label: str,
+) -> str:
+    """Accept current bytes directly or through one exact fixed successor.
+
+    The terminal successor must independently name the historical declaration
+    as its accepted hash and the current regular file as its successor hash.
+    A missing module, unknown path, malformed declaration, or either mismatch
+    fails closed.
+    """
+    if declared_sha256 == physical_sha256:
+        return physical_sha256
+    if not _is_sha256(declared_sha256):
+        raise AssertionError(f"{label} declared SHA-256 is invalid")
+
+    acceptance = _load_post_push_successor_acceptance()
+    accepted_lookup = getattr(acceptance, "accepted_sha256", None)
+    successor_lookup = getattr(acceptance, "successor_sha256", None)
+    if not callable(accepted_lookup) or not callable(successor_lookup):
+        raise AssertionError(
+            "fixed target-execution post-push successor API is incomplete"
+        )
+    if accepted_lookup(relative) != declared_sha256:
+        raise AssertionError(
+            f"post-push successor does not accept historical bytes: {relative}"
+        )
+    if successor_lookup(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"post-push successor does not bind current bytes: {relative}"
+        )
+    return physical_sha256
+
+
 def _fixed_path(root: Path, relative: str, *, regular_file: bool) -> Path:
     resolved_root = root.resolve(strict=True)
     candidate = Path(relative)
@@ -602,9 +667,13 @@ def _validate_reference(
     if reference.get("source") != expected_relative:
         raise AssertionError(f"{label} followed a non-fixed source path")
     physical = _sha256(_fixed_regular_file(root, expected_relative))
-    if reference.get("sha256") != physical:
-        raise AssertionError(f"{label} physical SHA-256 drifted")
-    return physical
+    return _current_or_post_push_successor_sha256(
+        root,
+        expected_relative,
+        reference.get("sha256"),
+        physical,
+        label=label,
+    )
 
 
 def _validate_predecessor(root: Path, contract: dict) -> dict:
@@ -1406,13 +1475,31 @@ def _validate_historical_successors(root: Path, contract: dict) -> None:
             raise AssertionError(
                 f"historical anchor does not contain accepted bytes: {relative}"
             )
-        if entry != {
-            "source": relative,
-            "accepted_sha256": accepted,
-            "accepted_hash_provenance": provenance,
-            "successor_sha256": _sha256(_fixed_regular_file(root, relative)),
+        if not isinstance(entry, dict) or set(entry) != {
+                "source",
+                "accepted_sha256",
+                "accepted_hash_provenance",
+                "successor_sha256",
         }:
             raise AssertionError(f"historical successor entry drifted: {relative}")
+        if entry.get("source") != relative:
+            raise AssertionError(f"historical successor path drifted: {relative}")
+        if entry.get("accepted_sha256") != accepted:
+            raise AssertionError(
+                f"historical successor accepted hash drifted: {relative}"
+            )
+        if entry.get("accepted_hash_provenance") != provenance:
+            raise AssertionError(
+                f"historical successor provenance drifted: {relative}"
+            )
+        physical = _sha256(_fixed_regular_file(root, relative))
+        _current_or_post_push_successor_sha256(
+            root,
+            relative,
+            entry.get("successor_sha256"),
+            physical,
+            label=f"historical successor {relative}",
+        )
     if historical.get("successor_allowlist") != sorted(
             HISTORICAL_SOURCE_ACCEPTED_SHA256):
         raise AssertionError("historical successor allowlist declaration drifted")
@@ -1706,9 +1793,14 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
         raise AssertionError(f"target-execution successor entry drifted: {relative}")
     if not _is_sha256(successor):
         raise AssertionError(f"target-execution successor hash is invalid: {relative}")
-    if _sha256(_fixed_regular_file(root, relative)) != successor:
-        raise AssertionError(f"target-execution successor file drifted: {relative}")
-    return successor
+    physical = _sha256(_fixed_regular_file(root, relative))
+    return _current_or_post_push_successor_sha256(
+        root,
+        relative,
+        successor,
+        physical,
+        label=f"target-execution successor {relative}",
+    )
 
 
 def fixed_source_sha256(ti_java_root: Path, relative: str) -> str | None:
@@ -1726,6 +1818,11 @@ def fixed_source_sha256(ti_java_root: Path, relative: str) -> str | None:
     digest = reference.get("sha256")
     if not _is_sha256(digest):
         raise AssertionError(f"target-execution fixed source hash is invalid: {relative}")
-    if _sha256(_fixed_regular_file(root, relative)) != digest:
-        raise AssertionError(f"target-execution fixed source file drifted: {relative}")
-    return digest
+    physical = _sha256(_fixed_regular_file(root, relative))
+    return _current_or_post_push_successor_sha256(
+        root,
+        relative,
+        digest,
+        physical,
+        label=f"target-execution fixed source {relative}",
+    )

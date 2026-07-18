@@ -378,6 +378,45 @@ SOURCE_PATHS = {
 BRIDGE_SOURCE_KEYS = frozenset({"python_successor_bridge", "java_successor_bridge"})
 BRIDGE_PROVENANCE_SENTINEL = "<bridge-self-provenance-sha256>"
 
+# These exact bytes were captured by the immutable target-execution contract and
+# were subsequently handed off through the code-fixed post-push successor.  The
+# historical builder must keep reproducing that document even after the listed
+# files advance; current bytes are authorized only by the successor contract.
+POST_PUSH_CHECKPOINT_ACCEPTED_SHA256 = {
+    "README.md": (
+        "321d23e47d0df0714ea632b2c8c1d3d05d0e67bf69d53e3a52e387e4a949bda4"
+    ),
+    "docs/refactor/05-progress.md": (
+        "e2363a603e9b82368185b6fef3e9882a3e586ce5b5eca14a8b5cddcbca7d6faf"
+    ),
+    "docs/refactor/phase4c/README.md": (
+        "f43ae7ca31038fcc45a05874cfc5c8a460edfe2833936bf4418f37706771d472"
+    ),
+    "infra/phase2/README.md": (
+        "55f9d05fa583e581d6a5b92ec4f1e3e53690a40b5087da456a84ef996b4d3f7b"
+    ),
+    "infra/phase2/verify-static.sh": (
+        "eb01988f26a56293338a7bcd8bc83487b2d8cd0c1c081ae75272bc73dfa28a94"
+    ),
+    "tools/phase2_wormhole_successor_acceptance.py": (
+        "f3a56bd684b508f69bc387d741f1c0277d0c4a7f4130aec984fd359fa8dc0f3a"
+    ),
+    "tools/test_phase2_wormhole_successor_acceptance.py": (
+        "ce70d5f35c7725d0f93f27619c5828f294ac259fc20f8594a3ac71b5f5f6f72d"
+    ),
+    "tools/phase4c_http_target_execution_successor_acceptance.py": (
+        "891e4c7c48c76b76697b064e8e6fd55f5cb549b751a7bff3562868f62d76c75c"
+    ),
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpTargetExecutionSuccessorAcceptance.java"
+    ): "76c2c4ef54061f85339ad8f5cb1f1bab21d2f71b7bbcf8fde44cdd4d563cdf15",
+    (
+        "tools/"
+        "build_phase4c_personal_bank_user_counts_http_target_execution_contract.py"
+    ): "51d3c9bf425319e7a0cd7a49e7244f058e09f14ac363f9278000192cb4a69d3b",
+}
+
 
 def canonical_json(value) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -457,7 +496,13 @@ def fixed_regular_file(relative: str) -> Path:
 
 
 def source_reference(relative: str) -> dict:
-    return {"source": relative, "sha256": sha256(fixed_regular_file(relative))}
+    return {
+        "source": relative,
+        "sha256": POST_PUSH_CHECKPOINT_ACCEPTED_SHA256.get(
+            relative,
+            sha256(fixed_regular_file(relative)),
+        ),
+    }
 
 
 def file_manifest(root: Path) -> dict[str, str]:
@@ -1258,7 +1303,10 @@ def validate_historical_successor_acceptance(predecessor: dict) -> dict:
             "source": relative,
             "accepted_sha256": accepted,
             "accepted_hash_provenance": provenance,
-            "successor_sha256": sha256(fixed_regular_file(relative)),
+            "successor_sha256": POST_PUSH_CHECKPOINT_ACCEPTED_SHA256.get(
+                relative,
+                sha256(fixed_regular_file(relative)),
+            ),
         }
     if tuple(sorted(overrides)) != tuple(sorted(HISTORICAL_SUCCESSOR_ALLOWLIST)):
         raise ValueError("historical successor allowlist is not exact")

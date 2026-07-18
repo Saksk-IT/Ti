@@ -13,22 +13,11 @@ import argparse
 from dataclasses import dataclass
 import datetime as dt
 import hashlib
+import importlib
 import json
 from pathlib import Path, PurePosixPath
 import re
 from typing import Sequence
-
-try:
-    from tools.phase4c_http_target_execution_successor_acceptance import (
-        load_http_target_execution_successor_contract,
-    )
-    from tools.phase4c_read_successor_acceptance import load_read_successor_contract
-except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_http_target_execution_successor_acceptance import (
-        load_http_target_execution_successor_contract,
-    )
-    from phase4c_read_successor_acceptance import load_read_successor_contract
-
 
 POSTGRES_IMAGE = (
     "postgres:18.4-alpine@sha256:"
@@ -101,6 +90,14 @@ PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256 = (
 )
 PHASE4C_HTTP_IMPLEMENTATION_DOCKERFILE_SHA256 = (
     "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+)
+
+READ_SUCCESSOR_MODULE = "tools.phase4c_read_successor_acceptance"
+TARGET_EXECUTION_SUCCESSOR_MODULE = (
+    "tools.phase4c_http_target_execution_successor_acceptance"
+)
+TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE = (
+    "tools.phase4c_http_target_execution_post_push_successor_acceptance"
 )
 
 
@@ -184,6 +181,31 @@ FIXED_IMMUTABLE_MIRRORS = (
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise EvidenceValidationError(message)
+
+
+def _load_fixed_successor_module(
+        qualified_name: str,
+        direct_name: str,
+        label: str,
+) -> object:
+    """Lazily import one code-fixed acceptance module, without scanning."""
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise EvidenceValidationError(f"{label} module is required") from error
+
+
+def _required_loader(module: object, name: str, label: str):
+    loader = getattr(module, name, None)
+    require(callable(loader), f"{label} loader is required")
+    return loader
 
 
 def sha256(path: Path) -> str:
@@ -539,13 +561,55 @@ def validate_fixed_acceptance(
 ) -> EvidenceDescriptor:
     """Validate only the reviewed, fixed production evidence chain."""
 
+    read_successor = _load_fixed_successor_module(
+        READ_SUCCESSOR_MODULE,
+        "phase4c_read_successor_acceptance",
+        "Phase4C fixed read successor acceptance",
+    )
+    target_successor = _load_fixed_successor_module(
+        TARGET_EXECUTION_SUCCESSOR_MODULE,
+        "phase4c_http_target_execution_successor_acceptance",
+        "Phase4C fixed target-execution successor acceptance",
+    )
+    post_push_successor = _load_fixed_successor_module(
+        TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE,
+        "phase4c_http_target_execution_post_push_successor_acceptance",
+        "Phase4C fixed target-execution post-push successor acceptance",
+    )
+
+    load_read_successor_contract = _required_loader(
+        read_successor,
+        "load_read_successor_contract",
+        "Phase4C fixed read successor acceptance",
+    )
+    load_http_target_execution_successor_contract = _required_loader(
+        target_successor,
+        "load_http_target_execution_successor_contract",
+        "Phase4C fixed target-execution successor acceptance",
+    )
+    load_http_target_execution_post_push_successor = _required_loader(
+        post_push_successor,
+        "load",
+        "Phase4C fixed target-execution post-push successor acceptance",
+    )
+
     require(
-        load_read_successor_contract(ti_java_root) is not None,
+        isinstance(load_read_successor_contract(ti_java_root), dict),
         "Phase4C fixed read successor contract is required",
     )
     require(
-        load_http_target_execution_successor_contract(ti_java_root) is not None,
+        isinstance(
+            load_http_target_execution_successor_contract(ti_java_root),
+            dict,
+        ),
         "Phase4C fixed target-execution successor contract is required",
+    )
+    require(
+        isinstance(
+            load_http_target_execution_post_push_successor(ti_java_root),
+            dict,
+        ),
+        "Phase4C fixed target-execution post-push successor contract is required",
     )
 
     return validate_fixed_chain(
