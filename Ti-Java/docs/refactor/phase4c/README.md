@@ -106,10 +106,10 @@ target-execution 合同与两份 bridge 在 `0531b3c9272f9743a374edcf5c8bbeb7264
 
 因此 target-execution bootstrap 的“等待首次提交”动作已完成，但两条 GET 仍保持 pending，有效账本仍为 **11 migrated、600 pending、0 production cutover**。operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
 
-## User-counts HTTP target-execution post-push anchor successor（当前）
+## User-counts HTTP target-execution post-push external anchor（当前）
 
-`6c1b03d` anchor checkpoint 包含九个精确文件，其中包括由原始 60-leaf JUnit XML 归一化得到的 60/60 manifest；它不是只记录一个摘要的松散交接。当前 post-push successor 固定整个 `6c1b03dd7fa9cde7a6dcdbf6b555452e9a6d9e53` Git checkpoint、提交/树元数据和九个文件的精确身份，并把 normalized JUnit manifest 与同一 checkpoint 绑定。target-execution bootstrap `0531b3c9272f9743a374edcf5c8bbeb72643eb1b` 与 anchor checkpoint `6c1b03d` 均已推送到 `main`。
+`6c1b03d` anchor checkpoint 包含九个精确文件，其中包括由原始 60-leaf JUnit XML 归一化得到的 60/60 manifest；随后提交 `1dae013e11c76ad858d6695f166a32631eb1525e` 物化 post-push successor。当前 external anchor 固定 `1dae013` 的 commit/root tree/parent/Ti-Java subtree、6 added + 10 modified 的完整 16 文件 delta，以及这 16 项中上一节点六个自排除来源的精确 Git blob、SHA-256、mode 与字节数。target-execution bootstrap `0531b3c`、anchor checkpoint `6c1b03d` 和 post-push `1dae013` 均已推送到 `main`。
 
-这一检查点已经通过全部 source tools 533/533、Phase 2 静态门禁，以及完整 Maven 675 个 surefire + 153 个 failsafe，0 failure/error/skip。post-push successor 只解决前驱 checkpoint 的固定交接；它自身仍是需要未来后继外锚的 bootstrap，不能自授权 typed parity、full target parity、route migration 或 production cutover。有效账本因此继续是 **11 migrated、600 pending、0 production cutover**。
+该合同的普通构建与加载不读取 `.git`，显式 Git replay 只允许固定的 `1dae013` 对象和 16 路径 allowlist；新节点不导入历史 bridge 或 Phase 2，也不把外锚节点加入固定五节点 WORM 链。上一 post-push 节点的六个自排除来源现已外部锚定；本节点自身六个控制面来源继续声明 `independently_signed=false`，由下一业务证据节点承接，不能自授权 typed parity、full target parity、route migration 或 production cutover。有效账本继续是 **11 migrated、600 pending、0 production cutover**。
 
-下一验收门禁是 typed parity 评审、真实 Tomcat 的 HEAD/Location/Vary/CORS/安全头/Request ID/全部限流头完整矩阵、Redis 真实连接拒绝/中断/同实例恢复，以及 PostgreSQL 16.14/18.4 关键前置终止的 identity/业务 SQL 与九表指纹。上述门禁完成前，operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+下一验收门禁先把 malformed expiry 固定为 PostgreSQL 域外 typed rejection，并把 aware expiry 按现有 `timestamp without time zone` 语义实际执行为 HTTP，从 57 HTTP + 2 typed 收敛到 58 HTTP + 1 typed rejection；随后补 PostgreSQL 16.14/18.4 关键前置终止的 identity/业务 SQL/九表指纹，以及无 application/auth/limiter mock 的真实 Tomcat HEAD/Location/Vary/CORS/安全头/Request ID/全部限流头与同一服务 Redis outage/recovery。上述门禁完成前，operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。

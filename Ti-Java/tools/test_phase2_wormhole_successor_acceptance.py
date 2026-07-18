@@ -15,6 +15,10 @@ from unittest import mock
 try:
     from tools import phase2_wormhole_successor_acceptance as phase2_acceptance
     from tools import (
+        phase4c_http_target_execution_post_push_successor_acceptance
+        as post_push_acceptance,
+    )
+    from tools import (
         phase4c_http_target_execution_successor_acceptance
         as target_execution_acceptance,
     )
@@ -34,6 +38,8 @@ try:
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     import phase2_wormhole_successor_acceptance as phase2_acceptance
+    import phase4c_http_target_execution_post_push_successor_acceptance \
+        as post_push_acceptance
     import phase4c_http_target_execution_successor_acceptance \
         as target_execution_acceptance
     from phase2_wormhole_successor_acceptance import (
@@ -405,6 +411,110 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                     label="fixed source",
                 )
 
+    def test_post_push_bridge_is_lazy_for_unchanged_bytes(self) -> None:
+        declared = "4" * 64
+        resolve = getattr(
+            post_push_acceptance,
+            "_current_or_post_push_anchor_successor_sha256",
+        )
+        with mock.patch.object(
+            post_push_acceptance,
+            "_load_post_push_anchor_successor_acceptance",
+            side_effect=AssertionError("anchor bridge must remain lazy"),
+        ):
+            self.assertEqual(
+                declared,
+                resolve(
+                    self.root,
+                    "fixed/post-push.py",
+                    declared,
+                    declared,
+                    label="post-push source",
+                ),
+            )
+
+    def test_post_push_bridge_delegates_only_exact_second_hop(self) -> None:
+        accepted = "4" * 64
+        physical = "5" * 64
+        resolve = getattr(
+            post_push_acceptance,
+            "_current_or_post_push_anchor_successor_sha256",
+        )
+        terminal = types.SimpleNamespace(
+            accepted_sha256=lambda relative: (
+                accepted if relative == "fixed/post-push.py" else None
+            ),
+            successor_sha256=lambda root, relative: (
+                physical
+                if root == self.root and relative == "fixed/post-push.py"
+                else None
+            ),
+        )
+        with mock.patch.object(
+            post_push_acceptance,
+            "_load_post_push_anchor_successor_acceptance",
+            return_value=terminal,
+        ):
+            self.assertEqual(
+                physical,
+                resolve(
+                    self.root,
+                    "fixed/post-push.py",
+                    accepted,
+                    physical,
+                    label="post-push source",
+                ),
+            )
+
+    def test_post_push_bridge_rejects_unknown_or_wrong_second_hop(self) -> None:
+        accepted = "4" * 64
+        physical = "5" * 64
+        resolve = getattr(
+            post_push_acceptance,
+            "_current_or_post_push_anchor_successor_sha256",
+        )
+        unknown = types.SimpleNamespace(
+            accepted_sha256=lambda relative: None,
+            successor_sha256=lambda root, relative: physical,
+        )
+        with mock.patch.object(
+            post_push_acceptance,
+            "_load_post_push_anchor_successor_acceptance",
+            return_value=unknown,
+        ):
+            with self.assertRaisesRegex(
+                AssertionError,
+                "does not accept historical",
+            ):
+                resolve(
+                    self.root,
+                    "unknown/post-push.py",
+                    accepted,
+                    physical,
+                    label="post-push source",
+                )
+
+        wrong = types.SimpleNamespace(
+            accepted_sha256=lambda relative: accepted,
+            successor_sha256=lambda root, relative: "6" * 64,
+        )
+        with mock.patch.object(
+            post_push_acceptance,
+            "_load_post_push_anchor_successor_acceptance",
+            return_value=wrong,
+        ):
+            with self.assertRaisesRegex(
+                AssertionError,
+                "does not bind current",
+            ):
+                resolve(
+                    self.root,
+                    "fixed/post-push.py",
+                    accepted,
+                    physical,
+                    label="post-push source",
+                )
+
     def test_fixed_acceptance_requires_target_execution_successor(self) -> None:
         modules = {
             phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
@@ -415,6 +525,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                     load_http_target_execution_successor_contract=lambda root: None,
                 ),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -446,6 +558,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 ),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: None),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -479,6 +593,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 ),
             phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=reject_tamper),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -530,6 +646,76 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                     self.successor_build,
                 )
 
+    def test_fixed_acceptance_requires_post_push_anchor_successor(self) -> None:
+        modules = {
+            phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
+                load_read_successor_contract=lambda root: {"validated": True},
+            ),
+            phase2_acceptance.TARGET_EXECUTION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(
+                    load_http_target_execution_successor_contract=lambda root: {
+                        "validated": True,
+                    },
+                ),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: None),
+        }
+        with mock.patch.object(
+            phase2_acceptance.importlib,
+            "import_module",
+            side_effect=lambda name: modules[name],
+        ):
+            with self.assertRaisesRegex(
+                EvidenceValidationError,
+                "fixed target-execution post-push anchor successor contract is required",
+            ):
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                )
+
+    def test_fixed_acceptance_fails_when_post_push_anchor_module_is_missing(
+        self,
+    ) -> None:
+        modules = {
+            phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
+                load_read_successor_contract=lambda root: {"validated": True},
+            ),
+            phase2_acceptance.TARGET_EXECUTION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(
+                    load_http_target_execution_successor_contract=lambda root: {
+                        "validated": True,
+                    },
+                ),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+        }
+
+        def import_or_reject(name: str) -> object:
+            if name in modules:
+                return modules[name]
+            raise ModuleNotFoundError(name=name)
+
+        with mock.patch.object(
+            phase2_acceptance.importlib,
+            "import_module",
+            side_effect=import_or_reject,
+        ):
+            with self.assertRaisesRegex(
+                EvidenceValidationError,
+                "fixed target-execution post-push anchor successor acceptance module is required",
+            ):
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                )
+
     def test_import_and_fixed_chain_do_not_import_successor_modules(self) -> None:
         script = r'''
 import importlib.abc
@@ -540,6 +726,7 @@ blocked = {
     "tools.phase4c_read_successor_acceptance",
     "tools.phase4c_http_target_execution_successor_acceptance",
     "tools.phase4c_http_target_execution_post_push_successor_acceptance",
+    "tools.phase4c_http_target_execution_post_push_anchor_successor_acceptance",
 }
 
 class Blocker(importlib.abc.MetaPathFinder):

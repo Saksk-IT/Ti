@@ -38,6 +38,10 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
             "server/src/test/java/io/saksk/ti/architecture/"
                     + "Phase4cPersonalBankUserCountsHttpTargetExecutionPostPush"
                     + "ContractParityTest.java";
+    private static final String POST_PUSH_ANCHOR_CONTRACT_PATH =
+            "docs/refactor/phase4c/"
+                    + "personal-bank-user-counts-http-target-execution-post-push-"
+                    + "anchor-contract.json";
     private static final String OLD_TARGET_BRIDGE_PATH =
             "server/src/test/java/io/saksk/ti/architecture/"
                     + "Phase4cHttpTargetExecutionSuccessorAcceptance.java";
@@ -46,23 +50,23 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
             successor(
                     "README.md",
                     "321d23e47d0df0714ea632b2c8c1d3d05d0e67bf69d53e3a52e387e4a949bda4",
-                    "9c7608803dff193b898d14d13de92095ef001dfeb6099fde2a2ba546d4cd867c"),
+                    "9008df17aa8eba4945fde525a304c4d891da20004f18ab86ceda485fffab2b57"),
             successor(
                     "docs/refactor/05-progress.md",
                     "e2363a603e9b82368185b6fef3e9882a3e586ce5b5eca14a8b5cddcbca7d6faf",
-                    "9ac3b2edaff690f105326aed3c7a87d4049b7f89a1af541038c8f0b032bf79ec"),
+                    "477d2dc0fce4946e511faa2c143fc76367ae6231a932ae204b6858ca5787e1bf"),
             successor(
                     "docs/refactor/phase4c/README.md",
                     "f43ae7ca31038fcc45a05874cfc5c8a460edfe2833936bf4418f37706771d472",
-                    "649ad38f868840edf8ca16ce35156dd18ea7336da9869433bdaa0db2f604fec2"),
+                    "50f1ee46eddac681b49281c3b348e4017fe6893ec38051a5485317cd766c2f61"),
             successor(
                     "infra/phase2/README.md",
                     "55f9d05fa583e581d6a5b92ec4f1e3e53690a40b5087da456a84ef996b4d3f7b",
-                    "4a5205e57bad5f54b60fd8ad1f21b8f32f5282bb4938a0244ea9f0977c34157e"),
+                    "7ae3e8a5bb36920039649ffa8a2aef2bd9bb59782fa03f50e4174cee9063b56f"),
             successor(
                     "infra/phase2/verify-static.sh",
                     "eb01988f26a56293338a7bcd8bc83487b2d8cd0c1c081ae75272bc73dfa28a94",
-                    "357cd003b068997cbcb4ed194f785d3a1d1f310871ad1994c5102bcb1839f54d"),
+                    "92a3a1ee30ddbb2b5c854dbff7fac23da37e5804e0628211e85725ba4523d835"),
             successor(
                     OLD_TARGET_BRIDGE_PATH,
                     "76c2c4ef54061f85339ad8f5cb1f1bab21d2f71b7bbcf8fde44cdd4d563cdf15",
@@ -75,7 +79,7 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
             successor(
                     "tools/phase2_wormhole_successor_acceptance.py",
                     "f3a56bd684b508f69bc387d741f1c0277d0c4a7f4130aec984fd359fa8dc0f3a",
-                    "b1eabe5dc758e8ff0c2b0d25f7a4878e7a38a4491db7ea3bffbe04018c579464"),
+                    "868d5cebbcc695136083ac892e572483ffc40829f487cb8d9d2b407c2fc763d1"),
             successor(
                     "tools/phase4c_http_target_execution_successor_acceptance.py",
                     "891e4c7c48c76b76697b064e8e6fd55f5cb549b751a7bff3562868f62d76c75c",
@@ -83,7 +87,23 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
             successor(
                     "tools/test_phase2_wormhole_successor_acceptance.py",
                     "ce70d5f35c7725d0f93f27619c5828f294ac259fc20f8594a3ac71b5f5f6f72d",
-                    "fae248af8e5b5e61634ac10bb8824d5437fd08c4d168c49faadff3e6983c1b9e"));
+                    "691198f36292c460b6bb516e9deb4e4efe064ae12fe60efb85280a52753cb5cb"));
+
+    private static final Set<String> POST_PUSH_ANCHOR_SUCCESSOR_PATHS = Set.of(
+            "README.md",
+            "docs/refactor/05-progress.md",
+            "docs/refactor/phase4c/README.md",
+            "infra/phase2/README.md",
+            "infra/phase2/verify-static.sh",
+            POST_PUSH_ACCEPTANCE_PATH,
+            POST_PUSH_PARITY_PATH,
+            "tools/build_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_post_push_contract.py",
+            "tools/phase2_wormhole_successor_acceptance.py",
+            "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+            "tools/test_phase2_wormhole_successor_acceptance.py",
+            "tools/test_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_post_push_contract.py");
 
     @Test
     void loadsTheFixedCheckedInContractAndExactCheckpoint() throws Exception {
@@ -147,6 +167,11 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
                 SUCCESSORS.get("README.md").successor());
         assertThat(Phase4cHttpTargetExecutionSuccessorAcceptance
                 .successorHash(root(), "unknown/source")).isNull();
+        assertThat(Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
+                .acceptedHash(POST_PUSH_PARITY_PATH)).isEqualTo(
+                "5805a4517e02ec23af94546e551d4d3994aaed5667fc680f5b603d81e95f9304");
+        assertThat(Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
+                .successorHash(root(), POST_PUSH_PARITY_PATH)).isNotNull();
     }
 
     @Test
@@ -250,8 +275,10 @@ class Phase4cPersonalBankUserCountsHttpTargetExecutionPostPushContractParityTest
 
     private static void copyMinimalFixture(Path targetRoot) throws Exception {
         Set<String> relatives = new LinkedHashSet<>(Set.of(
-                CONTRACT_PATH, PREDECESSOR_PATH, MANIFEST_PATH, WORM_PATH));
+                CONTRACT_PATH, PREDECESSOR_PATH, MANIFEST_PATH, WORM_PATH,
+                POST_PUSH_ANCHOR_CONTRACT_PATH));
         relatives.addAll(SUCCESSORS.keySet());
+        relatives.addAll(POST_PUSH_ANCHOR_SUCCESSOR_PATHS);
         for (String relative : relatives) {
             Path source = root().resolve(relative);
             Path target = targetRoot.resolve(relative);

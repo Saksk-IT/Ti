@@ -321,9 +321,20 @@ final class Phase4cHttpTargetExecutionPostPushSuccessorAcceptance {
                         .path("overrides").path(relative));
         Path path = fixedRegularFile(root, relative);
         String physical = sha256(path);
-        require(source.successorSha256().equals(physical)
-                        && Files.size(path) == source.successorByteCount(),
-                "post-push successor physical hash drifted: " + relative);
+        if (source.successorSha256().equals(physical)) {
+            require(Files.size(path) == source.successorByteCount(),
+                    "post-push successor physical byte count drifted: " + relative);
+            return physical;
+        }
+        require(source.successorSha256().equals(
+                        Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
+                                .acceptedHash(relative)),
+                "post-push external anchor did not accept exact successor: " + relative);
+        String anchoredSuccessor =
+                Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.successorHash(
+                        root, relative);
+        require(physical.equals(anchoredSuccessor),
+                "post-push external-anchor file hash drifted: " + relative);
         return physical;
     }
 
@@ -655,12 +666,32 @@ final class Phase4cHttpTargetExecutionPostPushSuccessorAcceptance {
                 "post-push fifth WORM boundary drifted");
 
         for (Map.Entry<String, SuccessorSource> entry : SUCCESSOR_SOURCES.entrySet()) {
-            Path path = fixedRegularFile(root, entry.getKey());
-            SuccessorSource expected = entry.getValue();
-            require(expected.successorSha256().equals(sha256(path))
-                            && Files.size(path) == expected.successorByteCount(),
-                    "post-push successor source drifted: " + entry.getKey());
+            validateTerminalSuccessor(root, entry.getKey(), entry.getValue());
         }
+    }
+
+    private static String validateTerminalSuccessor(
+            Path root,
+            String relative,
+            SuccessorSource expected
+    ) throws IOException {
+        Path path = fixedRegularFile(root, relative);
+        String physical = sha256(path);
+        if (expected.successorSha256().equals(physical)) {
+            require(Files.size(path) == expected.successorByteCount(),
+                    "post-push successor source byte count drifted: " + relative);
+            return physical;
+        }
+        require(expected.successorSha256().equals(
+                        Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
+                                .acceptedHash(relative)),
+                "post-push external anchor did not accept exact source: " + relative);
+        String anchoredSuccessor =
+                Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.successorHash(
+                        root, relative);
+        require(physical.equals(anchoredSuccessor),
+                "post-push external-anchor source drifted: " + relative);
+        return physical;
     }
 
     private static JsonNode readJson(Path path) throws IOException {

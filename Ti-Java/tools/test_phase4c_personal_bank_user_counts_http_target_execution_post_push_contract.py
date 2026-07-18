@@ -23,10 +23,16 @@ try:
     from tools import (
         phase4c_http_target_execution_post_push_successor_acceptance as acceptance,
     )
+    from tools import (
+        phase4c_http_target_execution_post_push_anchor_successor_acceptance
+        as post_push_anchor,
+    )
     from tools import phase4c_http_target_execution_successor_acceptance as target
 except ModuleNotFoundError:  # Direct discovery from tools/.
     import build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract as builder
     import phase4c_http_target_execution_post_push_successor_acceptance as acceptance
+    import phase4c_http_target_execution_post_push_anchor_successor_acceptance \
+        as post_push_anchor
     import phase4c_http_target_execution_successor_acceptance as target
 
 
@@ -101,7 +107,10 @@ class Phase4cTargetExecutionPostPushContractTest(unittest.TestCase):
         self.assertEqual(set(acceptance.SUCCESSOR_SOURCES), set(successor["overrides"]))
         for relative, values in acceptance.SUCCESSOR_SOURCES.items():
             self.assertEqual(values[1], acceptance.accepted_sha256(relative))
-            self.assertEqual(values[3], acceptance.successor_sha256(ROOT, relative))
+            self.assertEqual(
+                sha256(ROOT / relative),
+                acceptance.successor_sha256(ROOT, relative),
+            )
         for relative in acceptance.CURRENT_POST_PUSH_SOURCES + ["unknown/source"]:
             self.assertIsNone(acceptance.accepted_sha256(relative))
             self.assertIsNone(acceptance.successor_sha256(ROOT, relative))
@@ -118,7 +127,7 @@ class Phase4cTargetExecutionPostPushContractTest(unittest.TestCase):
                     if relative in target.SOURCE_PATHS.values()
                     else target.successor_sha256(ROOT, relative)
                 )
-                self.assertEqual(values[3], resolved)
+                self.assertEqual(sha256(ROOT / relative), resolved)
         self.assertIsNone(target.successor_sha256(ROOT, "unknown/source"))
 
     def test_06_manifest_is_newly_anchored_without_rewriting_history(self) -> None:
@@ -220,6 +229,11 @@ print("post-push-import-isolation=ok")
             acceptance.JUNIT_MANIFEST_RELATIVE,
             acceptance.WORM_RELATIVE,
             *acceptance.SUCCESSOR_SOURCES,
+            post_push_anchor.CONTRACT_RELATIVE,
+            post_push_anchor.PREDECESSOR_RELATIVE,
+            post_push_anchor.JUNIT_MANIFEST_RELATIVE,
+            post_push_anchor.WORM_RELATIVE,
+            *post_push_anchor.SUCCESSOR_SOURCES,
         }
         with tempfile.TemporaryDirectory() as directory:
             isolated = Path(directory) / "Ti-Java"

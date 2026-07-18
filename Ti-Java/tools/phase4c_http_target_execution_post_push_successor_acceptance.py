@@ -10,6 +10,7 @@ no mutable ref is an authority.
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -324,6 +325,57 @@ def _payload_sha256(document: dict[str, Any]) -> str:
     })
 
 
+def _load_post_push_anchor_successor_acceptance() -> object:
+    """Lazily import the sole fixed terminal successor on physical drift."""
+    qualified_name = (
+        "tools.phase4c_http_target_execution_post_push_anchor_"
+        "successor_acceptance"
+    )
+    direct_name = (
+        "phase4c_http_target_execution_post_push_anchor_successor_acceptance"
+    )
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed target-execution post-push anchor successor is required"
+        ) from error
+
+
+def _current_or_post_push_anchor_successor_sha256(
+        root: Path,
+        relative: str,
+        declared_sha256: str,
+        physical_sha256: str,
+        *,
+        label: str,
+) -> str:
+    """Accept current bytes directly or one exact code-fixed second hop."""
+    if declared_sha256 == physical_sha256:
+        return physical_sha256
+    acceptance = _load_post_push_anchor_successor_acceptance()
+    accepted_lookup = getattr(acceptance, "accepted_sha256", None)
+    successor_lookup = getattr(acceptance, "successor_sha256", None)
+    if not callable(accepted_lookup) or not callable(successor_lookup):
+        raise AssertionError("post-push anchor successor API is incomplete")
+    if accepted_lookup(relative) != declared_sha256:
+        raise AssertionError(
+            f"post-push anchor does not accept historical {label}: {relative}"
+        )
+    if successor_lookup(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"post-push anchor does not bind current {label}: {relative}"
+        )
+    return physical_sha256
+
+
 def _fixed_regular_file(root: Path, relative: str) -> Path:
     resolved_root = root.resolve(strict=True)
     candidate = Path(relative)
@@ -419,8 +471,16 @@ def _validate_local_files(root: Path) -> None:
 
     for relative, values in SUCCESSOR_SOURCES.items():
         payload = _fixed_regular_file(root, relative).read_bytes()
-        if _sha256_bytes(payload) != values[3] or len(payload) != values[4]:
-            raise AssertionError(f"post-push successor source drifted: {relative}")
+        physical_sha256 = _sha256_bytes(payload)
+        _current_or_post_push_anchor_successor_sha256(
+            root,
+            relative,
+            values[3],
+            physical_sha256,
+            label="successor source",
+        )
+        if physical_sha256 == values[3] and len(payload) != values[4]:
+            raise AssertionError(f"post-push successor source size drifted: {relative}")
 
 
 def validate_contract(document: dict[str, Any], ti_java_root: Path) -> None:
@@ -636,9 +696,13 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     if override != _expected_overrides()[relative]:
         raise AssertionError(f"post-push successor override drifted: {relative}")
     physical = _sha256_bytes(_fixed_regular_file(ti_java_root, relative).read_bytes())
-    if physical != values[3]:
-        raise AssertionError(f"post-push successor physical hash drifted: {relative}")
-    return physical
+    return _current_or_post_push_anchor_successor_sha256(
+        ti_java_root,
+        relative,
+        values[3],
+        physical,
+        label="successor physical hash",
+    )
 
 
 def _run_read_only_git(repository_root: Path, *arguments: str) -> bytes:

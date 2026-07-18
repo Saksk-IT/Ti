@@ -253,6 +253,12 @@ assert_file_contains "Fixed Phase 4C target-execution post-push successor module
 assert_file_contains "Fixed Phase 4C target-execution post-push successor contract" \
     'load_http_target_execution_post_push_successor(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C target-execution post-push anchor successor module" \
+    'tools.phase4c_http_target_execution_post_push_anchor_successor_acceptance' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C target-execution post-push anchor successor contract" \
+    'load_http_target_execution_post_push_anchor_successor(ti_java_root)' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"
 assert_file_contains "JDBC FK delete-rule assertion" "importedKeySetNull" "$REFERENCE_ASSERTIONS"
