@@ -128,10 +128,16 @@ successor 只替换 aware case 的一个有效证明叶：malformed expiry 继�
 
 普通 builder/load 仍完全 Gitless；显式 replay 只接受固定 `b0861d6`，不把 `HEAD`、工作树或 `origin/main` 当作验证权威。当前外锚合同、builder、Python/Java acceptance/parity 六个来源继续自排除、`independently_signed_provenance=false`、`current_anchor_source_bytes_external_git_anchor_complete=false`。WORM 仍只复用第五节点与 build-context `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`，不伪造第六份生产报告；路由保持 **11 migrated、600 pending、0 production cutover**。
 
-## User-counts HTTP full-parity bootstrap（当前节点）
+## User-counts HTTP full-parity bootstrap（predecessor）
 
 INT 从共同 BASE `765e4470f1ddb60f0ce6f23227d6303961f47fcf` 审查三条 Worker 分支，并只集成固定实现对象：PG `0f584743dbdc187b6bc6fc67899a2d6718cb13c8`、TOMCAT `cd7eba9bbee4edcb6a0e14fec5fdfdf613d2ea70`、REDIS `ad4d90b30cc5d244983fe759199f77ddeacdfc52`。三份 lane handoff 及其 tip 只用于 BASE、允许路径、真实性和中央零修改审计，handoff 文件没有进入 main。六个新增证据文件均由合同固定 SHA-256/字节数，未修改生产源码、共享安全配置、全局 OpenAPI、既有 route delta、data ownership、Compose、`server/pom.xml` 或 WORM。
 
 PG IT 在 PostgreSQL 16.14/18.4 各自固定 backend PID、权威与业务 SQL family、`42703 -> 25P02 -> rollback -> 同 PID 成功重试` 以及九表前后指纹；真实 Tomcat IT 以网络 HttpClient、真实 PostgreSQL/Redis/Session/auth/limiter 覆盖 GET/HEAD 的 `200/302/400/401/403/404/429/500/503` 和完整响应头/零 HEAD body；Redis IT 以真实连接拒绝、已接连接中断、同 context/port 恢复、429 后自然恢复及两个独立 Spring/Tomcat/Lettuce 实例收敛闭环。INT 持有 `heavy-verify.lock` 串行执行三类定向验证，Failsafe 13/13；随后完整 `clean verify` 为 Surefire 709 + Failsafe 167，全部 0 failure/error/skip，总用时 `07:02 min`，Testcontainers 残留为 0。
 
-追加合同 `personal-bank-user-counts-http-full-parity-contract.json` 因此只把 `pg16_pg18_termination_fingerprints_complete`、`real_tomcat_complete_response_header_matrix_complete`、`same_service_redis_outage_and_recovery_complete`、`full_target_parity_closed` 固定为 `true`。合同、builder、Python/Java acceptance/parity 六个 bootstrap 控制源仍自排除，等待下一提交以固定 Git 对象外锚；在此之前 `route_migration_eligible=false`，路由仍为 **11 migrated、600 pending、0 production cutover**。历史合同与 WORM 保持字节不可变；operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+追加合同 `personal-bank-user-counts-http-full-parity-contract.json` 因此只把 `pg16_pg18_termination_fingerprints_complete`、`real_tomcat_complete_response_header_matrix_complete`、`same_service_redis_outage_and_recovery_complete`、`full_target_parity_closed` 固定为 `true`。合同、builder、Python/Java acceptance/parity 六个 bootstrap 控制源在本节点自排除，现已由下述固定 Git 外锚承接。
+
+## User-counts HTTP full-parity external anchor（当前节点）
+
+固定外锚精确绑定提交 `848af89cb99ae0330ec1f0955cf23749a044d40e`、父提交 `765e4470f1ddb60f0ce6f23227d6303961f47fcf`、root tree `9cbb82ee611128bba95a3b726021dab9adde1011`、Ti-Java tree `88107eea64154eccba9c48e853ba08a52371c27c`、raw delta SHA-256 `31eaf6a354572681641dcace593e0d7eb0b3304ed4cfc6e380841dca6c5864b3`，以及 **15 个路径（12 added + 3 modified）** 的前后 mode/blob、SHA-256 与字节数。15 路径完整覆盖三份中央进度文档、full-parity 六个 bootstrap 控制源和六个 Worker 证据文件；bootstrap 六源已成为外部 Git 事实。
+
+普通 builder/load 完全 Gitless；显式 replay 只接受固定 `848af89`，不使用 `HEAD`、工作树或动态路径发现。外锚因此固定四个 parity 前提为 true，并且只授权 `route_migration_eligible=true` 与下一步生成追加式 route successor delta；它没有直接修改路由，当前仍是 **11 migrated、600 pending、0 production cutover**。本外锚自身六个控制源继续自排除且不授权 production cutover；历史合同、既有 route matrix/delta 与 WORM 保持字节不可变，operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。

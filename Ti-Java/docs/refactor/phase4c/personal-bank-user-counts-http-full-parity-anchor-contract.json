@@ -1,0 +1,299 @@
+{
+  "authorization": {
+    "client_change": false,
+    "full_parity_checkpoint_and_six_excluded_sources_external_git_anchor_complete": true,
+    "gateway_or_proxy_change": false,
+    "next_gate": "append_only_user_counts_route_parity_successor_delta",
+    "operator_migration_implementation": false,
+    "production_cutover": false,
+    "production_schema_or_index": false,
+    "real_data_migration_execution": false,
+    "route_migration_eligible": true,
+    "two_legacy_get_routes_migrated": false
+  },
+  "captured_at": "2026-07-18T21:52:39+08:00",
+  "contract_id": "ti.phase4c.personal-bank-user-counts-http-full-parity-anchor-contract",
+  "document_payload_sha256": "eb76c6bf825b4efe0ad6d1ed0a1d2fa02eb1025226c9168c6fe42108dc4ff816",
+  "full_parity_source_anchor": {
+    "artifacts": {
+      "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-contract.json": {
+        "byte_count": 7477,
+        "git_blob_oid": "d4e8d333766b084351c28644bbc30c87c0668183",
+        "mode": "100644",
+        "sha256": "13df3a1f81ca909d62e89495564215e92a757e41889aa91658db55e33717b787"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpFullParitySuccessorAcceptance.java": {
+        "byte_count": 8577,
+        "git_blob_oid": "ed68807e31141ee68b6a16ba71e3ace460e31e74",
+        "mode": "100644",
+        "sha256": "703eeaff656912bd67eb553fe6e1accf8cf6c4e9bc99a59bf71d13423f33baf7"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpFullParityContractParityTest.java": {
+        "byte_count": 6586,
+        "git_blob_oid": "19f01670c1a1b40b212411bd347cab6f01699be9",
+        "mode": "100644",
+        "sha256": "45ad052dfe392bf614f8af03f40bf77a954fb82648c2a1e97cb715f7818dace4"
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_full_parity_contract.py": {
+        "byte_count": 11271,
+        "git_blob_oid": "61ffdd2c3994f410eca4b78615aa29edd5bdd245",
+        "mode": "100644",
+        "sha256": "6ae98b23ca5d475f266608ae0ee443800d004004062a30f60b1895d1551ea585"
+      },
+      "tools/phase4c_http_full_parity_successor_acceptance.py": {
+        "byte_count": 7171,
+        "git_blob_oid": "a951992f6c90c5400952c6bf4ab4e0a6c3086152",
+        "mode": "100644",
+        "sha256": "a28c01c637cf61acc6dc476abe540d13a247c9298086d660c899f2af17c23cf0"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_full_parity_contract.py": {
+        "byte_count": 6313,
+        "git_blob_oid": "be4289798cc7635484c8f3dd1799d8ef0a282335",
+        "mode": "100644",
+        "sha256": "c9ba6025c127c92f1f20d2eefe753f02256d9aa3ed7e37c04e94093ed1044d14"
+      }
+    },
+    "current_anchor_source_bytes_external_git_anchor_complete": false,
+    "current_anchor_sources_excluded_from_self_authority": true,
+    "predecessor_bootstrap_sources_external_git_anchor_complete": true,
+    "source_count": 6,
+    "source_paths": [
+      "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpFullParitySuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpFullParityContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_full_parity_contract.py",
+      "tools/phase4c_http_full_parity_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_full_parity_contract.py"
+    ]
+  },
+  "git_checkpoint": {
+    "added_path_count": 12,
+    "artifacts": {
+      "README.md": {
+        "byte_count": 38663,
+        "change_type": "M",
+        "git_blob_oid": "57f736213bb2434dab0c85cf4934d4c0b70bd699",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "7bebf852c223c7b414872746c07c1e5ba4f8a1c1",
+        "previous_mode": "100644",
+        "sha256": "3bae759a577df3f4cc0e5ea417a634c4d0ad635acfa8d3b1fba2587469e0b302"
+      },
+      "docs/refactor/05-progress.md": {
+        "byte_count": 103147,
+        "change_type": "M",
+        "git_blob_oid": "76b586198594bf18e759a420cd2c8a3f4d4ea819",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "e73756dd7d2da15755c0d10e695821cd8a5ee7ff",
+        "previous_mode": "100644",
+        "sha256": "c904e0ddd2f0dfb4aabe09e21e36768b7a241a5e0d50af2126ecb16e8da4cb51"
+      },
+      "docs/refactor/phase4c/README.md": {
+        "byte_count": 21178,
+        "change_type": "M",
+        "git_blob_oid": "bf5d3154025bbdcb7fe0a2c2792bb64032948560",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "c645e5391df73752bb4359b606420f3138dde457",
+        "previous_mode": "100644",
+        "sha256": "ccd7da42d8d7d9d08a579943c98aeaf871947f4964636063cc05b68888683221"
+      },
+      "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-contract.json": {
+        "byte_count": 7477,
+        "change_type": "A",
+        "git_blob_oid": "d4e8d333766b084351c28644bbc30c87c0668183",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "13df3a1f81ca909d62e89495564215e92a757e41889aa91658db55e33717b787"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpFullParitySuccessorAcceptance.java": {
+        "byte_count": 8577,
+        "change_type": "A",
+        "git_blob_oid": "ed68807e31141ee68b6a16ba71e3ace460e31e74",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "703eeaff656912bd67eb553fe6e1accf8cf6c4e9bc99a59bf71d13423f33baf7"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpFullParityContractParityTest.java": {
+        "byte_count": 6586,
+        "change_type": "A",
+        "git_blob_oid": "19f01670c1a1b40b212411bd347cab6f01699be9",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "45ad052dfe392bf614f8af03f40bf77a954fb82648c2a1e97cb715f7818dace4"
+      },
+      "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsRealTomcatHeaderMatrixIT.java": {
+        "byte_count": 40107,
+        "change_type": "A",
+        "git_blob_oid": "6381cdda667b13c9edd10fc07c8d8623006c151a",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "cd9a45f6cfc52342d235202519ace13883e37354a901a790304739b7507501c9"
+      },
+      "server/src/test/java/io/saksk/ti/integration/Phase4cUserCountsTerminationFingerprintIT.java": {
+        "byte_count": 26069,
+        "change_type": "A",
+        "git_blob_oid": "6a54ad5f862005e36ce06f5a35da3f02e37c512f",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "aa55869a57233a34ceae59773456cbb759670db1624b844cae75e664f8c0701a"
+      },
+      "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsTerminationFingerprintSupport.java": {
+        "byte_count": 25907,
+        "change_type": "A",
+        "git_blob_oid": "ab562b29a979f0a3c9f7bc8f64be19a9a363fd57",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "e4c4fc6f73b5ee9eebc3ab2e9904a51d6c593ed711b4aaaa39a79971e887ce42"
+      },
+      "server/src/test/java/io/saksk/ti/web/security/Phase4cUserCountsRedisOutageRecoveryIT.java": {
+        "byte_count": 39719,
+        "change_type": "A",
+        "git_blob_oid": "303d88f5e7b12ba7abeb7f01178aaabbe6c96510",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "b07ec534e41a74c1fddc3d9c2b63a6ae26f57ab8918112dc7799f10b479239c4"
+      },
+      "server/src/test/java/io/saksk/ti/web/security/support/Phase4cRedisNetworkGate.java": {
+        "byte_count": 7245,
+        "change_type": "A",
+        "git_blob_oid": "c1590235099c2c6ba0eb74a26ad83afe5b18f65d",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "ac3bab1cd092dcce640954c167baf4f7de5e53dee8579e77fb36d632c410b5ab"
+      },
+      "server/src/test/resources/db/phase4c/073-personal-bank-user-counts-termination-fingerprint-seed.sql": {
+        "byte_count": 843,
+        "change_type": "A",
+        "git_blob_oid": "e52a5e9095a1847ab2742c02b8a485a555b3055e",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "33a6a4ce9845fe8b51ae6d5006af9a394bdc51d8427183d2775b2ef1cb4e6b40"
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_full_parity_contract.py": {
+        "byte_count": 11271,
+        "change_type": "A",
+        "git_blob_oid": "61ffdd2c3994f410eca4b78615aa29edd5bdd245",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "6ae98b23ca5d475f266608ae0ee443800d004004062a30f60b1895d1551ea585"
+      },
+      "tools/phase4c_http_full_parity_successor_acceptance.py": {
+        "byte_count": 7171,
+        "change_type": "A",
+        "git_blob_oid": "a951992f6c90c5400952c6bf4ab4e0a6c3086152",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "a28c01c637cf61acc6dc476abe540d13a247c9298086d660c899f2af17c23cf0"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_full_parity_contract.py": {
+        "byte_count": 6313,
+        "change_type": "A",
+        "git_blob_oid": "be4289798cc7635484c8f3dd1799d8ef0a282335",
+        "mode": "100644",
+        "object_type": "blob",
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "sha256": "c9ba6025c127c92f1f20d2eefe753f02256d9aa3ed7e37c04e94093ed1044d14"
+      }
+    },
+    "authored_at": "2026-07-18T21:52:39+08:00",
+    "changed_path_count": 15,
+    "commit_oid": "848af89cb99ae0330ec1f0955cf23749a044d40e",
+    "committed_at": "2026-07-18T21:52:39+08:00",
+    "exact_changed_paths": [
+      "README.md",
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md",
+      "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpFullParitySuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpFullParityContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsRealTomcatHeaderMatrixIT.java",
+      "server/src/test/java/io/saksk/ti/integration/Phase4cUserCountsTerminationFingerprintIT.java",
+      "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsTerminationFingerprintSupport.java",
+      "server/src/test/java/io/saksk/ti/web/security/Phase4cUserCountsRedisOutageRecoveryIT.java",
+      "server/src/test/java/io/saksk/ti/web/security/support/Phase4cRedisNetworkGate.java",
+      "server/src/test/resources/db/phase4c/073-personal-bank-user-counts-termination-fingerprint-seed.sql",
+      "tools/build_phase4c_personal_bank_user_counts_http_full_parity_contract.py",
+      "tools/phase4c_http_full_parity_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_full_parity_contract.py"
+    ],
+    "modified_path_count": 3,
+    "object_format": "sha1",
+    "parent_oid": "765e4470f1ddb60f0ce6f23227d6303961f47fcf",
+    "raw_delta_sha256": "31eaf6a354572681641dcace593e0d7eb0b3304ed4cfc6e380841dca6c5864b3",
+    "root_tree_oid": "9cbb82ee611128bba95a3b726021dab9adde1011",
+    "subject": "test(java): close phase4c user counts parity",
+    "ti_java_tree_oid": "88107eea64154eccba9c48e853ba08a52371c27c"
+  },
+  "parity": {
+    "full_target_parity_closed": true,
+    "pg16_pg18_termination_fingerprints_complete": true,
+    "real_tomcat_complete_response_header_matrix_complete": true,
+    "same_service_redis_outage_and_recovery_complete": true,
+    "typed_parity_review_complete": true
+  },
+  "predecessor": {
+    "byte_count": 7477,
+    "contract_id": "ti.phase4c.personal-bank-user-counts-http-full-parity-contract",
+    "document_payload_sha256": "7eecb6279b2e2b5532dab21c171b9fca3a7bb6129ff2f4dff3bfcf7941196da2",
+    "immutable": true,
+    "sha256": "13df3a1f81ca909d62e89495564215e92a757e41889aa91658db55e33717b787",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-contract.json",
+    "status": "full_target_parity_closed_external_anchor_pending_routes_pending"
+  },
+  "route_state": {
+    "implemented_pending_get_count": 2,
+    "migrated_operation_count": 11,
+    "pending_operation_count": 600,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-personal-bank-user-counts-http-full-parity-external-anchor",
+  "source_authority": {
+    "control_source_count": 6,
+    "control_sources": [
+      "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-anchor-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpFullParityAnchorSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpFullParityAnchorContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_full_parity_anchor_contract.py",
+      "tools/phase4c_http_full_parity_anchor_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_full_parity_anchor_contract.py"
+    ],
+    "excluded_from_self_authority": true,
+    "historical_contracts_and_worm_overwritten": false
+  },
+  "status": "full_target_parity_externally_anchored_route_migration_eligible",
+  "worm_evidence": {
+    "fixed_chain_node_count": 5,
+    "java_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+    "new_worm_report_created": false,
+    "reused": true,
+    "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json"
+  }
+}
