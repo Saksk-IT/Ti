@@ -136,8 +136,16 @@ PG IT 在 PostgreSQL 16.14/18.4 各自固定 backend PID、权威与业务 SQL f
 
 追加合同 `personal-bank-user-counts-http-full-parity-contract.json` 因此只把 `pg16_pg18_termination_fingerprints_complete`、`real_tomcat_complete_response_header_matrix_complete`、`same_service_redis_outage_and_recovery_complete`、`full_target_parity_closed` 固定为 `true`。合同、builder、Python/Java acceptance/parity 六个 bootstrap 控制源在本节点自排除，现已由下述固定 Git 外锚承接。
 
-## User-counts HTTP full-parity external anchor（当前节点）
+## User-counts HTTP full-parity external anchor（predecessor）
 
 固定外锚精确绑定提交 `848af89cb99ae0330ec1f0955cf23749a044d40e`、父提交 `765e4470f1ddb60f0ce6f23227d6303961f47fcf`、root tree `9cbb82ee611128bba95a3b726021dab9adde1011`、Ti-Java tree `88107eea64154eccba9c48e853ba08a52371c27c`、raw delta SHA-256 `31eaf6a354572681641dcace593e0d7eb0b3304ed4cfc6e380841dca6c5864b3`，以及 **15 个路径（12 added + 3 modified）** 的前后 mode/blob、SHA-256 与字节数。15 路径完整覆盖三份中央进度文档、full-parity 六个 bootstrap 控制源和六个 Worker 证据文件；bootstrap 六源已成为外部 Git 事实。
 
-普通 builder/load 完全 Gitless；显式 replay 只接受固定 `848af89`，不使用 `HEAD`、工作树或动态路径发现。外锚因此固定四个 parity 前提为 true，并且只授权 `route_migration_eligible=true` 与下一步生成追加式 route successor delta；它没有直接修改路由，当前仍是 **11 migrated、600 pending、0 production cutover**。本外锚自身六个控制源继续自排除且不授权 production cutover；历史合同、既有 route matrix/delta 与 WORM 保持字节不可变，operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+普通 builder/load 完全 Gitless；显式 replay 只接受固定 `848af89`，不使用 `HEAD`、工作树或动态路径发现。外锚因此固定四个 parity 前提为 true，并且只授权 `route_migration_eligible=true` 与下一步生成追加式 route successor delta；它本身没有直接修改路由。本外锚自身六个控制源继续自排除且不授权 production cutover；其 route 资格现由下述追加式节点消费。
+
+## User-counts HTTP route-promotion successor（当前节点）
+
+`route-parity-successor-delta.csv` 是新文件，不覆盖历史 Phase 0 matrix、Phase 3/4A delta 或 Phase 4C `route-parity-delta.csv`。它精确引用 full-parity 外锚并只把 `6858f6fa506f`（API alias）与 `006913d0d956`（Web alias）两条 GET 从 `pending` 晋级为 `migrated`；派生 HEAD/OPTIONS 不计 operation，`production_cutover=false`。
+
+`effective-route-parity-successor-status.json` 按 successor delta > Phase 4C pending delta > Phase 4A effective predecessor 的固定优先级物化 592 条规则/611 个 operation，拒绝未知 key 和层内重复 key，最终为 **13 migrated、598 pending、0 production cutover**。`personal-bank-user-counts-route-promotion-contract.json` 同时绑定 frozen matrix、Phase 4A effective predecessor、历史 pending delta、successor delta、full-parity eligibility anchor 与有效状态的 SHA-256/字节数，并由 Python/Java acceptance/parity 交叉验证。
+
+本节点没有修改生产 Java、`SecurityConfiguration`、共享认证过滤器、OpenAPI、data ownership、Compose、`server/pom.xml`、schema/index 或 WORM；旧 Flask 仍是生产 owner。operator、真实标签迁移、客户端/网关和 production cutover 继续禁止。

@@ -1,0 +1,102 @@
+{
+  "authorization": {
+    "client_change": false,
+    "derived_head_and_options_count_as_migrated": false,
+    "gateway_or_proxy_change": false,
+    "operator_migration_implementation": false,
+    "production_cutover": false,
+    "production_schema_or_index": false,
+    "real_data_migration_execution": false,
+    "two_legacy_get_routes_migrated": true
+  },
+  "captured_at": "2026-07-18T22:05:00+08:00",
+  "contract_id": "ti.phase4c.personal-bank-user-counts-route-promotion-contract",
+  "document_payload_sha256": "1503c4dd5905abb70a77835e6602d8e51a7f042f5eed6b0a25a9a0de4b5f6e0f",
+  "parity": {
+    "full_target_parity_closed": true,
+    "pg16_pg18_termination_fingerprints_complete": true,
+    "real_tomcat_complete_response_header_matrix_complete": true,
+    "route_migration_eligible": true,
+    "same_service_redis_outage_and_recovery_complete": true
+  },
+  "predecessor": {
+    "byte_count": 14885,
+    "document_payload_sha256": "eb76c6bf825b4efe0ad6d1ed0a1d2fa02eb1025226c9168c6fe42108dc4ff816",
+    "immutable": true,
+    "sha256": "77c15295db2addf223ac425dfbbde687c4be3685fd6c6a9b842db7a238b58836",
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-anchor-contract.json"
+  },
+  "route_authority": {
+    "effective_status": {
+      "byte_count": 5340,
+      "document_payload_sha256": "3788d541c027ba7f9c397afee1d006ea92da300845557ca35bdd513b920a0637",
+      "sha256": "c0e96472533d0bbe7d67ac1416a91f3e9a3bfcef8c27e1170b0e9939c46b358a",
+      "source": "docs/refactor/phase4c/effective-route-parity-successor-status.json"
+    },
+    "historical_matrix_and_deltas_overwritten": false,
+    "promoted_routes": [
+      {
+        "method": "GET",
+        "path": "/api/user/banks/api/<int:bank_id>/user-counts",
+        "route_id": "6858f6fa506f",
+        "target_module": "learning"
+      },
+      {
+        "method": "GET",
+        "path": "/user/banks/api/<int:bank_id>/user-counts",
+        "route_id": "006913d0d956",
+        "target_module": "learning"
+      }
+    ],
+    "sources": {
+      "baseline": {
+        "byte_count": 416225,
+        "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+        "source": "docs/refactor/02-route-parity-matrix.csv"
+      },
+      "eligibility_anchor": {
+        "byte_count": 14885,
+        "document_payload_sha256": "eb76c6bf825b4efe0ad6d1ed0a1d2fa02eb1025226c9168c6fe42108dc4ff816",
+        "sha256": "77c15295db2addf223ac425dfbbde687c4be3685fd6c6a9b842db7a238b58836",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-full-parity-anchor-contract.json"
+      },
+      "phase4c_pending_delta": {
+        "byte_count": 2230,
+        "sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b",
+        "source": "docs/refactor/phase4c/route-parity-delta.csv"
+      },
+      "predecessor_effective": {
+        "byte_count": 4048,
+        "sha256": "1c4645354be4d4a778ec7d68d2957130718e826648e420dd3d1fec7bea5339d4",
+        "source": "docs/refactor/phase4a/effective-route-parity-status.json"
+      },
+      "successor_delta": {
+        "byte_count": 836,
+        "sha256": "eef46dc120be7aff600f7f767120673451d21fa42389a777f24e7b4e4f011d07",
+        "source": "docs/refactor/phase4c/route-parity-successor-delta.csv"
+      }
+    }
+  },
+  "route_state": {
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-personal-bank-user-counts-route-parity-promotion",
+  "source_authority": {
+    "control_source_count": 6,
+    "control_sources": [
+      "docs/refactor/phase4c/personal-bank-user-counts-route-promotion-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpRoutePromotionSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsRoutePromotionContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_route_promotion_contract.py",
+      "tools/phase4c_http_route_promotion_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_route_promotion_contract.py"
+    ],
+    "excluded_from_self_authority": true,
+    "historical_contracts_and_worm_overwritten": false
+  },
+  "status": "two_user_counts_get_routes_migrated_production_cutover_false"
+}

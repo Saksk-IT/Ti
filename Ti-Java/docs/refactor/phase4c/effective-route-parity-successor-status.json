@@ -1,0 +1,160 @@
+{
+  "baseline": {
+    "expanded_operation_count": 611,
+    "migration_status": {
+      "migrated": 0,
+      "pending": 611
+    },
+    "rule_count": 592,
+    "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+    "source": "../02-route-parity-matrix.csv"
+  },
+  "captured_at": "2026-07-18T22:05:00+08:00",
+  "contract_id": "ti.phase4c.effective-route-parity-successor-status",
+  "deltas": [
+    {
+      "effect": "implemented_pending_no_status_change",
+      "operation_count": 2,
+      "sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b",
+      "source": "route-parity-delta.csv"
+    },
+    {
+      "effect": "pending_to_migrated",
+      "operation_count": 2,
+      "sha256": "eef46dc120be7aff600f7f767120673451d21fa42389a777f24e7b4e4f011d07",
+      "source": "route-parity-successor-delta.csv"
+    }
+  ],
+  "document_payload_sha256": "3788d541c027ba7f9c397afee1d006ea92da300845557ca35bdd513b920a0637",
+  "effective": {
+    "expanded_operation_count": 611,
+    "migrated_operations": [
+      {
+        "introduced_in": 3,
+        "method": "POST",
+        "path": "/api/login",
+        "route_id": "02366fc520ac",
+        "target_module": "identity"
+      },
+      {
+        "introduced_in": 3,
+        "method": "GET",
+        "path": "/api/auth/login-methods",
+        "route_id": "88d7dc05cdbb",
+        "target_module": "operations"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/quiz/subjects",
+        "route_id": "d3cd12aaca90",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/quiz/subjects/meta",
+        "route_id": "7fd9b0fc8111",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks",
+        "route_id": "14642ebe7c1d",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks/boards",
+        "route_id": "db1ac691d6fb",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks/card/<source_type>/<int:bank_id>",
+        "route_id": "8cfb837021af",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks/hot",
+        "route_id": "a473896ff467",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks/list",
+        "route_id": "b7e49e77a026",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks/summary",
+        "route_id": "f3644c1474f3",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4A-subject-directory-and-public-bank-read-slices",
+        "method": "GET",
+        "path": "/api/public/banks/<int:bank_id>",
+        "route_id": "37cd782b28dc",
+        "target_module": "catalog"
+      },
+      {
+        "introduced_in": "4C-user-counts-full-parity-route-successor",
+        "method": "GET",
+        "path": "/api/user/banks/api/<int:bank_id>/user-counts",
+        "route_id": "6858f6fa506f",
+        "target_module": "learning"
+      },
+      {
+        "introduced_in": "4C-user-counts-full-parity-route-successor",
+        "method": "GET",
+        "path": "/user/banks/api/<int:bank_id>/user-counts",
+        "route_id": "006913d0d956",
+        "target_module": "learning"
+      }
+    ],
+    "migration_status": {
+      "migrated": 13,
+      "pending": 598
+    },
+    "overridden_operation_count": 13,
+    "production_cutover_operation_count": 0,
+    "rule_count": 592
+  },
+  "eligibility": {
+    "document_payload_sha256": "eb76c6bf825b4efe0ad6d1ed0a1d2fa02eb1025226c9168c6fe42108dc4ff816",
+    "full_target_parity_closed": true,
+    "route_migration_eligible": true,
+    "sha256": "77c15295db2addf223ac425dfbbde687c4be3685fd6c6a9b842db7a238b58836",
+    "source": "personal-bank-user-counts-http-full-parity-anchor-contract.json"
+  },
+  "materialization_policy": {
+    "duplicate_delta_key_within_layer": "reject",
+    "historical_files": "immutable",
+    "key": [
+      "route_id",
+      "path",
+      "method"
+    ],
+    "precedence": "phase4c_route_successor_delta_over_phase4c_pending_delta_over_phase4a_effective_predecessor",
+    "unknown_delta_key": "reject"
+  },
+  "predecessor": {
+    "migration_status": {
+      "migrated": 11,
+      "pending": 600
+    },
+    "sha256": "1c4645354be4d4a778ec7d68d2957130718e826648e420dd3d1fec7bea5339d4",
+    "source": "../phase4a/effective-route-parity-status.json"
+  },
+  "schema_version": 1,
+  "scope_note": "migrated records Java route parity only; production cutover remains zero, the legacy Flask runtime remains owner, and 598 operations remain pending"
+}
