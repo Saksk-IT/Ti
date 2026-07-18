@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -161,6 +162,13 @@ CONTROL_SOURCES = (
     "tools/build_phase6_web_foundation_source_successor_contract.py",
     "tools/phase6_web_foundation_source_successor_acceptance.py",
     "tools/test_phase6_web_foundation_source_successor_contract.py",
+)
+
+ANCHOR_SUCCESSOR_MODULE = (
+    "tools.phase6_web_foundation_source_successor_anchor_acceptance"
+)
+ANCHOR_SUCCESSOR_SCRIPT_MODULE = (
+    "phase6_web_foundation_source_successor_anchor_acceptance"
 )
 
 
@@ -340,8 +348,30 @@ def build_contract(ti_java_root: Path = ROOT, *,
                    repository_root: Path | None = None) -> dict[str, Any]:
     root = ti_java_root.resolve(strict=True)
     _validate_fixed_inputs(root)
+    try:
+        anchor = importlib.import_module(ANCHOR_SUCCESSOR_MODULE)
+    except ModuleNotFoundError:
+        try:
+            anchor = importlib.import_module(ANCHOR_SUCCESSOR_SCRIPT_MODULE)
+        except (ImportError, ModuleNotFoundError) as error:
+            raise AssertionError(
+                "fixed Phase6 source-successor anchor module is unavailable"
+            ) from error
+    except ImportError as error:
+        raise AssertionError(
+            "fixed Phase6 source-successor anchor module is unavailable"
+        ) from error
+    anchor_load = getattr(anchor, "load", None)
+    if not callable(anchor_load) or not isinstance(anchor_load(root), dict):
+        raise AssertionError("fixed Phase6 source-successor anchor API drifted")
     if repository_root is not None:
         validate_git_checkpoint(repository_root)
+        anchor_validate_git = getattr(anchor, "validate_git_checkpoint", None)
+        if not callable(anchor_validate_git):
+            raise AssertionError(
+                "fixed Phase6 source-successor anchor Git API drifted"
+            )
+        anchor_validate_git(repository_root)
     document: dict[str, Any] = {
         "contract_id": CONTRACT_ID,
         "schema_version": 1,

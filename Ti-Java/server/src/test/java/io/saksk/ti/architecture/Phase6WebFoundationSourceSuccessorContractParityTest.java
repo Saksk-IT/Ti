@@ -118,16 +118,24 @@ class Phase6WebFoundationSourceSuccessorContractParityTest {
     }
 
     @Test
-    void loadsFromExactGitlessFixtureWithoutTrustingControlSources(
+    void loadsFromExactGitlessFixtureWithOnlyAnchoredPredecessorSources(
             @TempDir Path temporary) throws Exception {
         copyMinimalFixture(temporary);
         assertThat(temporary.resolve(".git")).doesNotExist();
         assertThat(temporary.resolve(
                 "server/src/test/java/io/saksk/ti/architecture/"
                         + "Phase6WebFoundationSourceSuccessorAcceptance.java"))
-                .doesNotExist();
+                .exists();
         assertThat(temporary.resolve(
                 "tools/phase6_web_foundation_source_successor_acceptance.py"))
+                .exists();
+        assertThat(temporary.resolve(
+                "server/src/test/java/io/saksk/ti/architecture/"
+                        + "Phase6WebFoundationSourceSuccessorAnchorAcceptance.java"))
+                .doesNotExist();
+        assertThat(temporary.resolve(
+                "tools/phase6_web_foundation_source_successor_anchor_"
+                        + "acceptance.py"))
                 .doesNotExist();
 
         JsonNode loaded =
@@ -164,7 +172,7 @@ class Phase6WebFoundationSourceSuccessorContractParityTest {
                             .load(fixture))
                     .as(relative)
                     .isInstanceOf(AssertionError.class)
-                    .hasMessageContaining("physical bytes drifted");
+                    .hasMessageContaining("bytes drifted");
         }
     }
 

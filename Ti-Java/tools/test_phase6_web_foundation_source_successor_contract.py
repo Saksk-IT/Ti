@@ -103,7 +103,8 @@ class Phase6WebFoundationSourceSuccessorContractTest(unittest.TestCase):
                     path.write_bytes(path.read_bytes() + b"\n")
                     with self.assertRaisesRegex(
                             AssertionError,
-                            "anchor module is unavailable|fixed bytes drifted"):
+                            "anchor module is unavailable|fixed bytes drifted|"
+                            "successor bytes drifted"):
                         acceptance.successor_sha256(root, relative)
 
     def test_07_fixed_authority_inputs_are_tamper_evident(self) -> None:

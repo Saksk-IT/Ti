@@ -164,10 +164,22 @@ final class Phase6WebFoundationSourceSuccessorAcceptance {
         }
         Path root = tiJavaRoot.toRealPath();
         Path path = fixedRegularFile(root, relative);
-        require(Files.size(path) == successor.successorBytes()
-                        && successor.successorSha256().equals(sha256(path)),
-                "Phase6 source-successor bytes drifted: " + relative);
-        return successor.successorSha256();
+        String physical = sha256(path);
+        if (Files.size(path) == successor.successorBytes()
+                && successor.successorSha256().equals(physical)) {
+            return physical;
+        }
+        require(successor.successorSha256().equals(
+                        Phase6WebFoundationSourceSuccessorAnchorAcceptance
+                                .acceptedHash(relative)),
+                "Phase6 source-successor anchor rejected bootstrap hash: "
+                        + relative);
+        require(physical.equals(
+                        Phase6WebFoundationSourceSuccessorAnchorAcceptance
+                                .successorHash(root, relative)),
+                "Phase6 source-successor anchor did not bind current bytes: "
+                        + relative);
+        return physical;
     }
 
     static Set<String> minimalFixturePaths() {
@@ -180,6 +192,8 @@ final class Phase6WebFoundationSourceSuccessorAcceptance {
         paths.add(DOCKERFILE_RELATIVE);
         paths.add(WORM_RELATIVE);
         paths.addAll(SOURCE_PATHS);
+        paths.addAll(Phase6WebFoundationSourceSuccessorAnchorAcceptance
+                .minimalFixturePaths());
         return Set.copyOf(paths);
     }
 
@@ -187,6 +201,7 @@ final class Phase6WebFoundationSourceSuccessorAcceptance {
         Path root = tiJavaRoot.toRealPath();
         JsonNode contract = validateContractPhysicalBytes(root);
         validate(contract, root);
+        Phase6WebFoundationSourceSuccessorAnchorAcceptance.load(root);
         return contract;
     }
 
@@ -360,9 +375,7 @@ final class Phase6WebFoundationSourceSuccessorAcceptance {
                             "successor_snapshot_fixed_by_checkpoint_tree")
                             .asBoolean(),
                     "Phase6 source-successor descriptor drifted: " + relative);
-            Path path = fixedRegularFile(root, relative);
-            require(Files.size(path) == expected.successorBytes()
-                            && expected.successorSha256().equals(sha256(path)),
+            require(successorHash(root, relative) != null,
                     "Phase6 source-successor physical bytes drifted: " + relative);
         }
     }

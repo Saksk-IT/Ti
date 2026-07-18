@@ -32,3 +32,26 @@ user-counts 和全部写操作继续显示显式阻断页；`/search` 与
 `/subjects/<int:subject_id>` 也尚未形成垂直切片。四条 Phase 6 旧页面 operation 均保持
 pending，当前有效 route 状态仍是 13 migrated / 598 pending / 0 production cutover。
 本节点不创建 route delta，不授权 operator、schema/index、真实数据迁移、网关或生产切流。
+
+## Source-successor chain
+
+Web foundation 进入 `main` 后对三个中央说明文件产生了合法字节漂移。提交
+`40a27ffdd83ecf240e17f4a5f69106906faaef35` 先以
+`web-foundation-source-successor-contract.json` 承接历史 typed-anchor；随后
+`web-foundation-source-successor-anchor-contract.json` 固定该提交的父提交、树、11 条
+精确差异、2,297/28 行 numstat、blob 字节和九项显式源码后继。链路不使用动态文件发现，
+也不把工作树 HEAD 当作证据。
+
+可重复验证：
+
+```bash
+python3 tools/build_phase6_web_foundation_source_successor_anchor_contract.py \
+  --repository-root .. --check
+python3 tools/phase6_web_foundation_source_successor_anchor_acceptance.py \
+  --repository-root ..
+python3 -m unittest \
+  tools.test_phase6_web_foundation_source_successor_anchor_contract
+```
+
+外部锚点只证明已推送的前驱检查点；本节点自身六个控制源继续明确自排除，等待后续已推送
+Git 节点承接。因此它没有改变 Phase 6 完成度，也没有改变 13 / 598 / 0 的路由权威。

@@ -226,6 +226,10 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
 
 
 def minimal_fixture_paths() -> tuple[str, ...]:
+    anchor = _load_anchor_successor()
+    anchor_fixture_paths = getattr(anchor, "minimal_fixture_paths", None)
+    if not callable(anchor_fixture_paths):
+        raise AssertionError("fixed Phase6 source-successor anchor fixture API drifted")
     return tuple(sorted({
         CONTRACT_RELATIVE,
         TYPED_ANCHOR_RELATIVE,
@@ -235,6 +239,7 @@ def minimal_fixture_paths() -> tuple[str, ...]:
         DOCKERFILE_RELATIVE,
         WORM_RELATIVE,
         *SOURCE_PATHS,
+        *anchor_fixture_paths(),
     }))
 
 
@@ -382,6 +387,10 @@ def load(ti_java_root: Path = ROOT) -> dict[str, Any]:
     root = ti_java_root.resolve(strict=True)
     document = _validate_contract_physical_bytes(root)
     validate(document, root)
+    anchor = _load_anchor_successor()
+    anchor_load = getattr(anchor, "load", None)
+    if not callable(anchor_load) or not isinstance(anchor_load(root), dict):
+        raise AssertionError("fixed Phase6 source-successor anchor API drifted")
     return document
 
 
@@ -394,6 +403,11 @@ def validate_git_checkpoint(repository_root: Path) -> None:
             or builder.GIT_RAW_DELTA_SHA256 != GIT_RAW_DELTA_SHA256):
         raise AssertionError("Phase6 builder Git authority drifted")
     builder.validate_git_checkpoint(repository_root)
+    anchor = _load_anchor_successor()
+    anchor_validate_git = getattr(anchor, "validate_git_checkpoint", None)
+    if not callable(anchor_validate_git):
+        raise AssertionError("fixed Phase6 source-successor anchor Git API drifted")
+    anchor_validate_git(repository_root)
 
 
 def main() -> int:
