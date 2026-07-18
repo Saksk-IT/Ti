@@ -19,13 +19,15 @@ import java.util.TreeMap;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/** Independent trust root admitting the reviewed Phase 4C HTTP implementation. */
+/** Historical implementation validator with a target-execution bootstrap handoff. */
 final class Phase4cHttpImplementationSuccessorAcceptance {
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String CONTRACT_RELATIVE =
             "docs/refactor/phase4c/"
                     + "personal-bank-user-counts-http-implementation-contract.json";
+    private static final String CONTRACT_SHA256 =
+            "c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd";
     private static final String CONTRACT_ID =
             "ti.phase4c.personal-bank-user-counts-http-implementation-contract";
     private static final String CONTRACT_STATUS =
@@ -98,6 +100,25 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
     private static final Map<String, String> ACCEPTED_SOURCES = acceptedSources();
     private static final Map<String, String> READ_TERMINAL_ACCEPTED_SOURCES =
             readTerminalAcceptedSources();
+    private static final Set<String> TARGET_EXECUTION_SUCCESSOR_PATHS = Set.of(
+            "README.md",
+            "docs/refactor/05-progress.md",
+            "docs/refactor/phase4c/README.md",
+            "docs/refactor/phase4c/route-parity-delta.csv",
+            "infra/phase2/README.md",
+            "infra/phase2/verify-static.sh",
+            "tools/phase2_wormhole_successor_acceptance.py",
+            "tools/test_phase2_wormhole_successor_acceptance.py",
+            "tools/phase4c_http_implementation_successor_acceptance.py",
+            "tools/phase4c_read_successor_acceptance.py",
+            "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+            "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+            "tools/test_phase4c_personal_bank_user_counts_"
+                    + "http_implementation_contract.py",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cHttpImplementationSuccessorAcceptance.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cReadSuccessorAcceptance.java");
     private static final Set<String> ADDED_RUNTIME_PATHS = Set.of(
             "openapi/phase4c-personal-bank-user-counts.openapi.json",
             "server/src/main/java/io/saksk/ti/web/compat/"
@@ -139,12 +160,8 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
     }
 
     static JsonNode load(Path tiJavaRoot) throws IOException {
-        require(isSha256(TRUST_PAYLOAD_SHA256),
-                "unsettled HTTP implementation trust payload SHA-256");
         Path root = tiJavaRoot.toRealPath();
-        JsonNode contract = JSON.readTree(Files.readString(
-                fixedRegularFile(root, CONTRACT_RELATIVE), StandardCharsets.UTF_8));
-        validate(contract);
+        JsonNode contract = loadImmutableContractEnvelope(root);
 
         JsonNode predecessor = readFixedJson(root, PREDECESSOR_RELATIVE);
         require(PREDECESSOR_SHA256.equals(sha256(
@@ -186,6 +203,18 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
         validateDataOwnership(root, contract);
         validateGoldenMapping(root, contract);
         validateWorm(root, contract);
+        return contract;
+    }
+
+    private static JsonNode loadImmutableContractEnvelope(Path root) throws IOException {
+        require(isSha256(TRUST_PAYLOAD_SHA256),
+                "unsettled HTTP implementation trust payload SHA-256");
+        Path contractPath = fixedRegularFile(root, CONTRACT_RELATIVE);
+        require(CONTRACT_SHA256.equals(sha256(contractPath)),
+                "HTTP implementation contract physical hash drifted");
+        JsonNode contract = JSON.readTree(Files.readString(
+                contractPath, StandardCharsets.UTF_8));
+        validate(contract);
         return contract;
     }
 
@@ -518,7 +547,6 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
     }
 
     static String successorHash(Path tiJavaRoot, String relative) throws IOException {
-        JsonNode contract = load(tiJavaRoot);
         String field;
         if (ACCEPTED_SOURCES.containsKey(relative)) {
             field = "http_entry_source_overrides";
@@ -527,11 +555,18 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
         } else {
             return null;
         }
-        return contract.path("historical_successor_acceptance")
+        Path root = tiJavaRoot.toRealPath();
+        JsonNode contract = loadImmutableContractEnvelope(root);
+        JsonNode reference = contract.path("historical_successor_acceptance")
                 .path(field)
-                .path(relative)
-                .path("successor_sha256")
-                .asString();
+                .path(relative);
+        require(relative.equals(reference.path("source").asString())
+                        && acceptedHash(relative).equals(
+                        reference.path("accepted_sha256").asString()),
+                "HTTP implementation successor entry drifted: " + relative);
+        String fixedSuccessor = reference.path("successor_sha256").asString();
+        return validateTerminalSource(root, relative, fixedSuccessor,
+                "HTTP implementation successor");
     }
 
     private static void validateAcceptedSourcesAgainstPredecessor(JsonNode predecessor) {
@@ -566,24 +601,59 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
         JsonNode sources = contract.path("source_contracts");
         for (Map.Entry<String, String> entry : SOURCE_PATHS.entrySet()) {
             JsonNode reference = sources.path(entry.getKey());
-            require(reference.path("sha256").asString().equals(
-                            sha256(fixedRegularFile(root, entry.getValue()))),
-                    "fixed implementation source hash drift: " + entry.getKey());
+            validateTerminalSource(
+                    root,
+                    entry.getValue(),
+                    reference.path("sha256").asString(),
+                    "fixed implementation source " + entry.getKey());
         }
         JsonNode overrides = contract.path("historical_successor_acceptance")
                 .path("http_entry_source_overrides");
         for (String relative : ACCEPTED_SOURCES.keySet()) {
-            require(overrides.path(relative).path("successor_sha256").asString().equals(
-                            sha256(fixedRegularFile(root, relative))),
-                    "HTTP implementation successor file drift: " + relative);
+            validateTerminalSource(
+                    root,
+                    relative,
+                    overrides.path(relative).path("successor_sha256").asString(),
+                    "HTTP implementation successor override");
         }
         JsonNode readOverrides = contract.path("historical_successor_acceptance")
                 .path("read_terminal_source_overrides");
         for (String relative : READ_TERMINAL_ACCEPTED_SOURCES.keySet()) {
-            require(readOverrides.path(relative).path("successor_sha256").asString()
-                            .equals(sha256(fixedRegularFile(root, relative))),
-                    "read-terminal implementation successor file drift: " + relative);
+            validateTerminalSource(
+                    root,
+                    relative,
+                    readOverrides.path(relative).path("successor_sha256").asString(),
+                    "read-terminal implementation successor override");
         }
+    }
+
+    private static String validateTerminalSource(
+            Path root,
+            String relative,
+            String fixedSha256,
+            String label
+    ) throws IOException {
+        String physicalSha256 = sha256(fixedRegularFile(root, relative));
+        if (TARGET_EXECUTION_SUCCESSOR_PATHS.contains(relative)) {
+            require(fixedSha256.equals(
+                            Phase4cHttpTargetExecutionSuccessorAcceptance.acceptedHash(
+                                    relative)),
+                    "target-execution successor did not accept the exact " + label
+                            + ": " + relative);
+        } else {
+            require(fixedSha256.equals(physicalSha256),
+                    "unauthorized target-execution successor path for " + label
+                            + ": " + relative);
+        }
+        if (fixedSha256.equals(physicalSha256)) {
+            return physicalSha256;
+        }
+        String terminalSha256 =
+                Phase4cHttpTargetExecutionSuccessorAcceptance.successorHash(
+                        root, relative);
+        require(physicalSha256.equals(terminalSha256),
+                "target-execution successor file hash drift for " + relative);
+        return physicalSha256;
     }
 
     private static void validateRuntimeTransition(

@@ -14,10 +14,16 @@ try:
         load_read_successor_contract,
         successor_sha256,
     )
+    from tools.phase4c_http_target_execution_successor_acceptance import (
+        fixed_source_sha256 as target_fixed_source_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_read_successor_acceptance import (
         load_read_successor_contract,
         successor_sha256,
+    )
+    from phase4c_http_target_execution_successor_acceptance import (
+        fixed_source_sha256 as target_fixed_source_sha256,
     )
 
 
@@ -37,6 +43,10 @@ USAGE_STATS_ENTRY_RELATIVE = (
 PHASE4C_COMPOSITION_PATH = (
     TI_JAVA_ROOT
     / "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
+)
+PHASE3_AUTH_TIME_HANDOFF_NAME = "phase3_auth_time_forward_handoff_test"
+PHASE3_AUTH_TIME_HISTORICAL_SHA256 = (
+    "cbafdbd774ab13429c834b20c7a89eab63f10f35edfc20173181bbbdf0e2e85c"
 )
 TERMINAL_SOURCE_HANDOFFS = {
     "application_api": ("main_source", "application_api"),
@@ -195,6 +205,19 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
             source = TI_JAVA_ROOT / reference["source"]
             self.assertTrue(source.is_file(), name)
             current_hash = sha256(source)
+            if name == PHASE3_AUTH_TIME_HANDOFF_NAME:
+                self.assertEqual(
+                    PHASE3_AUTH_TIME_HISTORICAL_SHA256,
+                    reference["sha256"],
+                )
+                self.assertEqual(
+                    current_hash,
+                    target_fixed_source_sha256(
+                        TI_JAVA_ROOT, reference["source"]
+                    ),
+                )
+                self.assertNotEqual(reference["sha256"], current_hash)
+                continue
             handoff = TERMINAL_SOURCE_HANDOFFS.get(name)
             if handoff is None:
                 self.assertEqual(reference["sha256"], current_hash, name)

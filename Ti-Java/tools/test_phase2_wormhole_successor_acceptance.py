@@ -9,8 +9,10 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 try:
+    from tools import phase2_wormhole_successor_acceptance as phase2_acceptance
     from tools.phase2_wormhole_successor_acceptance import (
         EvidenceDescriptor,
         EvidenceValidationError,
@@ -26,6 +28,7 @@ try:
         validate_evidence_chain,
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
+    import phase2_wormhole_successor_acceptance as phase2_acceptance
     from phase2_wormhole_successor_acceptance import (
         EvidenceDescriptor,
         EvidenceValidationError,
@@ -284,6 +287,27 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             tip.build_context_sha256,
         )
         self.assertEqual(PHASE4C_READ_ACCESS_REPORT_SHA256, tip.predecessor_sha256)
+
+    def test_fixed_acceptance_requires_target_execution_successor(self) -> None:
+        with mock.patch.object(
+            phase2_acceptance,
+            "load_read_successor_contract",
+            return_value={"validated": True},
+        ), mock.patch.object(
+            phase2_acceptance,
+            "load_http_target_execution_successor_contract",
+            return_value=None,
+        ):
+            with self.assertRaisesRegex(
+                EvidenceValidationError,
+                "fixed target-execution successor contract is required",
+            ):
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                )
 
     def test_fourth_node_tampering_fails_even_when_digest_is_reaccepted(self) -> None:
         _, third = self._successor_after(

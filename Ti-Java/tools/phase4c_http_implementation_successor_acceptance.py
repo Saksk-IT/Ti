@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent trust root for the Phase 4C user-counts HTTP implementation.
+"""Historical implementation validator with a target-execution bootstrap handoff.
 
 The bridge uses only fixed key-to-path maps.  Contract-provided paths are
 never followed, and the bridge files are provenance rather than members of
@@ -13,6 +13,17 @@ import hashlib
 import json
 from pathlib import Path
 
+try:
+    from tools.phase4c_http_target_execution_successor_acceptance import (
+        accepted_sha256 as _target_execution_accepted_sha256,
+        successor_sha256 as _target_execution_successor_sha256,
+    )
+except ModuleNotFoundError:  # Direct execution from tools/.
+    from phase4c_http_target_execution_successor_acceptance import (
+        accepted_sha256 as _target_execution_accepted_sha256,
+        successor_sha256 as _target_execution_successor_sha256,
+    )
+
 
 CONTRACT_ID = "ti.phase4c.personal-bank-user-counts-http-implementation-contract"
 CONTRACT_STATUS = "implementation_present_parity_incomplete_routes_pending"
@@ -20,6 +31,9 @@ CONTRACT_SCOPE = "phase4c-personal-bank-user-counts-http-implementation"
 CONTRACT_RELATIVE = (
     "docs/refactor/phase4c/"
     "personal-bank-user-counts-http-implementation-contract.json"
+)
+CONTRACT_SHA256 = (
+    "c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd"
 )
 PREDECESSOR_RELATIVE = (
     "docs/refactor/phase4c/personal-bank-user-counts-http-entry-contract.json"
@@ -186,6 +200,34 @@ READ_TERMINAL_SOURCE_ACCEPTED_SHA256 = {
         "590f4d62c45c4fc9fdde9332f2de376f62481b672120c72389071e4a8bf334a7"
     ),
 }
+
+# A later target-execution contract may advance only these exact bytes from
+# this historical implementation checkpoint.  Keeping the set here prevents
+# a future expansion of the target bridge from retroactively authorizing an
+# arbitrary source in this older trust root.
+TARGET_EXECUTION_SUCCESSOR_ALLOWLIST = frozenset({
+    "README.md",
+    "docs/refactor/05-progress.md",
+    "docs/refactor/phase4c/README.md",
+    "docs/refactor/phase4c/route-parity-delta.csv",
+    "infra/phase2/README.md",
+    "infra/phase2/verify-static.sh",
+    "tools/phase2_wormhole_successor_acceptance.py",
+    "tools/test_phase2_wormhole_successor_acceptance.py",
+    "tools/phase4c_http_implementation_successor_acceptance.py",
+    "tools/phase4c_read_successor_acceptance.py",
+    "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+    "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpImplementationSuccessorAcceptance.java"
+    ),
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cReadSuccessorAcceptance.java"
+    ),
+})
 
 SOURCE_PATHS = {
     "predecessor": PREDECESSOR_RELATIVE,
@@ -379,6 +421,39 @@ def _fixed_regular_file(root: Path, relative: str) -> Path:
     return _fixed_path(root, relative, regular_file=True)
 
 
+def _validated_current_sha256(
+        root: Path,
+        relative: str,
+        fixed_sha256: str,
+        *,
+        label: str,
+) -> str:
+    """Resolve historical bytes through the exact target successor allowlist.
+
+    Every code-fixed historical path must retain its anchored digest even when
+    its physical bytes happen to equal a rewritten contract reference. Any
+    physical drift must then be authorized by the bootstrap-validated
+    target-execution bridge. The historical contract is never used to authorize
+    its own changed bridge bytes.
+    """
+    if not _is_sha256(fixed_sha256):
+        raise AssertionError(f"invalid fixed SHA-256 for {label}: {relative}")
+    physical = _sha256(_fixed_regular_file(root, relative))
+    if relative in TARGET_EXECUTION_SUCCESSOR_ALLOWLIST:
+        if _target_execution_accepted_sha256(relative) != fixed_sha256:
+            raise AssertionError(
+                f"target successor accepted hash drift for {label}: {relative}"
+            )
+    elif physical != fixed_sha256:
+        raise AssertionError(f"unauthorized target successor path for {label}: {relative}")
+    if physical == fixed_sha256:
+        return physical
+    successor = _target_execution_successor_sha256(root, relative)
+    if successor != physical:
+        raise AssertionError(f"target successor hash drift for {label}: {relative}")
+    return physical
+
+
 def _add_manifest_path(root: Path, relative: str, manifest: dict[str, str]) -> None:
     path = _fixed_path(root, relative, regular_file=False)
     if path.is_file():
@@ -515,15 +590,39 @@ def _recompute_effective_owner_manifest(
     return effective_manifest
 
 
-def load_http_implementation_successor_contract(ti_java_root: Path) -> dict | None:
+def _load_immutable_contract_envelope(
+        ti_java_root: Path,
+) -> tuple[Path, dict] | None:
+    """Load the byte-fixed historical contract for scoped successor lookups."""
     root = ti_java_root.resolve(strict=True)
     path = root / CONTRACT_RELATIVE
     if not path.is_file():
         return None
     if not _is_sha256(TRUST_PAYLOAD_SHA256):
         raise AssertionError("unsettled HTTP implementation trust payload SHA-256")
-    with _fixed_regular_file(root, CONTRACT_RELATIVE).open(encoding="utf-8") as handle:
+    path = _fixed_regular_file(root, CONTRACT_RELATIVE)
+    if _sha256(path) != CONTRACT_SHA256:
+        raise AssertionError("HTTP implementation historical contract bytes drifted")
+    with path.open(encoding="utf-8") as handle:
         contract = json.load(handle)
+    if not isinstance(contract, dict):
+        raise AssertionError("HTTP implementation historical contract is not an object")
+    if contract.get("schema_version") != 1 or contract.get("contract_id") != CONTRACT_ID:
+        raise AssertionError("HTTP implementation historical contract identity drifted")
+    if contract.get("status") != CONTRACT_STATUS or contract.get("scope") != CONTRACT_SCOPE:
+        raise AssertionError("HTTP implementation historical contract boundary drifted")
+    if contract.get("document_payload_sha256") != _payload_sha256(contract):
+        raise AssertionError("HTTP implementation historical contract payload is invalid")
+    if _trust_payload_sha256(contract) != TRUST_PAYLOAD_SHA256:
+        raise AssertionError("HTTP implementation historical contract trust drifted")
+    return root, contract
+
+
+def load_http_implementation_successor_contract(ti_java_root: Path) -> dict | None:
+    loaded = _load_immutable_contract_envelope(ti_java_root)
+    if loaded is None:
+        return None
+    root, contract = loaded
     validate_http_implementation_successor_contract(contract, root)
     return contract
 
@@ -637,8 +736,12 @@ def validate_http_implementation_successor_contract(
             raise AssertionError(f"HTTP implementation accepted hash drift: {relative}")
         if not _is_sha256(successor):
             raise AssertionError(f"unsettled HTTP implementation successor hash: {relative}")
-        if _sha256(_fixed_regular_file(root, relative)) != successor:
-            raise AssertionError(f"HTTP implementation successor file drift: {relative}")
+        _validated_current_sha256(
+            root,
+            relative,
+            successor,
+            label="HTTP implementation historical successor",
+        )
 
     read_overrides = history.get("read_terminal_source_overrides", {})
     if set(read_overrides) != set(READ_TERMINAL_SOURCE_ACCEPTED_SHA256):
@@ -658,10 +761,12 @@ def validate_http_implementation_successor_contract(
             raise AssertionError(
                 f"unsettled read-terminal implementation successor hash: {relative}"
             )
-        if _sha256(_fixed_regular_file(root, relative)) != successor:
-            raise AssertionError(
-                f"read-terminal implementation successor file drift: {relative}"
-            )
+        _validated_current_sha256(
+            root,
+            relative,
+            successor,
+            label="read-terminal implementation historical successor",
+        )
 
     sources = contract.get("source_contracts", {})
     if set(sources) != set(SOURCE_PATHS):
@@ -672,8 +777,12 @@ def validate_http_implementation_successor_contract(
             raise AssertionError(f"fixed implementation source path drift: {name}")
         if set(reference) != {"source", "sha256"}:
             raise AssertionError(f"fixed implementation source shape drift: {name}")
-        if _sha256(_fixed_regular_file(root, relative)) != reference.get("sha256"):
-            raise AssertionError(f"fixed implementation source hash drift: {name}")
+        _validated_current_sha256(
+            root,
+            relative,
+            reference.get("sha256"),
+            label=f"fixed implementation source {name}",
+        )
 
     implementation = contract.get("implementation", {})
     if implementation.get("http_owner") != "learning":
@@ -1098,36 +1207,63 @@ def accepted_sha256(relative: str) -> str | None:
 
 
 def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
-    contract = load_http_implementation_successor_contract(ti_java_root)
-    if contract is None:
-        return None
     if relative in HTTP_ENTRY_SOURCE_ACCEPTED_SHA256:
         field = "http_entry_source_overrides"
     elif relative in READ_TERMINAL_SOURCE_ACCEPTED_SHA256:
         field = "read_terminal_source_overrides"
     else:
         return None
-    return contract["historical_successor_acceptance"][field][relative][
+    loaded = _load_immutable_contract_envelope(ti_java_root)
+    if loaded is None:
+        return None
+    root, contract = loaded
+    reference = contract["historical_successor_acceptance"][field][relative]
+    if reference.get("source") != relative:
+        raise AssertionError(f"implementation successor path drifted: {relative}")
+    if reference.get("accepted_sha256") != accepted_sha256(relative):
+        raise AssertionError(f"implementation successor accepted hash drifted: {relative}")
+    implementation_successor = contract["historical_successor_acceptance"][field][relative][
         "successor_sha256"
     ]
+    return _validated_current_sha256(
+        root,
+        relative,
+        implementation_successor,
+        label="HTTP implementation successor",
+    )
 
 
 def fixed_source_sha256(ti_java_root: Path, relative: str) -> str | None:
     """Return a validated current hash only for a code-fixed source path."""
-    contract = load_http_implementation_successor_contract(ti_java_root)
-    if contract is None:
-        return None
     names = [name for name, path in SOURCE_PATHS.items() if path == relative]
     if len(names) != 1:
         return None
-    return contract["source_contracts"][names[0]]["sha256"]
+    loaded = _load_immutable_contract_envelope(ti_java_root)
+    if loaded is None:
+        return None
+    root, contract = loaded
+    reference = contract["source_contracts"][names[0]]
+    if reference.get("source") != relative:
+        raise AssertionError(f"fixed implementation source path drifted: {names[0]}")
+    return _validated_current_sha256(
+        root,
+        relative,
+        reference["sha256"],
+        label=f"fixed implementation source {names[0]}",
+    )
 
 
 def runtime_successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     """Return a validated hash only for the fixed implementation runtime delta."""
-    contract = load_http_implementation_successor_contract(ti_java_root)
-    if contract is None or relative not in ADDED_RUNTIME_PATHS | CHANGED_RUNTIME_PATHS:
+    if relative not in ADDED_RUNTIME_PATHS | CHANGED_RUNTIME_PATHS:
         return None
-    return contract["implementation"]["production_runtime_transition"]["current"][
+    loaded = _load_immutable_contract_envelope(ti_java_root)
+    if loaded is None:
+        return None
+    root, contract = loaded
+    successor = contract["implementation"]["production_runtime_transition"]["current"][
         "files"
     ][relative]
+    if _sha256(_fixed_regular_file(root, relative)) != successor:
+        raise AssertionError(f"implementation runtime successor drifted: {relative}")
+    return successor

@@ -147,26 +147,35 @@ final class Phase4cReadSuccessorAcceptance {
         for (Map.Entry<String, FixedSource> entry : sources.entrySet()) {
             Path source = fixedRegularFile(root, entry.getKey());
             String expected = entry.getValue().successorSha256();
-            String httpEntrySuccessor =
-                    Phase4cHttpEntrySuccessorAcceptance.successorHash(entry.getKey());
-            if (httpEntrySuccessor != null) {
-                require(expected.equals(
-                                Phase4cHttpEntrySuccessorAcceptance.acceptedHash(
-                                        entry.getKey())),
-                        "HTTP entry did not accept the exact read successor for "
-                                + entry.getKey());
-                expected = httpEntrySuccessor;
+            String targetExecutionSuccessor =
+                    Phase4cHttpTargetExecutionSuccessorAcceptance.successorHash(
+                            root, entry.getKey());
+            if (targetExecutionSuccessor != null && expected.equals(
+                    Phase4cHttpTargetExecutionSuccessorAcceptance.acceptedHash(
+                            entry.getKey()))) {
+                expected = targetExecutionSuccessor;
             } else {
-                String implementationSuccessor =
-                        Phase4cHttpImplementationSuccessorAcceptance.successorHash(
-                                root, entry.getKey());
-                if (implementationSuccessor != null) {
+                String httpEntrySuccessor =
+                        Phase4cHttpEntrySuccessorAcceptance.successorHash(entry.getKey());
+                if (httpEntrySuccessor != null) {
                     require(expected.equals(
-                                    Phase4cHttpImplementationSuccessorAcceptance
-                                            .acceptedHash(entry.getKey())),
-                            "HTTP implementation did not accept the exact read "
-                                    + "successor for " + entry.getKey());
-                    expected = implementationSuccessor;
+                                    Phase4cHttpEntrySuccessorAcceptance.acceptedHash(
+                                            entry.getKey())),
+                            "HTTP entry did not accept the exact read successor for "
+                                    + entry.getKey());
+                    expected = httpEntrySuccessor;
+                } else {
+                    String implementationSuccessor =
+                            Phase4cHttpImplementationSuccessorAcceptance.successorHash(
+                                    root, entry.getKey());
+                    if (implementationSuccessor != null) {
+                        require(expected.equals(
+                                        Phase4cHttpImplementationSuccessorAcceptance
+                                                .acceptedHash(entry.getKey())),
+                                "HTTP implementation did not accept the exact read "
+                                        + "successor for " + entry.getKey());
+                        expected = implementationSuccessor;
+                    }
                 }
             }
             require(expected.equals(sha256(source)),

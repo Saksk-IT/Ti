@@ -16,6 +16,10 @@ try:
         accepted_sha256 as http_implementation_accepted_sha256,
         successor_sha256 as http_implementation_successor_sha256,
     )
+    from tools.phase4c_http_target_execution_successor_acceptance import (
+        accepted_sha256 as http_target_execution_accepted_sha256,
+        successor_sha256 as http_target_execution_successor_sha256,
+    )
     from tools.phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
         successor_sha256 as composition_successor_sha256,
@@ -29,6 +33,10 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_implementation_successor_acceptance import (
         accepted_sha256 as http_implementation_accepted_sha256,
         successor_sha256 as http_implementation_successor_sha256,
+    )
+    from phase4c_http_target_execution_successor_acceptance import (
+        accepted_sha256 as http_target_execution_accepted_sha256,
+        successor_sha256 as http_target_execution_successor_sha256,
     )
     from phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
@@ -204,24 +212,29 @@ def validate_read_successor_contract(contract: dict, ti_java_root: Path) -> None
                 f"read successor path escaped or vanished: {relative}"
             ) from error
         physical_hash = successor_hash
-        http_successor = http_entry_successor_sha256(root, relative)
-        if http_successor is not None:
-            if http_entry_accepted_sha256(relative) != successor_hash:
-                raise AssertionError(
-                    f"HTTP entry did not accept the exact read successor for {relative}"
-                )
-            physical_hash = http_successor
+        target_successor = http_target_execution_successor_sha256(root, relative)
+        if target_successor is not None and (
+                http_target_execution_accepted_sha256(relative) == successor_hash):
+            physical_hash = target_successor
         else:
-            implementation_successor = http_implementation_successor_sha256(
-                root, relative
-            )
-            if implementation_successor is not None:
-                if http_implementation_accepted_sha256(relative) != successor_hash:
+            http_successor = http_entry_successor_sha256(root, relative)
+            if http_successor is not None:
+                if http_entry_accepted_sha256(relative) != successor_hash:
                     raise AssertionError(
-                        "HTTP implementation did not accept the exact read "
-                        f"successor for {relative}"
+                        f"HTTP entry did not accept the exact read successor for {relative}"
                     )
-                physical_hash = implementation_successor
+                physical_hash = http_successor
+            else:
+                implementation_successor = http_implementation_successor_sha256(
+                    root, relative
+                )
+                if implementation_successor is not None:
+                    if http_implementation_accepted_sha256(relative) != successor_hash:
+                        raise AssertionError(
+                            "HTTP implementation did not accept the exact read "
+                            f"successor for {relative}"
+                        )
+                    physical_hash = implementation_successor
         if not resolved.is_file() or _sha256(resolved) != physical_hash:
             raise AssertionError(f"read successor file hash drift for {relative}")
 
@@ -242,6 +255,17 @@ def load_composition_predecessor_contract(ti_java_root: Path) -> dict | None:
 def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     contract = load_read_successor_contract(ti_java_root)
     if contract is not None:
+        fixed = {
+            **PYTHON_SOURCES,
+            **JAVA_SOURCES,
+            **AUXILIARY_SOURCES,
+        }.get(relative)
+        target_successor = http_target_execution_successor_sha256(
+            ti_java_root, relative
+        )
+        if target_successor is not None and fixed is not None and (
+                http_target_execution_accepted_sha256(relative) == fixed[1]):
+            return target_successor
         http_successor = http_entry_successor_sha256(ti_java_root, relative)
         if http_successor is not None:
             return http_successor
@@ -261,11 +285,6 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
                     f"successor for {relative}"
                 )
             return implementation_successor
-        fixed = {
-            **PYTHON_SOURCES,
-            **JAVA_SOURCES,
-            **AUXILIARY_SOURCES,
-        }.get(relative)
         if fixed is not None:
             return fixed[1]
         composition_fixed = COMPOSITION_SUCCESSOR_SOURCES.get(relative)

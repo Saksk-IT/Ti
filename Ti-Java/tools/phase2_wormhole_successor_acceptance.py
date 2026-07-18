@@ -19,13 +19,13 @@ import re
 from typing import Sequence
 
 try:
-    from tools.phase4c_http_implementation_successor_acceptance import (
-        load_http_implementation_successor_contract,
+    from tools.phase4c_http_target_execution_successor_acceptance import (
+        load_http_target_execution_successor_contract,
     )
     from tools.phase4c_read_successor_acceptance import load_read_successor_contract
 except ModuleNotFoundError:  # Direct script execution from tools/.
-    from phase4c_http_implementation_successor_acceptance import (
-        load_http_implementation_successor_contract,
+    from phase4c_http_target_execution_successor_acceptance import (
+        load_http_target_execution_successor_contract,
     )
     from phase4c_read_successor_acceptance import load_read_successor_contract
 
@@ -544,8 +544,8 @@ def validate_fixed_acceptance(
         "Phase4C fixed read successor contract is required",
     )
     require(
-        load_http_implementation_successor_contract(ti_java_root) is not None,
-        "Phase4C fixed HTTP implementation successor contract is required",
+        load_http_target_execution_successor_contract(ti_java_root) is not None,
+        "Phase4C fixed target-execution successor contract is required",
     )
 
     return validate_fixed_chain(
@@ -564,9 +564,11 @@ def validate_fixed_chain(
 ) -> EvidenceDescriptor:
     """Validate the fixed bytes without using the successor contract as authority.
 
-    The implementation-contract builder uses this path before the contract file
-    exists.  The production static gate calls ``validate_fixed_acceptance`` and
-    therefore additionally requires the independently trusted successor.
+    Contract builders use this path before the terminal target-execution
+    contract exists.  The production static gate calls
+    ``validate_fixed_acceptance`` and therefore additionally requires the
+    bootstrap-validated target successor.  Route promotion remains blocked
+    until a later Git-anchored node fixes the physical bridge bytes.
     """
 
     return validate_evidence_chain(

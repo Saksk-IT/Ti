@@ -29,6 +29,10 @@ try:
         load_read_successor_contract,
         validate_read_successor_contract,
     )
+    from tools.phase4c_http_target_execution_successor_acceptance import (
+        accepted_sha256 as target_execution_accepted_sha256,
+        successor_sha256 as target_execution_successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_entry_successor_acceptance import (
         accepted_sha256 as http_entry_accepted_sha256,
@@ -45,6 +49,10 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_read_successor_acceptance import (
         load_read_successor_contract,
         validate_read_successor_contract,
+    )
+    from phase4c_http_target_execution_successor_acceptance import (
+        accepted_sha256 as target_execution_accepted_sha256,
+        successor_sha256 as target_execution_successor_sha256,
     )
 
 
@@ -253,6 +261,19 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                 read_terminal = read_sources.get(reference["source"])
                 if current_hash == read_terminal:
                     continue
+                target_successor = target_execution_successor_sha256(
+                    ROOT, reference["source"]
+                )
+                target_predecessor = (
+                    read_terminal
+                    if read_terminal is not None
+                    else reference["sha256"]
+                )
+                if target_successor is not None and (
+                        target_execution_accepted_sha256(reference["source"])
+                        == target_predecessor):
+                    self.assertEqual(current_hash, target_successor, name)
+                    continue
                 implementation_successor = implementation_successor_sha256(
                     ROOT, reference["source"]
                 )
@@ -342,6 +363,17 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                         relative,
                     )
                     self.assertEqual(current_hash, http_successor, relative)
+                    continue
+                target_successor = target_execution_successor_sha256(
+                    ROOT, relative
+                )
+                if target_successor is not None:
+                    self.assertEqual(
+                        second_handoff["successor_sha256"],
+                        target_execution_accepted_sha256(relative),
+                        relative,
+                    )
+                    self.assertEqual(current_hash, target_successor, relative)
                     continue
                 implementation_successor = implementation_successor_sha256(
                     ROOT, relative

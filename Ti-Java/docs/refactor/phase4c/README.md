@@ -1,6 +1,6 @@
 # Phase 4C：练习与学习记录
 
-本目录保存 `learning` 垂直切片的实现前合同、HTTP-neutral read 后继合同、HTTP pending implementation successor、OpenAPI/route delta、所有权 overlay、批准差异和可重复证据。
+本目录保存 `learning` 垂直切片的实现前合同、HTTP-neutral read 后继合同、HTTP pending implementation 与 target-execution successor、OpenAPI/route delta、所有权 overlay、批准差异和可重复证据。
 Phase 1/Phase 4A/Phase 4B 的历史基线保持不可变；Phase 4C 只能通过显式 successor
 合同推进，不得把后续结论回写成早期事实。
 
@@ -71,16 +71,37 @@ GET 与派生 HEAD 的状态和语义一致，只有 HEAD 在所有状态保持�
 
 历史 entry gate 的状态是“只授权未来精确 HTTP slice，生产实现尚未开始”；该时点公开应用方法为 27 个，有效迁移状态为 **11 migrated、600 pending、0 production cutover**。这些实现前事实保持不变，但已由下述 successor 承接，不再是当前工作树状态。
 
-## User-counts HTTP pending implementation checkpoint
+## User-counts HTTP pending implementation checkpoint（历史 predecessor）
 
 HTTP 生产适配已经存在：双 alias Controller、安全错误投影、严格路径解析、API-only CORS/OPTIONS、GET 与派生 HEAD 状态/语义一致且 HEAD 零响应体、独立 Redis 三窗口限流与相应配置/OpenAPI 均已物化。OpenAPI 和 route delta 将两条 GET 明确登记为 implemented-pending；派生 HEAD/OPTIONS 不计迁移 operation。新的 Redis namespace 由 `learning` 唯一拥有，有效所有权总数为 **160/160**。
 
-当前 implementation successor 固定 297 个 production runtime files；相对 288 文件 predecessor 精确新增 9 个、修改 6 个，并绑定 44 个 source contract 路径。第五节点 WORM 报告 SHA-256 为 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，Java build-context 为 `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。
+该 implementation predecessor 固定 297 个 production runtime files；相对 288 文件 predecessor 精确新增 9 个、修改 6 个，并绑定 44 个 source contract 路径。第五节点 WORM 报告 SHA-256 为 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，Java build-context 为 `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。
 
 首次完整独立验收尝试虽逐段通过 source tools 与 Maven，但在 Compose 运行阶段发现 `read_only` API 服务不支持 environment-backed secret，因此整轮作废。将限流 HMAC Secret 改为 file-backed configtree 后，验收时冻结的 pre-documentation checkpoint 已从头重跑并通过：该冻结点 1,449 个受控文件的源/副本清单 SHA-256 均为 `154013da39c75fb33c7b0c9d02f4e0f34038b259972d4a9a7f93a7ae47e90d63`，临时报告 SHA-256 为 `2b3cd6e4ea34a501809b5083bad0b49db82dba0aea92b36a4328c5d2ac530f8d`。全部 source tools 496/496、Phase 1 23/23、Phase 2、Phase 3 29/29、topology 60/60、小程序 36/36、独立 PostgreSQL/Redis 数据面、专用空缓存 Maven 661+93、唯一镜像、3/3 Compose readiness 与重启恢复均绿色；9 个只读 bind 全部来自副本，environment Secret 为 0，临时资源和端口为 0 残留。该 manifest 与临时报告只描述验收冻结点，不是当前工作树的字节清单；其后的证据措辞、固定 trust/contract 与 parity 测试更新只由当前 source/contract 门禁另行约束。
 
 真实随机端口 Tomcat `NetworkIT` 仍 mock `LearningApplicationApi` 与认证 ports；它证明网络和 Servlet 适配行为，但不证明 Target Session、Flask Session、Bearer、应用服务与 JDBC 的真实端到端链路。
 
-当前 59-case 映射证据明确分类为 `PARTIAL_EXECUTION_MAPPING_LEDGER`：48 个 case 只通过 MockMvc 执行真实适配层并 mock `LearningApplicationApi`，8 个 case 仅绑定认证测试，3 个 case 仅绑定 typed PostgreSQL 测试。因此 `full_target_parity_closed=false`、`route_migration_eligible=false`，有效状态继续为 **11 migrated、600 pending、0 production cutover**。
+在 implementation predecessor 时点，59-case 映射证据明确分类为 `PARTIAL_EXECUTION_MAPPING_LEDGER`：48 个 case 只通过 MockMvc 执行真实适配层并 mock `LearningApplicationApi`，8 个 case 仅绑定认证测试，3 个 case 仅绑定 typed PostgreSQL 测试。因此该历史时点的 `full_target_parity_closed=false`、`route_migration_eligible=false`，有效状态为 **11 migrated、600 pending、0 production cutover**。
 
-下一门禁是消除绑定式和回显式证明，使全部 59 个 case 经真实目标认证、应用与数据库路径执行；还必须闭合全部前置终止的 `users.last_active` 零 DML 指纹和原始 Servlet 路径边界。operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+该 predecessor 当时的下一门禁是消除绑定式和回显式证明；后文 target-execution successor 已完成此项。typed parity、真实 Tomcat、Redis 故障恢复、PG16/18 关键终止指纹和 bridge 外部提交锚定仍未闭合；operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。
+
+## User-counts HTTP target-execution successor
+
+历史 `PARTIAL_EXECUTION_MAPPING_LEDGER` 与 implementation contract 保持字节不可变。新的 target-execution successor 以 implementation contract 的物理 SHA-256 `c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd`、document payload `f6eff86bea6a1d04bc43bfe8a532ff952f295c6aa2d1d89f6b40f6fe02dc91f9` 和独立 trust payload `624bb2b801a51e0fd19ae4d4583d77c6b6195355685b202b4c5ac3aa56d2cf8f` 为唯一前驱，不回写早期账本。
+
+59 个 golden disposition 现在分为：
+
+- 46 个普通完整上下文 HTTP 执行；
+- 11 个带真实 PostgreSQL transaction abort 的完整上下文 HTTP 执行；
+- 1 个 malformed expiry typed rejection；
+- 1 个 aware expiry offset-provenance collapse。
+
+57 个 HTTP case 均在安装完整 Spring Security/Servlet 生产过滤链的上下文中使用 MockMvc 执行，测试上下文连接真实 PostgreSQL 18.4 与 Redis 7.4.7，且没有 mocked application/auth port。其中 49 个到达 Controller、应用服务和业务 JDBC adapter；5 个 Web 302 与 3 个 API 401 按契约在业务层前终止，并证明业务 JDBC 未被调用。它们覆盖 Target Session、Flask Session exchange 与 Bearer，逐 case 固定 200×34、302×5、401×3、403×10、500×5，且 API/Web HTTP 分布为 43/14。SQL tracer 观察每条执行及 read-only 状态，验证九张相关表前后指纹一致、观测到的 write DML 与 schema mutation statement 均为 0；11 个故障均形成同连接 `42703 -> 25P02 -> rollback`，需要继续降级的查询只允许在回滚后由不同连接成功。额外 1 个 supplementary JUnit 单独证明 Flask Session 与权威 Target Session 均到达应用/JDBC，不计入 59 disposition，所以套件的 JUnit leaf 总数是 60。
+
+该 successor 只声明 `all_59_target_dispositions_executed=true`，不声明 `full_target_parity_closed`。57 个 HTTP 使用 MockMvc，不是真实随机端口 Tomcat；本套件只在 PostgreSQL 18.4 执行全部 59 disposition，PG16.14/18.4 双版本仍由较窄 JDBC IT 绑定；malformed 与 aware 两个 typed 处置没有伪造 HTTP status，最终 parity 接受仍待评审。真实 Tomcat HEAD/Location/Vary/CORS/安全头/Request ID/全部限流头矩阵、Redis 连接拒绝/中断/同实例恢复、生产流量与切流均不在本节点授权范围。
+
+本轮只有 `src/test`、测试 seed、证据与门禁变化，生产 build-context 仍为 `273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3`。固定 WORM 链禁止重复 build-context，因此不伪造第六份报告；target-execution contract 显式复用第五节点 `7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39`，并记录 `new_worm_report_created=false`、`production_build_context_unchanged=true`。
+
+当前 target-execution 合同与两份 bridge 是诚实的 bootstrap，而不是外部前驱已固定的独立信任根。合同文档记录两份 bridge 的当前物理 SHA，但 bridge-normalized trust payload 会把这两个 source hash 替换为固定 sentinel 以打破递归哈希环；因此 `external_bridge_bytes_anchor_complete=false`、`route_promotion_blocked_by_bridge_bootstrap=true`。本节点提交并推送后，下一节点必须固定该 Git commit、合同物理 SHA 和两份 bridge 物理 SHA，才能移除此阻断；当前 bridge 也继续不能从历史 `accepted_sha256` allowlist 获得 authority。
+
+因此两条 GET 继续保持 pending，有效账本仍为 **11 migrated、600 pending、0 production cutover**。下一门禁首先是提交推送本 bootstrap 节点并由下一节点完成外部 Git/合同/bridge 锚定，同时加入归一化 JUnit 执行产物；随后才是 typed parity 评审、真实 Tomcat 全响应矩阵、Redis 真实故障恢复和 PG16/18 关键终止指纹。operator、schema/index、真实数据迁移、客户端、网关和 production cutover 继续禁止。

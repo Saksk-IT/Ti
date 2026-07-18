@@ -1,0 +1,860 @@
+{
+  "contract_id": "ti.phase4c.personal-bank-user-counts-http-target-execution-contract",
+  "schema_version": 1,
+  "captured_at": "2026-07-18T10:00:00+08:00",
+  "status": "target_dispositions_executed_typed_parity_review_pending_routes_pending",
+  "scope": "phase4c-personal-bank-user-counts-http-target-execution",
+  "predecessor": {
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json",
+    "sha256": "c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd",
+    "document_payload_sha256": "f6eff86bea6a1d04bc43bfe8a532ff952f295c6aa2d1d89f6b40f6fe02dc91f9",
+    "trust_payload_sha256": "624bb2b801a51e0fd19ae4d4583d77c6b6195355685b202b4c5ac3aa56d2cf8f",
+    "contract_id": "ti.phase4c.personal-bank-user-counts-http-implementation-contract",
+    "status": "implementation_present_parity_incomplete_routes_pending",
+    "scope": "phase4c-personal-bank-user-counts-http-implementation",
+    "immutable": true
+  },
+  "source_contracts": {
+    "application_test_configuration": {
+      "source": "server/src/main/resources/application-test.yml",
+      "sha256": "1096a23b40fa67126184cbbc09cc289c7e4bd37416cf097cc3a6bec7e894a88c"
+    },
+    "approved_differences": {
+      "source": "docs/refactor/phase4c/approved-differences.md",
+      "sha256": "921d6626ab11d59a9667e1942953807b0aa1a81c06c01094cc109312f9d6b300"
+    },
+    "auth_schema": {
+      "source": "server/src/test/resources/db/phase3/030-auth-schema.sql",
+      "sha256": "9f9546be5f32bd1babcb9a4711c2cc9b3641e4c22ff051738ba9d735a150c87e"
+    },
+    "container_images": {
+      "source": "server/src/test/java/io/saksk/ti/support/Phase2ContainerImages.java",
+      "sha256": "c3bcd6b78ed2606ddc1e7a685774b9d0c2969c93502b6983d5f8352e27c29f50"
+    },
+    "contract_builder": {
+      "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "sha256": "51d3c9bf425319e7a0cd7a49e7244f058e09f14ac363f9278000192cb4a69d3b"
+    },
+    "contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "sha256": "a8ce7fc93fe022d16a10e4bdd0fa9bff55788b076eb78601efba373c29c54a4b"
+    },
+    "fault_injecting_data_source": {
+      "source": "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsFaultInjectingDataSource.java",
+      "sha256": "83f381e0766ebeb0c71aa3b8f3f024d9af1a0099776b2d8923082947d6116dae"
+    },
+    "historical_all_shares_entry_contract_test": {
+      "source": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "sha256": "e37b0418e8018d58135c5b1c55149d9679dfedb21f8b67fca3425b874ea23efc"
+    },
+    "historical_composition_contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "sha256": "b81c8fb13f2ce4dd0d917a0876b88a20804bd1d272a7c261563dad9513d42f17"
+    },
+    "historical_implementation_contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "sha256": "9c61d6cefdd980457197fb850f690c6adc1a84fdb3d21905a2a5cfdb1bc258c2"
+    },
+    "historical_java_implementation_successor_bridge": {
+      "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+      "sha256": "1d2c193fb7a63173850bfee7ce382e7b4bc417c5b3879f3ef4bb43187f980275"
+    },
+    "historical_java_read_successor_bridge": {
+      "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+      "sha256": "5047c8b0a36450a72ba74a460db115ab33a58861b64216fa2cc67a7ddb0a026d"
+    },
+    "historical_partial_mapping": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-mapping-evidence.json",
+      "sha256": "d039193c2ecfb644fdd356b196f6551440e63ee27eba0645d9f8e5bef923b4d3"
+    },
+    "historical_python_implementation_successor_bridge": {
+      "source": "tools/phase4c_http_implementation_successor_acceptance.py",
+      "sha256": "54438d9ee44d391b813a1c3503444dd65d627e3b5932971e49ef549650fbbff4"
+    },
+    "historical_python_read_successor_bridge": {
+      "source": "tools/phase4c_read_successor_acceptance.py",
+      "sha256": "1e494bce628e87bc2db3d01742fb929752fedaefd7563defccad7b972c951980"
+    },
+    "historical_read_contract_test": {
+      "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+      "sha256": "641c90d33de50daeb3a1a1c9a3ae5027562273f780f88e6a26cf00ad3bd462ac"
+    },
+    "historical_share_list_read_contract_test": {
+      "source": "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "sha256": "ffde7c337edf81ba8cf1a457800e89e3150df10b44ea7da50e99436534caa671"
+    },
+    "java_contract_parity_test": {
+      "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTargetExecutionContractParityTest.java",
+      "sha256": "6a9b86c78b6e473cc80b0202750f87f7c95914d012200292e29aafeea33165a6"
+    },
+    "java_successor_bridge": {
+      "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+      "sha256": "76c2c4ef54061f85339ad8f5cb1f1bab21d2f71b7bbcf8fde44cdd4d563cdf15"
+    },
+    "network_it": {
+      "source": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsNetworkIT.java",
+      "sha256": "6231d45c205a988489724f3345c8fda349e67907dedb3e9707e54da3431d15f2"
+    },
+    "openapi_overlay": {
+      "source": "openapi/phase4c-personal-bank-user-counts.openapi.json",
+      "sha256": "076957f391fd9aed65861d0633ad4b21d88b391df5217b10e2105b88b56605c9"
+    },
+    "ownership_effective": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-effective-data-ownership-status.json",
+      "sha256": "9f29ee2e27695a1d36a0ca0e5a8ffbe76172b1d3583ca6ee3cf3099e43d758b2"
+    },
+    "phase2_build_context_hasher": {
+      "source": "infra/phase2/hash-java-build-context.sh",
+      "sha256": "e8e618ce08128e4fbf7b090b5b0709ed1d6bc5d1638f1f2838ff6d7409a0dea6"
+    },
+    "phase2_minimal_reference_schema": {
+      "source": "server/src/test/resources/db/phase2/minimal-reference-schema.sql",
+      "sha256": "2873948e1d0a59eb8ceb9dce94e23ec05d9db6bfe288e33140d33519dac62c83"
+    },
+    "phase2_readme": {
+      "source": "infra/phase2/README.md",
+      "sha256": "55f9d05fa583e581d6a5b92ec4f1e3e53690a40b5087da456a84ef996b4d3f7b"
+    },
+    "phase2_readonly_role": {
+      "source": "server/src/test/resources/db/phase2/020-test-readonly-role.sql",
+      "sha256": "5a76c750bb94ba67b3e0160bcfefa17ad5ef7511123fb1b38210cc9a356b7307"
+    },
+    "phase2_static_gate": {
+      "source": "infra/phase2/verify-static.sh",
+      "sha256": "eb01988f26a56293338a7bcd8bc83487b2d8cd0c1c081ae75272bc73dfa28a94"
+    },
+    "phase2_worm_validator": {
+      "source": "tools/phase2_wormhole_successor_acceptance.py",
+      "sha256": "f3a56bd684b508f69bc387d741f1c0277d0c4a7f4130aec984fd359fa8dc0f3a"
+    },
+    "phase2_worm_validator_test": {
+      "source": "tools/test_phase2_wormhole_successor_acceptance.py",
+      "sha256": "ce70d5f35c7725d0f93f27619c5828f294ac259fc20f8594a3ac71b5f5f6f72d"
+    },
+    "phase3_authentication_it": {
+      "source": "server/src/test/java/io/saksk/ti/integration/Phase3AuthenticationIT.java",
+      "sha256": "b5fa92f1fbb44190761c36c40c27b3fc5ebe846a4fa8d41ae1946af9d4927130"
+    },
+    "phase4b_all_shares_entry_anchor": {
+      "source": "docs/refactor/phase4b/personal-bank-all-shares-entry-contract.json",
+      "sha256": "b4311e170cde6657a9ddd30885f17cd847f56a61e8e8f24c159be425d5931fbb"
+    },
+    "phase4b_goldens": {
+      "source": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+      "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1"
+    },
+    "phase4c_read_predecessor": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json",
+      "sha256": "458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73"
+    },
+    "phase4c_readme": {
+      "source": "docs/refactor/phase4c/README.md",
+      "sha256": "f43ae7ca31038fcc45a05874cfc5c8a460edfe2833936bf4418f37706771d472"
+    },
+    "postgres_containers": {
+      "source": "server/src/test/java/io/saksk/ti/support/Phase2PostgresContainers.java",
+      "sha256": "c5ecf36dc5e943f9baa34b61be65bf73cf4502b1e8bdccc0a012a8db55c29ffe"
+    },
+    "postgres_it": {
+      "source": "server/src/test/java/io/saksk/ti/integration/Phase4cPersonalBankUserCountsJdbcCompatibilityIT.java",
+      "sha256": "7cf1b1f6a617dabeed10785b8b3b5cf397d9001a1b8209c0eca048de97c4484c"
+    },
+    "predecessor": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json",
+      "sha256": "c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd"
+    },
+    "progress": {
+      "source": "docs/refactor/05-progress.md",
+      "sha256": "e2363a603e9b82368185b6fef3e9882a3e586ce5b5eca14a8b5cddcbca7d6faf"
+    },
+    "project_readme": {
+      "source": "README.md",
+      "sha256": "321d23e47d0df0714ea632b2c8c1d3d05d0e67bf69d53e3a52e387e4a949bda4"
+    },
+    "python_successor_bridge": {
+      "source": "tools/phase4c_http_target_execution_successor_acceptance.py",
+      "sha256": "891e4c7c48c76b76697b064e8e6fd55f5cb549b751a7bff3562868f62d76c75c"
+    },
+    "read_contract_builder": {
+      "source": "tools/build_phase4c_personal_bank_user_counts_read_contract.py",
+      "sha256": "f923257659b03ffb0fd52a60894ba5b59df3ba242cf187416bf52edda2eeb3bd"
+    },
+    "redis_it": {
+      "source": "server/src/test/java/io/saksk/ti/web/security/RedisPersonalBankUserCountsReadRateLimiterIT.java",
+      "sha256": "b6a7b0e5684277227f5c6f6770cae7352b4864bd91ac727ccff7caea0043d621"
+    },
+    "route_delta": {
+      "source": "docs/refactor/phase4c/route-parity-delta.csv",
+      "sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b"
+    },
+    "server_pom": {
+      "source": "server/pom.xml",
+      "sha256": "24b45d68c44c64a6b2fda2fbf6f342889640f7c3dbc088015703cd1a68ff916b"
+    },
+    "share_list_schema": {
+      "source": "server/src/test/resources/db/phase4b/062-personal-bank-share-list-schema.sql",
+      "sha256": "d0e51e7cd16d0275611a82c984a52538beb14b10b19c50925646dd48a4d1c29d"
+    },
+    "target_execution_evidence": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-execution-evidence.json",
+      "sha256": "947737b496168385b07db3d71a3bcf99d0940b1b52da4188ebf64516257b4002"
+    },
+    "target_execution_it": {
+      "source": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsGoldenTargetExecutionIT.java",
+      "sha256": "45b1a96fcc66a436551a8ce7604b304f2a479cece87c431a3a3c003da01d5ca1"
+    },
+    "target_execution_seed": {
+      "source": "server/src/test/resources/db/phase4c/071-personal-bank-user-counts-golden-target-seed.sql",
+      "sha256": "5fbdc1da8e15072995baffba15b3a430b1ddd93e4788237a44bc3a5965e7556e"
+    },
+    "usage_stats_schema": {
+      "source": "server/src/test/resources/db/phase4b/065-personal-bank-usage-stats-schema.sql",
+      "sha256": "90d94b6c90c09586908e3108626ddbace04a83b56ed2018a55709ccdc7a2f684"
+    },
+    "user_counts_schema": {
+      "source": "server/src/test/resources/db/phase4b/067-personal-bank-user-counts-schema.sql",
+      "sha256": "32367c8795654e0ae2f5e2f1d6d4e42fb70e354f745a7f06894e28ac4a45f934"
+    },
+    "worm_tip": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json",
+      "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39"
+    }
+  },
+  "historical_successor_acceptance": {
+    "predecessor_sha256": "c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd",
+    "predecessor_trust_payload_sha256": "624bb2b801a51e0fd19ae4d4583d77c6b6195355685b202b4c5ac3aa56d2cf8f",
+    "anchored_source_overrides": {
+      "README.md": {
+        "source": "README.md",
+        "accepted_sha256": "37d97e57cd8526615d828601dc56fc344b6e9e8cd400da85ebb9bf77b87ca20e",
+        "accepted_hash_provenance": "predecessor.historical_successor_acceptance",
+        "successor_sha256": "321d23e47d0df0714ea632b2c8c1d3d05d0e67bf69d53e3a52e387e4a949bda4"
+      },
+      "docs/refactor/05-progress.md": {
+        "source": "docs/refactor/05-progress.md",
+        "accepted_sha256": "12935066fb4a2c53c78213e2b269028b9e24342034640467cfcb1d4bb47858a9",
+        "accepted_hash_provenance": "predecessor.historical_successor_acceptance",
+        "successor_sha256": "e2363a603e9b82368185b6fef3e9882a3e586ce5b5eca14a8b5cddcbca7d6faf"
+      },
+      "docs/refactor/phase4c/README.md": {
+        "source": "docs/refactor/phase4c/README.md",
+        "accepted_sha256": "c44612d78bdafa7bc550feed7496588f0d163f8f1dda72fba917a4590f1f7064",
+        "accepted_hash_provenance": "predecessor.historical_successor_acceptance",
+        "successor_sha256": "f43ae7ca31038fcc45a05874cfc5c8a460edfe2833936bf4418f37706771d472"
+      },
+      "docs/refactor/phase4c/route-parity-delta.csv": {
+        "source": "docs/refactor/phase4c/route-parity-delta.csv",
+        "accepted_sha256": "fc3c61f84fba411ed2b5509f841c0183c4da7250ecbfc9c6d1ba03cbb3c01f9e",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b"
+      },
+      "infra/phase2/README.md": {
+        "source": "infra/phase2/README.md",
+        "accepted_sha256": "2d5d4fa1f26ce1fde3a273631f309aab5496c64641acba0b26b814e3ec4b64d1",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "55f9d05fa583e581d6a5b92ec4f1e3e53690a40b5087da456a84ef996b4d3f7b"
+      },
+      "infra/phase2/verify-static.sh": {
+        "source": "infra/phase2/verify-static.sh",
+        "accepted_sha256": "5e26d01247dce13342972d4b189460f7ae6f788506c57550b42b5b1f4f658821",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "eb01988f26a56293338a7bcd8bc83487b2d8cd0c1c081ae75272bc73dfa28a94"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java": {
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+        "accepted_sha256": "cd212636e08ce74efa9efbc3ee988f14b69032f6fc3f7e927a591737b35e29d3",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "1d2c193fb7a63173850bfee7ce382e7b4bc417c5b3879f3ef4bb43187f980275"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java": {
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+        "accepted_sha256": "7b486e7dfe6e6e7e24435854e7c0545b5f9fdaec785974fb44cd0978f8e40fa5",
+        "accepted_hash_provenance": "predecessor.historical_successor_acceptance",
+        "successor_sha256": "5047c8b0a36450a72ba74a460db115ab33a58861b64216fa2cc67a7ddb0a026d"
+      },
+      "server/src/test/java/io/saksk/ti/integration/Phase3AuthenticationIT.java": {
+        "source": "server/src/test/java/io/saksk/ti/integration/Phase3AuthenticationIT.java",
+        "accepted_sha256": "cbafdbd774ab13429c834b20c7a89eab63f10f35edfc20173181bbbdf0e2e85c",
+        "accepted_hash_provenance": "phase4b_all_shares_entry.source_contracts",
+        "successor_sha256": "b5fa92f1fbb44190761c36c40c27b3fc5ebe846a4fa8d41ae1946af9d4927130"
+      },
+      "tools/phase2_wormhole_successor_acceptance.py": {
+        "source": "tools/phase2_wormhole_successor_acceptance.py",
+        "accepted_sha256": "ac0f2adf78f09fd25fa27d2846dd972e877ca00f63dd37eb4efb05935c50cc13",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "f3a56bd684b508f69bc387d741f1c0277d0c4a7f4130aec984fd359fa8dc0f3a"
+      },
+      "tools/phase4c_http_implementation_successor_acceptance.py": {
+        "source": "tools/phase4c_http_implementation_successor_acceptance.py",
+        "accepted_sha256": "e46e28e065613dec3cedfcadcddaeda91354c8901543dd3f5eeb6d8bff4cd1cd",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "54438d9ee44d391b813a1c3503444dd65d627e3b5932971e49ef549650fbbff4"
+      },
+      "tools/phase4c_read_successor_acceptance.py": {
+        "source": "tools/phase4c_read_successor_acceptance.py",
+        "accepted_sha256": "af08c2611bfb4f9a566ac01a644c65807a0b2eb3f60c61ad0344e8c958cda8a9",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "1e494bce628e87bc2db3d01742fb929752fedaefd7563defccad7b972c951980"
+      },
+      "tools/test_phase2_wormhole_successor_acceptance.py": {
+        "source": "tools/test_phase2_wormhole_successor_acceptance.py",
+        "accepted_sha256": "c30199997348f971f29a9dfd1d87cba67513c56bb9e241dfc23d195a479ff230",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "ce70d5f35c7725d0f93f27619c5828f294ac259fc20f8594a3ac71b5f5f6f72d"
+      },
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py": {
+        "source": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+        "accepted_sha256": "2ed3c3d1168aeea07d863bcdd6c81522bc59e78d253242b9f36f3808b9ca0b40",
+        "accepted_hash_provenance": "phase4c_read_predecessor.source_contracts",
+        "successor_sha256": "e37b0418e8018d58135c5b1c55149d9679dfedb21f8b67fca3425b874ea23efc"
+      },
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py": {
+        "source": "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+        "accepted_sha256": "6869964c169b6970df0c9f762957664f2e711c2abb309a4e5a2a3689cb636f29",
+        "accepted_hash_provenance": "phase4c_read_predecessor.source_contracts",
+        "successor_sha256": "ffde7c337edf81ba8cf1a457800e89e3150df10b44ea7da50e99436534caa671"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py": {
+        "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+        "accepted_sha256": "b41ad9f6252ec74c4914ad9bd5652d150bd08359b26fb26498c34fd3a337a186",
+        "accepted_hash_provenance": "predecessor.historical_successor_acceptance",
+        "successor_sha256": "b81c8fb13f2ce4dd0d917a0876b88a20804bd1d272a7c261563dad9513d42f17"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py": {
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+        "accepted_sha256": "f4d9ae7fe8b2c48238469a7b53a434d6c10269aadfbc154bea7d30eddfceddc6",
+        "accepted_hash_provenance": "predecessor.source_contracts",
+        "successor_sha256": "9c61d6cefdd980457197fb850f690c6adc1a84fdb3d21905a2a5cfdb1bc258c2"
+      },
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py": {
+        "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+        "accepted_sha256": "5299925446ed7ef84828ea7de875cfdd070bff260e06a590cad2fd474473dd77",
+        "accepted_hash_provenance": "predecessor.historical_successor_acceptance",
+        "successor_sha256": "641c90d33de50daeb3a1a1c9a3ae5027562273f780f88e6a26cf00ad3bd462ac"
+      }
+    },
+    "successor_allowlist": [
+      "README.md",
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md",
+      "docs/refactor/phase4c/route-parity-delta.csv",
+      "infra/phase2/README.md",
+      "infra/phase2/verify-static.sh",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/integration/Phase3AuthenticationIT.java",
+      "tools/phase2_wormhole_successor_acceptance.py",
+      "tools/phase4c_http_implementation_successor_acceptance.py",
+      "tools/phase4c_read_successor_acceptance.py",
+      "tools/test_phase2_wormhole_successor_acceptance.py",
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py"
+    ],
+    "successor_allowlist_exact": true,
+    "accepted_hashes_independently_located": true,
+    "predecessor_rewrite_forbidden": true,
+    "arbitrary_source_hash_lookup_forbidden": true,
+    "current_bridges_excluded_from_historical_accepted_hash_allowlist": true
+  },
+  "bridge_provenance": {
+    "state": "bootstrap_pending_post_push_external_git_anchor",
+    "normalized_source_keys": [
+      "java_successor_bridge",
+      "python_successor_bridge"
+    ],
+    "normalization_sentinel": "<bridge-self-provenance-sha256>",
+    "source_hashes_normalized_to_break_recursive_cycle": true,
+    "physical_hash_binding_scope": "current_contract_and_worktree_only",
+    "external_bridge_bytes_anchor_complete": false,
+    "post_push_external_git_anchor_required_before_route_promotion": true
+  },
+  "production_surface": {
+    "file_count": 297,
+    "manifest_sha256": "d327a5ef85fa47abc6417527d7bfd99a01f29de6ea3c2f08205cbf30a6e38f79",
+    "files": {
+      ".env.example": "e7fb6042e77e80f03bd2ab6c9011a1a638468e0f122fbaf09e4122ee04f1b9d2",
+      "compose.dev.yml": "cc11134c6c0c546075275ebf18b5a98dc51c8eaf1afeb12488f7bd78c5e57392",
+      "contracts/README.md": "e47b810212c4b172c73678bfa4c3235d96c4dd23998b466e464b330480a0d777",
+      "contracts/openapi-manual-overrides.json": "fba9d6abc92b9f865e314a70f6d8f9e1390f7026b142f9898502f0955c4de15c",
+      "contracts/openapi.json": "41e0ad0e1eca3ba8731242dea7a638cd348069aad1331382f5f1bf6d4a08d64e",
+      "openapi/phase3-authentication.openapi.json": "7b014165a027ae3dbdbf8597ca910db8ab153b0437156f6d0fdd07985f348fab",
+      "openapi/phase4a-public-bank.openapi.json": "1f163574d9fb5b25d58df4a4a75ffca6b74b874dfbf66551cf46408d67110a34",
+      "openapi/phase4a-subject-directory.openapi.json": "8344f0173f523939abae203430cf92455d6240404e3d8ffe7a002507cadd2169",
+      "openapi/phase4c-personal-bank-user-counts.openapi.json": "076957f391fd9aed65861d0633ad4b21d88b391df5217b10e2105b88b56605c9",
+      "server/.dockerignore": "d8b374c8ff5bb7579923a18973052a4cf1e3536319a767fbc53d6af49455f041",
+      "server/.mvn/wrapper/maven-wrapper.jar": "4e2fbf6554bc8a4702cdfdd3bef464f423393d784ddbb037216320ce55d5e4e1",
+      "server/.mvn/wrapper/maven-wrapper.properties": "ec15e462d862b9ba5dc9d8cdf249576bfdad7c70ccd441d64117d9abcd808dab",
+      "server/Dockerfile": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+      "server/build-versions.properties": "1fec094f44293d7e09a496125d8e16550c71326f72c5c64b0c5a5678d5b8a121",
+      "server/mvnw": "07e72ac35ecf8c24db67498fc6a9a8e7c64b31ab3798a7119fe73fb7cd6c0331",
+      "server/mvnw.cmd": "8c720db91d96ba5f67afa4083726b20eb4be399d86bb859e09eb67436bb230f5",
+      "server/pom.xml": "24b45d68c44c64a6b2fda2fbf6f342889640f7c3dbc088015703cd1a68ff916b",
+      "server/src/main/java/io/saksk/ti/TiApplication.java": "f25402f1507dd4a97d7ded1e8d2a2716696f3eeda0eeca8850e33f9a70e59e0f",
+      "server/src/main/java/io/saksk/ti/assessment/api/AssessmentApplicationApi.java": "09592178eb664f210e608f75fbbc0767a7a905c554666e40f9cf89baf9fbff21",
+      "server/src/main/java/io/saksk/ti/assessment/api/events/package-info.java": "c2470ccdb5d4149368ba1dad271ccf6e472eb4c17435eb493f9b613de1ec1cc7",
+      "server/src/main/java/io/saksk/ti/assessment/api/package-info.java": "36558cbcfd31dceca0dc5305903f0f26688d7437586f0819e4b8f3ddda83f308",
+      "server/src/main/java/io/saksk/ti/assessment/package-info.java": "7717a498df0277b4666be2bc3545f293144a45a0017da330b9d35f3516eebac4",
+      "server/src/main/java/io/saksk/ti/campus/api/CampusApplicationApi.java": "c588c722365e138717e841206855f1b2fb3d2dae52c4dc5dc42ebba782d0cd00",
+      "server/src/main/java/io/saksk/ti/campus/api/events/package-info.java": "08c316b45a2e3abb6a8b87ab4b7e2e7158f856c7097185326d1ca19c60dea29d",
+      "server/src/main/java/io/saksk/ti/campus/api/package-info.java": "a6f9f52251cb3837e6833992b917cd80fe0baa70a50fc9a16af4a5d1fb7012d7",
+      "server/src/main/java/io/saksk/ti/campus/package-info.java": "4b936f831c5b316c424d12e98f609b5b940b0fd0c8b36034bee41563f3e4d3e1",
+      "server/src/main/java/io/saksk/ti/catalog/api/AuthenticatedCatalogViewer.java": "f7b92a09029035b23af7d08c49ef9674f57fb63263c5c0ec8215ad90383b37f6",
+      "server/src/main/java/io/saksk/ti/catalog/api/CatalogApplicationApi.java": "740b1de2f7a622a523534dec29ecdd3afd6488f3d9cb7437e7a9359a13537fa3",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankBoardRef.java": "2eeaad49b171b3ca501847d443162578f0d696b97bab1510a50ef099b33e60a5",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankBoardView.java": "2daa84ab6a22e7b45c28c915ef6517e3172de52a4793251dd63a2381aa18ffe5",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankCardView.java": "e407df8e33d855e67c46003e6f136fb3940670ba554f02eabe030994ccd957ec",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankCatalogApi.java": "d8498719596b60115891afad5566eb9c065548c6007cdf01d1958393e65c1543",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankDetailView.java": "920abd11300cfd6024a0ee5213c5489ea85906c7b612dc51460afd4bb3e31b29",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankFilter.java": "e79390b87f29377b8cdaecac510e2ee429d5f9183ebd4281bda802b645537375",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankHotQuery.java": "8dcc08e0f59eeb6bb386df3ea3143894fa8fefad218848e4edf26339a2e0bcc2",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankPageView.java": "3c1c5875e8a14b6a552df67c1560fba733f87a2b365ee98661208618eedcc04f",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankRef.java": "535e9753652a9a166165d6f848b29f573b09b22cc5f5522b31016b7b13b8e8ae",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankRelation.java": "2b5d63937a43577f5dc09ca6c765fd59596c8a5685b6672b3775151bf16cdc96",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankRelationView.java": "e1d03b4c89fcde730c85101b03e00c1ec006a6bf0d283a4593586be2434294dc",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSearchQuery.java": "8a8edff8c1041b90f4057b0cc808084dc1d7cbd53f8322cfce6b07ae8e2fd563",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSnapshotFreshness.java": "32514d11a956b7a87e0856440dc2693be3c7b68faf3007aa33dfa6b9ff31e457",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSnapshotUnavailableException.java": "75dcf3c19dce815c243f6612ef0c043563878f399a13f8e232c460fcc85ff19d",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSort.java": "81c25951e70d4f3d464c46257a87735efb590cc2416940b92989231ae08adde0",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSource.java": "b0c1635219021272451fe2152b20d0f0bd41d634279ccf4e5c492c3d47139c60",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSourceBreakdownView.java": "4ad110d744592aadf68aa9bbff45d4e714359f9077b96041552ee496ab330abd",
+      "server/src/main/java/io/saksk/ti/catalog/api/PublicBankSummaryView.java": "6a1e154d41cbe1872d7191d3b4314a712c3d74c285255702e1e03d839a372147",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionCatalogCountQuery.java": "d0f8928974866593656ae207f4103c8732c163e9c6b25d50cbb0860e08d5eae0",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionCatalogListQuery.java": "4bc6c181980bcf82518f7c56724a127c6a5d37e7ad58fd3ebe0a24fda070355d",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionCatalogRecordView.java": "78525b82a4760787835eb5874c015a945eba57dc56adb9d5e816eb34479c032a",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionCatalogSummaryView.java": "6334db548da69dea769f234bdeca6c39791b90bd9f8d2e8fda8b9ad27c0cc640",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionExportQuery.java": "dd0086e3691cf2ab5aed417f39d9d717571550893dfddfaa1091c31ad9421c7c",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionExportRecordView.java": "59c549ea0e6aac5c84516ff657a4cc1f8d427a21e9a67f64a5662a3d8584c8fa",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionMetadataApplicationApi.java": "3301f5d0776bf0309bdf5d91b3669fdfeefde2ff1a5c5264dc47faa38ca66954",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionSubjectAssignmentScope.java": "6eea050f1dda9a0ae64aa85954bbd116a6790a6766c2af7187dbf8c1c1d86567",
+      "server/src/main/java/io/saksk/ti/catalog/api/QuestionTypeCatalogView.java": "035cd454df4499faeffee1ed6145918fdfdc9ee9a5458a1165340e869de612cf",
+      "server/src/main/java/io/saksk/ti/catalog/api/SubjectCatalogView.java": "22be62ebd999ea7dd33fad30a3d9f9c5bdde2ed0cbf438d03cc874a559cf8747",
+      "server/src/main/java/io/saksk/ti/catalog/api/SubjectContextView.java": "06e3eab29561ff51b93e4c5357357ad1bba2726cb15e0f34e4fae469fe071dae",
+      "server/src/main/java/io/saksk/ti/catalog/api/SubjectInventorySummaryView.java": "36a1078d6f601f93d3fa43e5b74aeef2ce038fd470fa47076ac5d3979e0b7f0c",
+      "server/src/main/java/io/saksk/ti/catalog/api/SubjectMetadataApplicationApi.java": "ef6b469d8d4838d39d35888e05ebe23c66dfd8722c318d0401cff965274eb1e5",
+      "server/src/main/java/io/saksk/ti/catalog/api/SubjectSummaryView.java": "95685de956f2a73656b9a12a5e6517d9caef5e660bc68ca51eddd32eeadb1691",
+      "server/src/main/java/io/saksk/ti/catalog/api/package-info.java": "91fc5814d074b5700ac949e4abe98b8b825f39e9079f089e3da391fe7f6bae1f",
+      "server/src/main/java/io/saksk/ti/catalog/application/PublicBankCatalogService.java": "c1fceeffdc52170a642cd8a8070a3417cb41f4f85f443d0483305a46ac070ce8",
+      "server/src/main/java/io/saksk/ti/catalog/application/PublicBankSnapshotRefreshCoordinator.java": "2c262c53c9ad4e4899c7e0e9297f0678f73b56da9cdd8d430260822d63b46bee",
+      "server/src/main/java/io/saksk/ti/catalog/application/QuestionMetadataQueryService.java": "403dfa12af0a0c8b061931bf70965bce9e6582c413aec4905d68cd770cb48ab3",
+      "server/src/main/java/io/saksk/ti/catalog/application/SubjectCatalogQueryService.java": "16d0821837451a64b9347484a0c465825e44b6a359c93796dbc03fc3905f9f1b",
+      "server/src/main/java/io/saksk/ti/catalog/application/SubjectMetadataQueryService.java": "1aac46da47fe15f9dd74083cd45490cab274415d16d4c3acb280d9b12ca31966",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/PublicBankRefreshLeasePort.java": "315a8aa7d62e7fef2ebdf9208cf19baf12adce3a1a3222461b043f61270b82ea",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/PublicBankSnapshotInspectionPort.java": "e68850b601fb552c2f2c9b5aafd7ea4e10dd9aa2cd028f8d8cb74c8ff06ce3b6",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/PublicBankSnapshotMaintenancePort.java": "b0231eaefc6f932be8f56184106d55472af6e4d0785a113553130144bf5fd2e3",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/PublicBankSnapshotQueryPort.java": "252edac253daaca6d16cb85132b17c4b19ad5ab16a6a63c48e603faa5659bb90",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/QuestionCountQueryPort.java": "5fcd17ddf15f997b57401fb84d5d7521f31899c92402c940753c6fd306a98003",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/QuestionDetailQueryPort.java": "b5e230aa5c6877453d6146e836c5f3943d4bcbc6b04d76343059f4145d06de4f",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/QuestionExportQueryPort.java": "98220fdd2d6865c850622ec58a15a923830391d8a00d39375cfa2d1d4c1601fb",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/QuestionSummaryQueryPort.java": "6e2f5c9ec78c901e6d7d133c497afe834b00d34a579c7b8fd8a66b997798063b",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/QuestionTypeQueryPort.java": "8a140ac047def335416970c72d9d05fca8dd903eb0432feb973db1ed339346f7",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectCatalogQueryPort.java": "d84226ceae8a29430feba7c9be724b1b58676d05c9c775451491d4f54a9fde1b",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectContextQueryPort.java": "51c2881c1de7bf353784e2b86b700f7f73adf2904cd838470a6ec0d0d937368b",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectInventoryQueryPort.java": "baa1691eba37faf5a76d5f9650745808ed971a3da7240d3f43c1a291fd6be629",
+      "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectReadPort.java": "39b21390d38bfb33a7323c132f62d7b77711271f24fb3cd8967fd81761788032",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankMetricProjection.java": "33da05146114d334d2a5196ab0c4cf60ffec3f09aefe2a759175bb6188580dd9",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankPageSlice.java": "57eab1359cf75d63cd4a2d3168dd0c5369cee4954ea68d62089684591916aef1",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankProjectionBatch.java": "62b32178bc9578cd8189c7b2afdbe16690ff85b963ab95686391ed47b164ae22",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankSnapshot.java": "39fc46bc70d87733025538a4f73f8ec06db84b1a01743f782995095db7d2c4d5",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankSnapshotCommit.java": "37b68ff5f998518afdeb88fcbe0607ece0152a840b4c31d0eac541aa469a5c10",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankSnapshotResult.java": "dade98454ff05d2426c23dfeff7c87f80be3ee0b6f7c5ae67c1786a6c1344cfa",
+      "server/src/main/java/io/saksk/ti/catalog/domain/PublicBankViewerProjection.java": "22bffb3d36fe698332bfe229fe176ddb9dbff46dc384ae363e7686586f452934",
+      "server/src/main/java/io/saksk/ti/catalog/domain/SubjectCatalogEntry.java": "cbdbb4155f180b91f2705d06a2801cfef9405b32d4739176cb94cb186ce837af",
+      "server/src/main/java/io/saksk/ti/catalog/domain/SubjectSnapshot.java": "90bccb8cea9fa1c3f2a95e1b9b3ec180e7ef72119ba7ef058bc8c82fcf5a742a",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/coordination/PublicBankSnapshotConfiguration.java": "2475929e086df0560ebced09ccef24a9321559f73982f3c26ac617385fc8813e",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/coordination/PublicBankSnapshotProperties.java": "d29d426a6a675afc9614e7a901dd5c201f8765b01ae3949f4b6f1b0d39361b41",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/coordination/RedisPublicBankRefreshLeaseAdapter.java": "1e216350cfea4594f71b78ef0241ae328e9a0c06eb719cb3082bee5132a3418c",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/health/PublicBankSnapshotHealthIndicator.java": "b96138aa20f95372faf1daf1fd5e9b461ff316ebaad5b7053b8151e8cadedb20",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcPublicBankSnapshotMaintenanceAdapter.java": "03aa79a4697ccdd3f5b086a57524faeff34ef904ebb9d7c65714b79c87094f7d",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcPublicBankSnapshotQueryAdapter.java": "1342d0f1cdf6ee5fac6a825d8c302843fb7ec081f6e881df4a014668cca66371",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionCountQueryAdapter.java": "adc6bcf5cfc0621e14421ec716536f7af879881a9577361d1be1c25cec5739c3",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionDetailQueryAdapter.java": "6861c6659eb1537710377a8f4819477031098dffc3fd7708c56b667dbafc84a2",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionExportQueryAdapter.java": "4cec329e1774bd3e255c37dc0b24cf6f45141febd0039e626b070663dd400388",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionSummaryQueryAdapter.java": "66478f9f7c4e8e6d4c9fc88e5496ec0fb1004dee6b172e2ffaf8d36c16407601",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcQuestionTypeQueryAdapter.java": "ef78a5c216b4c68a84f6f4ff6ff8ded30d36968f0a91e13a22d3781955c8b775",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectCatalogQueryAdapter.java": "dc7099f26ef7902884c5ab2d8ad65baf31f0bdb6fa3e86c7c4456b6405f4163c",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectContextQueryAdapter.java": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectInventoryQueryAdapter.java": "105c356e48a432ac29c7b34ac24615eef54a5ddb492acb30a31dbeb9cc744a03",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JpaSubjectReadAdapter.java": "7e93121df3f298cd45eaaa9db2f45e0fd740deb60794ab2806951397cdb876e3",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/SubjectReadEntity.java": "06358ba9e58eaad4b26fc699b6246cf2f2012199fc2379c4f06a7496bc341da9",
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/SubjectReadRepository.java": "ff51ec81058cd37ba4558fc7104b2efe72c6f0f31ff18b1413f86f38a38cdb27",
+      "server/src/main/java/io/saksk/ti/catalog/package-info.java": "6393cadcd0a6830c6d880e7fe2585d61e8fbe371580d09fccff3826f936ae560",
+      "server/src/main/java/io/saksk/ti/coding/api/CodingApplicationApi.java": "eab418904b74431546a4d03979562cb038334568f60fbd5bc98f6232a21387be",
+      "server/src/main/java/io/saksk/ti/coding/api/events/package-info.java": "f5c6a81c2ae3883a9131cd7140279b58f245d24fd06a374cd5f9f146f1d9e41c",
+      "server/src/main/java/io/saksk/ti/coding/api/package-info.java": "cdebe78e2a34d72462d974f13c5355ea362fa0a43aedeee515a9593a3fcdfe31",
+      "server/src/main/java/io/saksk/ti/coding/package-info.java": "1a0edbb5e9ee6ffc5ebaf82a5cda37807f3419f52f463b033ebfd61807bfba4d",
+      "server/src/main/java/io/saksk/ti/community/api/CommunityApplicationApi.java": "60520b14304ffc78ec5c3dfacd43668175b715d5c670fb80badce44706f5800d",
+      "server/src/main/java/io/saksk/ti/community/api/events/package-info.java": "95103910ebb0766419378496306ecd6830ca53c6393ef4fc00615d87f68489f6",
+      "server/src/main/java/io/saksk/ti/community/api/package-info.java": "2a9351f81e20a4b752b5b0facb7f2bba34371f65aadc55cfa7a689b53c0cc6ff",
+      "server/src/main/java/io/saksk/ti/community/package-info.java": "e219b5f6f1432aab77c9a6db42e28f5a76cc5d4b052d1d81a8da06060436baaa",
+      "server/src/main/java/io/saksk/ti/identity/api/AuthenticateCommand.java": "99a51e48c079c0c138c037cd06a8a56bfee198c4d03ae6eaa576a672120b7603",
+      "server/src/main/java/io/saksk/ti/identity/api/AuthenticationOutcome.java": "4ebc3d1b33d137786c5c1f929404e5713883a52edee0dbaaf31b60057b3a5364",
+      "server/src/main/java/io/saksk/ti/identity/api/AuthenticationResult.java": "83791997128a73b00abbaa1ec9fe31c4ac5fd8dba67a913b201c4b2fbfcf0a46",
+      "server/src/main/java/io/saksk/ti/identity/api/IdentityApplicationApi.java": "661cc5de63051486d4e191ee8bb5ad3cf1c78e34c58efe0b14b22fd5e9d5737b",
+      "server/src/main/java/io/saksk/ti/identity/api/IdentitySummary.java": "7f5af5f09463aa7c3412a52136211aeff255c0c1c2f3176336042882dcbb5d5b",
+      "server/src/main/java/io/saksk/ti/identity/api/LegacyAuthenticationResult.java": "886b15c9cea699078925ac53a8fef18ecba40783ae383f55071a6be6fd483ca7",
+      "server/src/main/java/io/saksk/ti/identity/api/LegacyCredentialAuthenticationApi.java": "228d7b16142cca2432a7ec478e92ef710d26b6348562fc592a2ee7c06c65fbf2",
+      "server/src/main/java/io/saksk/ti/identity/api/SessionAuthorityApi.java": "9288ee9e1b3a243d3bc54162e39d8d9abc6bcdfebb39bbe5c9835d8a66346f0d",
+      "server/src/main/java/io/saksk/ti/identity/api/SessionAuthorizationResult.java": "0ca9b5559b8b97578dacbb130339d84833419e450491db93a92d279621757311",
+      "server/src/main/java/io/saksk/ti/identity/api/SubjectAccessDecision.java": "870eebf13fd9a7fd0432d167eaafedd2c14b45f039f2326c6030030caadb464d",
+      "server/src/main/java/io/saksk/ti/identity/api/SubjectAccessPolicyApi.java": "c82ec194c33015d8c9eebbb22c97c5a1b6d077e372ac6aaf80a11ab7a1160002",
+      "server/src/main/java/io/saksk/ti/identity/api/package-info.java": "c72eebb0155a86101420138a4eab2328a96038db1a159d9f33bace9f31c69868",
+      "server/src/main/java/io/saksk/ti/identity/application/LegacyAuthenticationAuthority.java": "816986ba35a5d82fac69b43834eb3eca42bb1b0a68f2f850adb0b720d85893d9",
+      "server/src/main/java/io/saksk/ti/identity/application/PasswordLoginApplicationService.java": "73298cdb8f4227e64811a02744b232e4bb69651265d4539573087da8064872c1",
+      "server/src/main/java/io/saksk/ti/identity/application/SessionAuthorityApplicationService.java": "4a2aefd03f405babab7dfe8ea14ffd9882f949dd78ff99128193bd65ccf53d19",
+      "server/src/main/java/io/saksk/ti/identity/application/SubjectAccessPolicyService.java": "2080d2d8149d2537aef0b0d4627986c79e88713e08b68e2fcfdc629d140e1e6d",
+      "server/src/main/java/io/saksk/ti/identity/application/port/AuthoritativeIdentityStateStore.java": "24cdc563f59bf4168e94fb8d581f62e916ffab8893d027ead8d4e150ebec0d26",
+      "server/src/main/java/io/saksk/ti/identity/application/port/IdentityCredentialStore.java": "9c87824773a4e88c32c1c7568bb9cbc3dc72d249d7941be175b47d37fdadf182",
+      "server/src/main/java/io/saksk/ti/identity/application/port/PasswordHashPort.java": "2ed32915b9b9939c4585a3664e0ee1ca52ac8033ccba1499964c9ec77ecb2e61",
+      "server/src/main/java/io/saksk/ti/identity/application/port/SubjectAccessReadPort.java": "e830c319b148f2d8eaf2804af8411223e891c75fd3cc8ec71792275e24a77fe4",
+      "server/src/main/java/io/saksk/ti/identity/domain/AuthoritativeIdentityState.java": "3c952a2a60679e83a31a061710479bf9f7cc1eb8fd7980e8a568f268d21a12af",
+      "server/src/main/java/io/saksk/ti/identity/domain/AuthorizedLegacyIdentity.java": "2b27f7bccc5edf6f1a7e92b4fc488331454a3a69a9880aa3c74fef25c46016ce",
+      "server/src/main/java/io/saksk/ti/identity/domain/IdentityCredential.java": "55dd0612e152a1ed86b09fa223c1042469e7f7053cbd9c285fb4dfb1f8c85017",
+      "server/src/main/java/io/saksk/ti/identity/domain/LoginIdentifier.java": "adb2995b8f2c85751b76e6acc38360fa10f6efef46455c898d4cc182246a4754",
+      "server/src/main/java/io/saksk/ti/identity/domain/SubjectAccessState.java": "eeed5ff981080b4b3295ab222dad5cb7c0f7abc2bf65f8e498f9859162fb966f",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/persistence/JdbcAuthoritativeIdentityStateStore.java": "1d3a6901d1dcd904ce7d4d5ed8550641ae5ec1b824f16bfa985cfd387c2cd082",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/persistence/JdbcIdentityCredentialStore.java": "fb39019cfd483157c51c95b0741d0cb92adf539d5bec45dcb4c9568c93cee54a",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/persistence/JdbcSubjectAccessReadAdapter.java": "cc1805426a3ac11af6575ecd9f8784e471243d07bcb12387042371ce91077772",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyAuthenticationCompatibilityService.java": "033e31bbc51f10aaf7c74883c63d0269de5668d018fb512927d0613c1a4e37a3",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyAuthenticationConfiguration.java": "c2e42c52166575f045cce5b69418ebc26c4ebe14f779ad26c8f5097061664939",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyAuthenticationMetrics.java": "2c57435eb578adab4e571a495e02cf70cfc0f0f8e4496ccf4b63a506b6dad290",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyAuthenticationProperties.java": "342e456ecf5544051aff2e58e8c1187c453a3781af4440539836d7dc7011f0ad",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyCryptoSupport.java": "0d10f2967148500c0cb6f6fbe93a8b74e5f90e005ebceb393c8cbbebb14aaaeb",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyFlaskSessionVerifier.java": "081d23fa651b3233f53ae08b6a22fad13ea90562e6072eec4a5b3d0a31c1da0e",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyJwtIdentity.java": "e33502c3ceb051f6a6fb50338e26fc85b36ed8b9c29cd9b55062c86c65923876",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacyJwtVerifier.java": "2728cf965ddf3132ee13619ab55f9dde508f1e878fd09331954556e7a83dd7c6",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/LegacySessionIdentity.java": "3ca1e43d10de49b024e0e41a23f468171f2c480ec2dc026b0dac35675c1938f7",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/PasswordInputLimits.java": "2156ef65b17ec68cdf765658dbb12badda832ed891feefdfda39b4e2abbb2f7f",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/PasswordKdfBudget.java": "01385af31d7c194d90e0e95bd299e4eb9d6f4feac7546e5db347c84df31f1816",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/StrictLegacyJson.java": "e416b24971d4dcbb75abd6b6b4bd74538cee4eb596e40d179906be81308c7d26",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/TransitionalPasswordHashAdapter.java": "734b3682209100f37f97b5b66c7b9d47d63e163d237909da54d2ad3ce78c4fde",
+      "server/src/main/java/io/saksk/ti/identity/infrastructure/security/WerkzeugPasswordVerifier.java": "814d93862f4b36d97491eb2cf1a801c2cdb6286d60d6c90e4c82a44a80370830",
+      "server/src/main/java/io/saksk/ti/identity/package-info.java": "a65c94190239f9a2ac1d96324e5fb7b34a5ec6a1e1e4149765216a321eb2034a",
+      "server/src/main/java/io/saksk/ti/intelligence/api/IntelligenceApplicationApi.java": "c83db50f0ee38e8c3180432995116a1035dba1240d6a6f4939e87fadd3ab2f0b",
+      "server/src/main/java/io/saksk/ti/intelligence/api/events/package-info.java": "a9f337a5897bf7b8989f034090db60b9ee7936d418a083f3f927d64410dad259",
+      "server/src/main/java/io/saksk/ti/intelligence/api/package-info.java": "481ff02d5ec15097d8092850fb5fc42973428daf0bcccc1342a39decf0c3a973",
+      "server/src/main/java/io/saksk/ti/intelligence/package-info.java": "24b4a4c12a543839e2ba4c535020272a0164e3db03df50b141dcb3d8252787e8",
+      "server/src/main/java/io/saksk/ti/learning/api/AuthenticatedLearningViewer.java": "a24aa0fb97849f8bf61eea19be5c86f650c0243f42da6e657949430d0246968a",
+      "server/src/main/java/io/saksk/ti/learning/api/LearningApplicationApi.java": "bcf06fb1c7df46c279c7bc456af7a72623f9a77b6a4764f2a52f9f44731d8ee5",
+      "server/src/main/java/io/saksk/ti/learning/api/PersonalBankUserCountsQuery.java": "7de4e2189f5c904ad79cd840672e73cffca6201a6be30f98cfdc03680ac85820",
+      "server/src/main/java/io/saksk/ti/learning/api/PersonalBankUserCountsResult.java": "1cede5400db5ed3c33a382b84f5049d5dbcab83ec61c3ec5bf3fcc7f3a74d593",
+      "server/src/main/java/io/saksk/ti/learning/api/PersonalBankUserCountsView.java": "bc1cfb8f634cb6944692434ee9038b50bc2cfb03ba070401de67edb1a9870a96",
+      "server/src/main/java/io/saksk/ti/learning/api/events/package-info.java": "030888fa437c96efbf3e5d5ac684ebc10254d04aee6f132ec352760e4eb56a65",
+      "server/src/main/java/io/saksk/ti/learning/api/package-info.java": "5bfebfd925796d186dc1a12db3ca46a8950f3269ae2ec69914cd7a5013d5b07e",
+      "server/src/main/java/io/saksk/ti/learning/application/PersonalBankUserCountsService.java": "879039c664a5005ec0f9285b62a485199bb8f7903dd30538561d563b5c28445a",
+      "server/src/main/java/io/saksk/ti/learning/application/port/PersonalBankUserCountsQueryPort.java": "07b0cfbeadaf409765cc9545f0b138993517e44b129293c1f50610946fc70f5b",
+      "server/src/main/java/io/saksk/ti/learning/infrastructure/persistence/JdbcPersonalBankUserCountsQueryAdapter.java": "41f63f166282c5fce01d27ae21bb4d3cfe20c35a65dcfac3c6407c7653dc582a",
+      "server/src/main/java/io/saksk/ti/learning/package-info.java": "6194bd72367250d6f6d858ba39251d863bc7d4032264a8ab62fdde31aba910ba",
+      "server/src/main/java/io/saksk/ti/messaging/api/MessagingApplicationApi.java": "534edb205d86068acd1ae88ee75ff797736efb9ac40e220af413c70054d79b71",
+      "server/src/main/java/io/saksk/ti/messaging/api/package-info.java": "b7a728b61a11b0c3aff71e156fa53b6a5c8255bc522a1021592a92b59807de4f",
+      "server/src/main/java/io/saksk/ti/messaging/package-info.java": "57e7823a32b80e10f72dfbe02a0b44dbb1303d7ab83dcfc9a7af3f4f4af65620",
+      "server/src/main/java/io/saksk/ti/operations/api/LoginMethodsView.java": "624d276d3067ffedd6bccd22fe7709b052bf8e4111a04387e4874ba57d742120",
+      "server/src/main/java/io/saksk/ti/operations/api/OperationsApplicationApi.java": "658f3380a69d4a11cf964d5e900b202513595e847144d7d3eba1f326bda7d6da",
+      "server/src/main/java/io/saksk/ti/operations/api/package-info.java": "6b0b3b19f4f289b3af66d7bb05db4917b92bb4f470a8ffe61f79e30d42e19abf",
+      "server/src/main/java/io/saksk/ti/operations/application/LoginMethodsQueryService.java": "9f54e5e73a2ec0c21db338851e9e00ed38a83490b201b58c2e5070d9a4991b9b",
+      "server/src/main/java/io/saksk/ti/operations/application/port/LoginMethodsReadPort.java": "76cf1be3331a0c59b465cd027be0fe6f8fd22e1137f831b14dffc75568c76b8d",
+      "server/src/main/java/io/saksk/ti/operations/domain/LoginMethods.java": "55fff4c231dc204d2bd3a55c35d6396b49465f52d1fe95105fcac5c335ce8990",
+      "server/src/main/java/io/saksk/ti/operations/infrastructure/persistence/JdbcLoginMethodsReadAdapter.java": "d6b00f3cddf5ac27801947604765b5eaf2f78277c4d0ff50c353bda281e1d538",
+      "server/src/main/java/io/saksk/ti/operations/package-info.java": "532a8022a38f62e3229943ca078b107d53c28096114f30d75987a4fbff5791a8",
+      "server/src/main/java/io/saksk/ti/personalbank/api/AuthenticatedPersonalBankViewer.java": "a1d0fe3791ced4e45bbeb6ce254eda704bb3f81a49c4ba3cd068cc52db315760",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankApplicationApi.java": "8b3e8751e2a356f4a33bfa8ae77cf4299e0c11fdfb0e01574ffd95065ff71e1d",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankCategoryView.java": "70435695f616c48306ad1d0b622ad3243a9cb1ad5cca303cfd3b6329f339bab5",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankOwnedShareView.java": "56bda793e32604ca661791fbcada5423d019c2fc6adfc170e263311dd88aa820",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionAccessResult.java": "c48caf38205cfab014d0630812b5da5f85d779ca5b664c2681f11795794c757a",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionFactsApi.java": "afd5b38759ae2d38cc4ef59ef0bcd25ac68df43b265f13ebb35b4b9a3482d99d",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionFactsResult.java": "143652ba6318e4982ba2ddc0a60d6b80cf12147297e643b42407aeecaecf2e98",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionFactsView.java": "097201743c6395b7b1613b27c44f5fd620fca410d7fb46739a4cb99902fbdcbf",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionMembershipView.java": "4a7a7086bde507d6f3390ec718bca9f17c838984be056ffa4323f743e8429423",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionSelection.java": "68ad81576650046da1725c1f50026c52f52ca4edf04e5a466b5fbd8876e08c7a",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionTypeCount.java": "2c366ef493490434b436adeceee38686b170e28a8905eba540422ab274ed8a48",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankShareListView.java": "e8e0431e2f1473656b870fd163e92c2aff94596fdae8d2ea4b178fd9bdc1fa3a",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankShareView.java": "a2e6b27712fa0e6cc3b29474ae57a6a68870dc8583855d81597b338d8f226119",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsResult.java": "830c886e3ff043a94ed3857e9eb20b436520448d6f7689cca0b17739c8def288",
+      "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankUsageStatsView.java": "7f60075308fcb52922a97f85cf7c83e857d6bde01a310936b441eb1cc1f1f294",
+      "server/src/main/java/io/saksk/ti/personalbank/api/package-info.java": "575e22a59276f7ef2f94eef87fceed201cb4428caa7270051d10019ea7ae2966",
+      "server/src/main/java/io/saksk/ti/personalbank/application/PersonalBankQueryService.java": "bbf9d0a5c2374a9d3c8c69eea5c65305010a2cdc7b0ed0eb5a0159b0fcead268",
+      "server/src/main/java/io/saksk/ti/personalbank/application/PersonalBankQuestionFactsService.java": "f1155d1d3b1a008e4b233e1ca6c39014715649c09892a003c699daa0ec7071a6",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankCategoryQueryPort.java": "f611707567dc2e425ace5851802f61cdd9c9ff3fc518aebdb7c79d98a7b975ca",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankOwnedShareQueryPort.java": "a34708d1331ba877705967edf44594ca53ff6544778c7a751d4232e528e3fd86",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankQuestionFactsQueryPort.java": "f904d39c9d6bb1bb440c0e734eca633a3a2f2cc820c3f2d7d82ece055a8d3c37",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankShareQueryPort.java": "6919432092777d124a2193e74f27b362216bdbe1c32edb57e972ba5d7e5e0f69",
+      "server/src/main/java/io/saksk/ti/personalbank/application/port/PersonalBankUsageStatsQueryPort.java": "fea992277c1e8ba3611c0310f91998aa1b0cef8f1c6a39ef89ba91adfa8323e6",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankCategoryQueryAdapter.java": "749a70cad4c83acdca9ef5a68ef31a48901e394718a95363ae910a0d2102a2ad",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankOwnedShareQueryAdapter.java": "25eca27538ae0b0a28d1a63e6e06b34ad2da70349a432b688608d8657203cdb0",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankQuestionFactsQueryAdapter.java": "7b3c20e2b5e5acd9a1baba1cc26a8ccf6bb378ff1ea78042cddfdfb1e0d348f8",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankShareQueryAdapter.java": "1851bd512cf5fef0c5b3e2a0e0b4cef7f9ff7ee6ca348053ca87be7a1d467d65",
+      "server/src/main/java/io/saksk/ti/personalbank/infrastructure/persistence/JdbcPersonalBankUsageStatsQueryAdapter.java": "14ce375e206cf8fd1868b5d4a0b85a0044a85e67a33b86728a76583f10cb65fb",
+      "server/src/main/java/io/saksk/ti/personalbank/package-info.java": "d5d53fe893de9d408a2e45ffb03597c57b72dad3f4ce765b5ab4d902f3d2699f",
+      "server/src/main/java/io/saksk/ti/sharedkernel/api/package-info.java": "97c10e52cf06c4d2f7833db7ed5a01bb604fc9ad1d6d0af909f555f115cbadc3",
+      "server/src/main/java/io/saksk/ti/sharedkernel/package-info.java": "3ca0bbcad9505506e699f2c0c2fb48facf112fbca7ff094d19117eb992c8777b",
+      "server/src/main/java/io/saksk/ti/web/LegacyDecimalPathInteger.java": "cfa4050ce58d9a32c6f04e451528a9fa15ccc8ca3d2f6ee89c7500bccbbfe45f",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyLoginController.java": "e0b0bcdfd27a3cb593178329dfde2e7ad56c94725fb033a5eb9dbfa2bc23b325",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyLoginInput.java": "406a94f91f7d8bdcfc365928bf62868ca982632d459a7aa22c25cd9e619c1e78",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyLoginMethodsController.java": "c20e8fd00387c23d8991c5f25565e00d83dda3adadfcc6203e4347e163c66137",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyLoginRequestParser.java": "34e5eac189260d30a8b67a12a50845780abb133ec619b1d089430801e588dda4",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyPersonalBankUserCountsController.java": "de3cd8cda777b7e8171a80153a779a028474681aa34c62b18b939ccbc0fd802f",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyPersonalBankUserCountsSecurityErrorWriter.java": "83ff8864b235e320f8c047e9cf434f8f66d111d995320b92a9f80837af898210",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyPublicBankCatalogController.java": "3923c91bdcbdd8b8cc0564aeadb89a7d71a4b02391ca015a8c9ee46f6f1d920c",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacyPublicBankSecurityErrorWriter.java": "9342db40af9274578e67009e27de2551aa35a13b2fe67a91019529081de220da",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacySubjectCatalogController.java": "d74904ac1c69bd4f1a7c71c06d8777f715ff67256b0dd3f146a409e3b9b465df",
+      "server/src/main/java/io/saksk/ti/web/compat/LegacySubjectSecurityErrorWriter.java": "f3dfb275bc9dcb5691f2487a243e8db15672e9010ed4bf345ad815a4c3452d12",
+      "server/src/main/java/io/saksk/ti/web/compat/SafeLegacyRedirect.java": "ee272f94003418793b32537bc5cbebf6e5b6c8f8dc0363673456012f79d23e1f",
+      "server/src/main/java/io/saksk/ti/web/config/ProductionSecretsConfiguration.java": "c2f56f255d879cf4955c71a5dd385b125c0b6c49d5c26f3cd2e4b98533092331",
+      "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java": "8e6a064d9880a37a597ce9c3422ac4028580b54e60694e6ec7741c9829e8eb70",
+      "server/src/main/java/io/saksk/ti/web/config/TimeConfiguration.java": "22714bb74572654cf99bfd09fdd80719389327293289e24e13cfc050e4ca1b94",
+      "server/src/main/java/io/saksk/ti/web/contract/ApiError.java": "07510e28ca813bf3af8ffae7c58284205a83447c8b958cd21f6c69480cff6060",
+      "server/src/main/java/io/saksk/ti/web/contract/ApiErrorDetail.java": "4291c2bef9b7d6e1aaa3f942c07e7324722b2119819c408c35ab903aa3139687",
+      "server/src/main/java/io/saksk/ti/web/contract/ApiErrorEnvelope.java": "0cbf24e5a145aea6411bb5e8d74085b63a2c00e074ce12e53b25091dffa9ca4f",
+      "server/src/main/java/io/saksk/ti/web/contract/ApiMeta.java": "2f0d1571e0cf9cb64ef03200f182488e089433ba16fd65db15a6d3379634cd6d",
+      "server/src/main/java/io/saksk/ti/web/contract/ApiResponses.java": "a24525d6ab6de395156c026e55734fe4fffe38b6995465370c068d6380a985f0",
+      "server/src/main/java/io/saksk/ti/web/contract/ApiSuccess.java": "8aab19ad482292ea92c668e2c6e9566a9e113ca4d246083c7de4ae4003c06beb",
+      "server/src/main/java/io/saksk/ti/web/contract/PaginationMeta.java": "c0af5844eb8e82ebfe1ae66a9f196c6334a7d87441d7826d447c41648ece08b5",
+      "server/src/main/java/io/saksk/ti/web/error/ApiException.java": "d9aacf605eacb344ea2b438dd5ce841fa79d54499b3a0e7952ef09236d141ce6",
+      "server/src/main/java/io/saksk/ti/web/error/ErrorCode.java": "7d551611c7cf00fb54becb85431a963de5190d0ec600bbd2d3675934c2d4eac9",
+      "server/src/main/java/io/saksk/ti/web/error/GlobalExceptionHandler.java": "f131535d2e4b9502de4f74a4c998a8e84d1f74a7e1cc446cfd88c3c50e08cbd5",
+      "server/src/main/java/io/saksk/ti/web/error/SafeErrorController.java": "e967d341eac1663a74e065a32d3285b5ad33b28a3f5d3029da14dc25eba6f85e",
+      "server/src/main/java/io/saksk/ti/web/error/SafeSecurityErrorWriter.java": "136602700f4e3540747e147a7f36181bf89b3435d3d3768f3daf25172dd372d0",
+      "server/src/main/java/io/saksk/ti/web/package-info.java": "59b53555409f8dabd61d6d19a8b38c1f57e8430bf842ca42accbbba95a0a56da",
+      "server/src/main/java/io/saksk/ti/web/request/RequestId.java": "149305482d48bb5dcbb4325c0ce42e261ec2bd653bb1f87d43a86b6f8e591c61",
+      "server/src/main/java/io/saksk/ti/web/request/RequestIdFilter.java": "751438cfaa2bdc1fdcb62227d7879bd177496942bfd4b94bfcf3eac76158084a",
+      "server/src/main/java/io/saksk/ti/web/security/AnonymousSessionLifetime.java": "6d9209126fb607948a4ee2b3a546661c06f838cf82678bb2873a0695059311e3",
+      "server/src/main/java/io/saksk/ti/web/security/ClientAddressProperties.java": "e07a9628d1d8be7fa253f079f5e5423a1a2a4f88a18d04005097541de9d34f48",
+      "server/src/main/java/io/saksk/ti/web/security/ClientAddressResolver.java": "4a6bb77cbf33101ecc824ac70da97054a616ec919add17f19e2a9ac3baf053b0",
+      "server/src/main/java/io/saksk/ti/web/security/CsrfController.java": "87df1e82ad2fa422f3f52f212d6e4198624379b17fa795557f5ccc6cc3549100",
+      "server/src/main/java/io/saksk/ti/web/security/CsrfIssuanceRateLimitFilter.java": "f2b05832533239f4d8a4f4d38c1f0fb0c2435bb642278a2db4188810076ee6c2",
+      "server/src/main/java/io/saksk/ti/web/security/CsrfIssuanceRateLimitProperties.java": "27e6bd167ed5ca7a83a47f56e6130ae92e39a887b64dad1e4be4839be88d0722",
+      "server/src/main/java/io/saksk/ti/web/security/CsrfIssuanceRateLimiter.java": "118ed5f4360ca02892902daccf0fef1d817bc4577e4758b7d7a51b19b343f386",
+      "server/src/main/java/io/saksk/ti/web/security/LegacySessionExchangeGuard.java": "36c617212507908912a81ebd2aa792edc2914b8a0278b52d2915240f7b3740ab",
+      "server/src/main/java/io/saksk/ti/web/security/LegacySessionExchangeProperties.java": "65a07ef677ecc5df069673f83c600322ecf67b88930fea8c60a89d3d658e0fdb",
+      "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitConfiguration.java": "be9d75e7e9496e489f2d2447b7bfb13ab0815be254bdba47aaba91b1048fd9ed",
+      "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitProperties.java": "7427a9097da3427673176d9b5e000d7328189ac78afcf34c5c4b03287bd2e533",
+      "server/src/main/java/io/saksk/ti/web/security/LoginRateLimiter.java": "502652483c998e2596982e707cb47409389520aa954abd96352b2dc71299b413",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsCorsConfigurationSource.java": "9da4b4954ccf973be7b4101bb7347418712966c78f2b70db708e8d6e4227bbfa",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRateLimitFilter.java": "2021702419e72cc000cf522b4d8a4e7b0503dd12e1651dc441381aaa0c60362e",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRateLimitProperties.java": "6f26307cf98b936f23f571988c9f84764050d982310ced53fe9923a3935679d5",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRateLimiter.java": "be3e09e6f316be696f54a24a78b4750339b9ae0a166204583c1e46e00ff0a5aa",
+      "server/src/main/java/io/saksk/ti/web/security/PersonalBankUserCountsReadRequestResolver.java": "fbe9a88ab81a31433d46575730e41e7d4a9511a98e29019911116187c13843dd",
+      "server/src/main/java/io/saksk/ti/web/security/PublicBankReadRateLimitFilter.java": "7e53e6103d7b745e80be297d98424f64bfde78163366f4721e441486b307de7d",
+      "server/src/main/java/io/saksk/ti/web/security/PublicBankReadRateLimitProperties.java": "c7483f7d311ccbad3cb856b1a6e4499b41a36f947e85131178e962d90d0683f3",
+      "server/src/main/java/io/saksk/ti/web/security/PublicBankReadRateLimiter.java": "ed69f047b70500e92b2b5162ae36707fef2ac7cc83376992331a721d96951380",
+      "server/src/main/java/io/saksk/ti/web/security/PublicBankReadRequestResolver.java": "584cbf38ea8c57ba0e760371d4096c7182e570b3327d4dbba9dda598dc5cf48f",
+      "server/src/main/java/io/saksk/ti/web/security/RedisCsrfIssuanceRateLimiter.java": "b87221cea7aad0f16b254498f4eaaad26cc60cf70cbd1a3c8366f56ef91cbb57",
+      "server/src/main/java/io/saksk/ti/web/security/RedisLegacySessionExchangeGuard.java": "6641943cd3e0acc4ef0be496120ef292fd1ce5d06cd6faaa1456a4ee2e2f84a2",
+      "server/src/main/java/io/saksk/ti/web/security/RedisLoginRateLimiter.java": "304b5092c1b8f79268dcb27c5f9a8107be35158ada37dc76f37bff37727d6680",
+      "server/src/main/java/io/saksk/ti/web/security/RedisPersonalBankUserCountsReadRateLimiter.java": "314dbe1de47f2da6d16de260bed015833847731db81cdd2584147bdb7f0beb7a",
+      "server/src/main/java/io/saksk/ti/web/security/RedisPublicBankReadRateLimiter.java": "da598f03571aa8769e0d6a101b50bfda7eda05cfd570fce6df4f567b0f318f00",
+      "server/src/main/java/io/saksk/ti/web/security/RedisSubjectReadRateLimiter.java": "f96aa2d9bd5ba1ef5597f6bbf160da3a48335756d177721e79daf678503f18df",
+      "server/src/main/java/io/saksk/ti/web/security/RedisTargetSessionCsrfRevoker.java": "7edb1ec36611aad25642a3724ab16db75a88d606afb1a76e567800fb9f61e5fb",
+      "server/src/main/java/io/saksk/ti/web/security/RedisTargetSessionRegistry.java": "bf6bde9f23a18a3b2c53f403cee976166b7b8f4a0be2a9b141b70dac6369cf5e",
+      "server/src/main/java/io/saksk/ti/web/security/SafeSessionAttributeSerializer.java": "60ccd43a6bce715dee4524fd8ac580bb53dd6b0b3ff1bf219ad194b5f9f1e3c2",
+      "server/src/main/java/io/saksk/ti/web/security/SessionBoundCsrfTokens.java": "8a645c61e0a377bfbee30a6404aa2091a9514749a0395d8dd3874567ac053178",
+      "server/src/main/java/io/saksk/ti/web/security/SubjectReadRateLimitFilter.java": "8888d767e781e0395fdfc3bb6484290dd5d552f83126ee2ebe77c80887cd24e6",
+      "server/src/main/java/io/saksk/ti/web/security/SubjectReadRateLimitProperties.java": "b2797b3f46fa733271d606eb084d483a3f969511644aaa4ad8cc74311dbd19fc",
+      "server/src/main/java/io/saksk/ti/web/security/SubjectReadRateLimiter.java": "97e4f971dfd944b735873562f3e5e5bf31a26cb0d4ed2efe68ea2585aca9fc94",
+      "server/src/main/java/io/saksk/ti/web/security/SubjectReadRequestResolver.java": "8a25ccfbfb00bed9810a31a0d696dd9e99836e3edf5386044ce16bbf8727b2f0",
+      "server/src/main/java/io/saksk/ti/web/security/TargetAuthenticatedPrincipal.java": "10f0d6df24fb6af7e46b599ebfa7da9c6b896627cb33e3150c695f7692d1823b",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionAttributes.java": "6ce701925c326c9036d3d9f6b2923cc274614d58987c5a44714cb0a5bc5a559c",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionAuthenticationFilter.java": "f60034927f8585b4b9a06c30a11dde592ed6626c8d3004dd531cd5831d79bcc8",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionConfiguration.java": "b4f57a7a7eba8230ff5b03fa4cec7ad2c7e194aa519391f5fc5ee217731bce23",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionCookiePolicy.java": "fca37742ab91f24632a7613348123b50403729f2f63a2d8303538bb2c80e8192",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionCsrfRevoker.java": "32c39e1a75dbbc62bc7b4a015667aa45fec1441422b88edd613e9108960c4aeb",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionFilterRegistrationConfiguration.java": "911add55e717cef957608650e8aa05f9b939593efa5f3af3e013e2645476c030",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionIssuer.java": "eb7d4b4d9f8dd40bdb0bc3a2ed3c8a793f758cf2835d7cfb49d1c115b018de5e",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionLimitProperties.java": "3632496fb081b936358a5776f267dc0b956cf1e08094ce42979cc9995e4b2986",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionProperties.java": "a4977d6d7dd57a38df9364fdc47ee7f447f97d94d57c91b0b763c8e2aae54ecb",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionReconciliationFilter.java": "2a56cf98c3e02a1842f659dd827169c267b95722b61bfc77f4f96c054ece62c4",
+      "server/src/main/java/io/saksk/ti/web/security/TargetSessionRegistry.java": "1781e886468b67c403ae3f89f03872b321b16ab0d545a5363bb893dea8a571e4",
+      "server/src/main/java/io/saksk/ti/web/security/TrustedProxyClientAddressResolver.java": "b58c39d319a02b5646355fc0f75e075a997405d5cef871be09d5b151e303e3e5",
+      "server/src/main/resources/application-local.yml": "bfb3987a24d7eb26d45aa84c85c5c321148390d9cde8a7c752c9ade142f211dd",
+      "server/src/main/resources/application-prod.yml": "b741dc5efbe7b0f81750b24c7ad1c48930ca2bb3a104f99f5eb3fb163617d53b",
+      "server/src/main/resources/application-test.yml": "1096a23b40fa67126184cbbc09cc289c7e4bd37416cf097cc3a6bec7e894a88c",
+      "server/src/main/resources/application-unit.yml": "48b19013cdcbc9a48cd1ef99723000060a45beee112d0de8b4917ff03a7a7bde",
+      "server/src/main/resources/application.yml": "6f5584026bcdd412db7a09ab8fde946556011aefabf7ca578441d5548f1a855c"
+    },
+    "unchanged_from_predecessor": true
+  },
+  "verification_evidence": {
+    "target_execution": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-execution-evidence.json",
+      "sha256": "947737b496168385b07db3d71a3bcf99d0940b1b52da4188ebf64516257b4002",
+      "evidence_id": "ti.phase4c.personal-bank-user-counts-golden-target-execution-evidence",
+      "case_payload_sha256": "75be10b21c2c006d978575dda314003536ac8920ecd6c6fbe64cfdd264d2b17f",
+      "document_payload_sha256": "5ca521f808aa67ea4589d044d04a0037e448dc9d2a519e3b6af7d776b2cb89de",
+      "case_ids_sha256": "d8c9aa1c8fdcfd833f2d7bbba3e21adcc3e696954b8756ace69405428bbdfad8",
+      "summary": {
+        "case_count": 59,
+        "http_execution_count": 57,
+        "business_jdbc_reached_http_count": 49,
+        "pre_business_jdbc_termination_http_count": 8,
+        "pre_business_jdbc_termination_status_counts": {
+          "302": 5,
+          "401": 3
+        },
+        "non_fault_http_execution_count": 46,
+        "fault_http_execution_count": 11,
+        "typed_postgresql_disposition_count": 2,
+        "api_alias_http_execution_count": 43,
+        "web_alias_http_execution_count": 14,
+        "http_status_counts": {
+          "200": 34,
+          "302": 5,
+          "401": 3,
+          "403": 10,
+          "500": 5
+        },
+        "bound_only_case_count": 0,
+        "mocked_application_result_case_count": 0,
+        "junit_leaf_test_count": 60,
+        "supplementary_junit_test_count": 1
+      },
+      "disposition_counts": {
+        "EXECUTED_FULL_CONTEXT_HTTP": 46,
+        "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT": 11,
+        "EXECUTED_TYPED_COLLAPSE": 1,
+        "EXECUTED_TYPED_REJECTION": 1
+      }
+    },
+    "historical_partial_mapping": {
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-mapping-evidence.json",
+      "sha256": "d039193c2ecfb644fdd356b196f6551440e63ee27eba0645d9f8e5bef923b4d3",
+      "classification": "PARTIAL_EXECUTION_MAPPING_LEDGER",
+      "case_count": 59,
+      "immutable": true
+    },
+    "junit": {
+      "source": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsGoldenTargetExecutionIT.java",
+      "sha256": "45b1a96fcc66a436551a8ce7604b304f2a479cece87c431a3a3c003da01d5ca1",
+      "case_leaf_count": 59,
+      "supplementary_leaf_count": 1,
+      "total_leaf_count": 60
+    },
+    "postgresql": {
+      "version": "18.4",
+      "real_container": true,
+      "read_only": true,
+      "users_last_active_write_dml_count": 0
+    }
+  },
+  "routes_and_openapi": {
+    "routes": [
+      {
+        "route_id": "6858f6fa506f",
+        "alias": "api",
+        "path": "/api/user/banks/api/<int:bank_id>/user-counts",
+        "target_path": "/api/user/banks/api/{bank_id}/user-counts",
+        "method": "GET",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "production_cutover": false
+      },
+      {
+        "route_id": "006913d0d956",
+        "alias": "web",
+        "path": "/user/banks/api/<int:bank_id>/user-counts",
+        "target_path": "/user/banks/api/{bank_id}/user-counts",
+        "method": "GET",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "production_cutover": false
+      }
+    ],
+    "implemented_pending_get_count": 2,
+    "migrated_operation_count": 11,
+    "pending_operation_count": 600,
+    "production_cutover_operation_count": 0,
+    "route_migration_eligible": false,
+    "counted_methods": [
+      "GET"
+    ],
+    "derived_methods": [
+      "HEAD",
+      "OPTIONS"
+    ],
+    "route_delta": {
+      "source": "docs/refactor/phase4c/route-parity-delta.csv",
+      "sha256": "40ead5f703f1a589989fd524107f1fc31994662fb7d3e3be54fe22705025b52b"
+    },
+    "openapi_overlay": {
+      "source": "openapi/phase4c-personal-bank-user-counts.openapi.json",
+      "sha256": "076957f391fd9aed65861d0633ad4b21d88b391df5217b10e2105b88b56605c9"
+    }
+  },
+  "data_ownership": {
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-effective-data-ownership-status.json",
+    "sha256": "9f29ee2e27695a1d36a0ca0e5a8ffbe76172b1d3583ca6ee3cf3099e43d758b2",
+    "document_payload_sha256": "37b9f1a922ced2691f1a040c10eda077c893118f092a6ba68c90fcf640bd0193",
+    "resource_count": 160,
+    "resources_with_exactly_one_owner": 160,
+    "canonical_owner_manifest_sha256": "9767e2c6d6619be0db5f7b3f78335b23ff2020a9d756a2d6a3bf36eccc78908e",
+    "unchanged_from_predecessor": true
+  },
+  "worm_evidence": {
+    "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json",
+    "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+    "java_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+    "new_worm": false,
+    "new_worm_report_created": false,
+    "production_build_context_unchanged": true,
+    "read_role_closed": true,
+    "hibernate_schema_mode": "validate",
+    "production_schema_or_index_changed": false,
+    "operator_migration_executed": false,
+    "real_data_migration_executed": false,
+    "production_cutover": false
+  },
+  "authorization": {
+    "target_dispositions_executed": true,
+    "all_59_target_dispositions_executed": true,
+    "typed_parity_review_complete": false,
+    "full_target_parity_closed": false,
+    "route_migration_eligible": false,
+    "external_bridge_bytes_anchor_complete": false,
+    "route_promotion_blocked_by_bridge_bootstrap": true,
+    "two_legacy_get_routes_migrated": false,
+    "derived_head_and_options_count_as_migrated": false,
+    "production_schema_or_index": false,
+    "operator_migration_implementation": false,
+    "real_data_migration_execution": false,
+    "migration_global_preflight_closed": false,
+    "client_change": false,
+    "gateway_or_proxy_change": false,
+    "production_cutover": false
+  },
+  "acceptance": {
+    "target_dispositions_executed": true,
+    "all_59_target_dispositions_executed": true,
+    "typed_parity_review_complete": false,
+    "case_count": 59,
+    "http_execution_count": 57,
+    "business_jdbc_reached_http_count": 49,
+    "pre_business_jdbc_termination_http_count": 8,
+    "pre_business_jdbc_termination_status_counts": {
+      "302": 5,
+      "401": 3
+    },
+    "typed_postgresql_disposition_count": 2,
+    "bound_only_case_count": 0,
+    "mocked_application_result_case_count": 0,
+    "junit_leaf_test_count": 60,
+    "full_target_parity_closed": false,
+    "route_migration_eligible": false,
+    "external_bridge_bytes_anchor_complete": false,
+    "post_push_external_git_anchor_required_before_route_migration": true,
+    "implemented_pending_get_count": 2,
+    "migrated_operation_count": 11,
+    "pending_operation_count": 600,
+    "production_cutover_operation_count": 0,
+    "production_cutover": false,
+    "effective_resource_count": 160,
+    "resources_with_exactly_one_owner": 160,
+    "production_runtime_unchanged": true,
+    "new_worm": false,
+    "new_worm_report_created": false,
+    "production_build_context_unchanged": true,
+    "operator_and_real_migration_remain_blocked": true,
+    "next_gate": "commit_and_push_this_bootstrap_checkpoint_then_anchor_its_git_commit_contract_sha256_and_both_bridge_sha256_in_the_next_node_before_typed_parity_network_redis_identity_review_or_route_migration"
+  },
+  "document_payload_sha256": "331c82ad941f4eeb3e07d1701271310f2b1dea91132794e4e5d1eb1b466fc458"
+}

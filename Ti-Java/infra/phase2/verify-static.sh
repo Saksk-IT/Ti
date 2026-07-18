@@ -244,8 +244,8 @@ assert_file_contains "Fixed Phase 4C HTTP implementation WORM successor" \
 assert_file_contains "Fixed Phase 4C HTTP implementation WORM predecessor" \
     'predecessor_sha256=PHASE4C_READ_ACCESS_REPORT_SHA256' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
-assert_file_contains "Fixed Phase 4C HTTP implementation successor contract" \
-    'load_http_implementation_successor_contract(ti_java_root)' \
+assert_file_contains "Fixed Phase 4C target-execution successor contract" \
+    'load_http_target_execution_successor_contract(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"

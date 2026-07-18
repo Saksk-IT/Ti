@@ -1,0 +1,5093 @@
+{
+  "schema_version": 1,
+  "evidence_id": "ti.phase4c.personal-bank-user-counts-golden-target-execution-evidence",
+  "captured_at": "2026-07-18T09:57:07+08:00",
+  "source_checkpoint": {
+    "commit": "67dddb831bac8499e80f4af57c959e9c6b244519",
+    "committed_at": "2026-07-18T09:57:07+08:00",
+    "subject": "test(java): remove legacy credential expiry bombs",
+    "artifacts": {
+      "target_execution_test": {
+        "path": "server/src/test/java/io/saksk/ti/integration/LegacyPersonalBankUserCountsGoldenTargetExecutionIT.java",
+        "sha256": "45b1a96fcc66a436551a8ce7604b304f2a479cece87c431a3a3c003da01d5ca1"
+      },
+      "fault_injecting_data_source": {
+        "path": "server/src/test/java/io/saksk/ti/support/Phase4cUserCountsFaultInjectingDataSource.java",
+        "sha256": "83f381e0766ebeb0c71aa3b8f3f024d9af1a0099776b2d8923082947d6116dae"
+      },
+      "postgresql_seed": {
+        "path": "server/src/test/resources/db/phase4c/071-personal-bank-user-counts-golden-target-seed.sql",
+        "sha256": "5fbdc1da8e15072995baffba15b3a430b1ddd93e4788237a44bc3a5965e7556e"
+      }
+    }
+  },
+  "source_golden": {
+    "path": "docs/refactor/phase4b/golden-personal-bank-user-counts-reads.json",
+    "sha256": "71f3be3e1ac821c7d3287ab2fbb19ce166828b0ca4da44716d540597eb380bd1",
+    "case_count": 59,
+    "case_payload_sha256": "0ace2f642523a62e802db3dc3d045d601743a277e7edf7e2cf214d00619a51bf",
+    "ordered_case_ids_sha256": "d8c9aa1c8fdcfd833f2d7bbba3e21adcc3e696954b8756ace69405428bbdfad8",
+    "document_payload_sha256": "e2415f68b5324c60a073a6dec47f069488c72b9ed2605aea2de34241728c4110",
+    "canonical_order_preserved": true
+  },
+  "historical_mapping": {
+    "path": "docs/refactor/phase4c/personal-bank-user-counts-golden-target-mapping-evidence.json",
+    "sha256": "d039193c2ecfb644fdd356b196f6551440e63ee27eba0645d9f8e5bef923b4d3",
+    "evidence_id": "ti.phase4c.personal-bank-user-counts-golden-target-mapping-evidence",
+    "classification": "PARTIAL_EXECUTION_MAPPING_LEDGER",
+    "immutable_historical_predecessor": true,
+    "relabeled_or_rewritten": false
+  },
+  "execution_harness": {
+    "test_class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+    "application_class": "io.saksk.ti.TiApplication",
+    "annotations": [
+      "SpringBootTest",
+      "AutoConfigureMockMvc",
+      "Testcontainers",
+      "ActiveProfiles(test)",
+      "Execution(SAME_THREAD)"
+    ],
+    "full_spring_context": true,
+    "full_production_filter_chain": true,
+    "excluded_production_filters": [],
+    "mocked_application_or_authentication_ports": [],
+    "test_replacements": [
+      "class-captured current-second java.time.Clock with share-expiry semantic re-anchoring",
+      "tracing and PostgreSQL-abort-injecting DataSource wrapping the real pool"
+    ],
+    "clock": {
+      "mode": "captured_once_at_class_initialization",
+      "precision": "utc_epoch_second",
+      "credential_expiry_offset_seconds": 3600,
+      "share_expiry_anchor_timezone": "Asia/Shanghai",
+      "share_expiry_semantics_reanchored_before_fingerprint": true
+    },
+    "transport": "MockMvc",
+    "real_tomcat_transport": false,
+    "same_thread_execution": true,
+    "postgresql": {
+      "version": "18.4",
+      "image": "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+      "real_container": true
+    },
+    "redis": {
+      "version": "7.4.7",
+      "image": "redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf",
+      "real_container": true
+    },
+    "session_bootstrap": {
+      "distinct_actor_count": 12,
+      "credential_source": "signed Flask session exchanged through the real authentication filter into an authoritative target Session",
+      "bootstrap_http_probes_counted_as_golden_dispositions": false
+    },
+    "supplementary_junit": {
+      "method": "realFlaskExchangeAndAuthoritativeTargetSessionBothReachApplicationJdbc",
+      "junit_leaf_count": 1,
+      "http_probe_count": 2,
+      "probes": [
+        "real Flask Session exchange",
+        "authoritative target Session"
+      ],
+      "counted_as_golden_dispositions": false
+    },
+    "seed_attestation": {
+      "users": 13,
+      "user_progress": 0,
+      "user_question_banks": 7,
+      "bank_shares": 9,
+      "bank_share_records": 9,
+      "user_bank_questions": 9,
+      "user_bank_favorites": 6,
+      "user_bank_mistakes": 3,
+      "user_question_tag_items": 1,
+      "total_rows": 57,
+      "users_with_null_last_active": 13,
+      "malformed_share_and_record_omitted": [
+        99656,
+        99676
+      ],
+      "aware_share_and_record_omitted": [
+        99661,
+        99681
+      ],
+      "empty_expiry_share": {
+        "id": 99660,
+        "expires_at": null
+      },
+      "normalized_tag_row": {
+        "user_id": 99451,
+        "scope": "user_bank",
+        "scope_id": 99551,
+        "question_id": 99701,
+        "tag": "重点"
+      },
+      "normal_session_version": 11,
+      "revoked_user_session_version": 12
+    }
+  },
+  "summary": {
+    "case_count": 59,
+    "http_execution_count": 57,
+    "business_jdbc_reached_http_count": 49,
+    "pre_business_jdbc_termination_http_count": 8,
+    "pre_business_jdbc_termination_status_counts": {
+      "302": 5,
+      "401": 3
+    },
+    "non_fault_http_execution_count": 46,
+    "fault_http_execution_count": 11,
+    "typed_postgresql_disposition_count": 2,
+    "api_alias_http_execution_count": 43,
+    "web_alias_http_execution_count": 14,
+    "http_status_counts": {
+      "200": 34,
+      "302": 5,
+      "401": 3,
+      "403": 10,
+      "500": 5
+    },
+    "bound_only_case_count": 0,
+    "mocked_application_result_case_count": 0,
+    "junit_leaf_test_count": 60,
+    "supplementary_junit_test_count": 1,
+    "execution_disposition_counts": {
+      "EXECUTED_FULL_CONTEXT_HTTP": 46,
+      "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT": 11,
+      "EXECUTED_TYPED_REJECTION": 1,
+      "EXECUTED_TYPED_COLLAPSE": 1
+    }
+  },
+  "side_effect_invariants": {
+    "fingerprinted_tables": [
+      "users",
+      "user_progress",
+      "user_question_banks",
+      "bank_shares",
+      "bank_share_records",
+      "user_bank_questions",
+      "user_bank_favorites",
+      "user_bank_mistakes",
+      "user_question_tag_items"
+    ],
+    "fingerprint_taken_before_and_after_each_http_case": true,
+    "fingerprint_unchanged_for_each_http_case": true,
+    "write_dml_count_per_http_case": 0,
+    "users_last_active_write_dml_count_per_http_case": 0,
+    "schema_mutation_count_per_http_case": 0,
+    "business_query_connections_read_only": true,
+    "redis_route_state_assertion": {
+      "mode": "RESPONSE_HEADER_CONDITIONED",
+      "header_absent": "no route rate-limit key exists",
+      "header_present": "exactly one second, hour and day key exists and each value is 1"
+    }
+  },
+  "authentication_sql_boundaries": {
+    "auth-state-invalid-bearer-does-not-fallback-session-api-alias": {
+      "execution_families_exactly": [
+        "AUTHORITY_USERS"
+      ],
+      "business_jdbc_reached": false
+    },
+    "auth-invalid-bearer-falls-back-session-api-alias": {
+      "execution_families_exactly": [],
+      "business_jdbc_reached": false
+    },
+    "auth-anonymous-api-alias": {
+      "execution_families_exactly": [],
+      "business_jdbc_reached": false
+    },
+    "all_web_302_cases": {
+      "execution_families_exactly": [],
+      "business_jdbc_reached": false
+    },
+    "all_other_http_statuses": {
+      "required_execution_families": [
+        "AUTHORITY_USERS",
+        "BANK_ACCESS"
+      ],
+      "authority_users_occurrence_count": 1,
+      "business_query_connections_read_only": true
+    }
+  },
+  "fault_contract": {
+    "case_count": 11,
+    "real_postgresql_abort_per_case": true,
+    "initial_sqlstate": "42703",
+    "poisoned_transaction_sqlstate": "25P02",
+    "fault_connection_read_only": true,
+    "rollback_after_fault_on_same_connection": true,
+    "failed_family_occurrence_has_no_success_record": true,
+    "later_success_rule": "For HTTP 200 QUESTION_SUMMARY faults with occurrence < 4, a later same-family success follows rollback on a different connection."
+  },
+  "typed_contract": {
+    "case_count": 2,
+    "malformed_expiry": {
+      "case_id": "access-shared-malformed-expiry-value-error",
+      "disposition": "EXECUTED_TYPED_REJECTION",
+      "sqlstate": "22007",
+      "persisted_row_count": 0
+    },
+    "aware_expiry": {
+      "case_id": "access-shared-aware-expiry-type-error",
+      "disposition": "EXECUTED_TYPED_COLLAPSE",
+      "projected_local_datetime": "2026-07-17T13:00:00",
+      "offset_provenance_erased": true,
+      "approved_empty_expiry_representation": "SQL NULL in bank_shares.expires_at for id 99660"
+    },
+    "typed_dispositions_are_not_http_executions": true
+  },
+  "route_worm_and_parity_boundaries": {
+    "implementation_worm": {
+      "path": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json",
+      "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+      "reused": true
+    },
+    "implementation_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+    "implementation_chain_node_count": 5,
+    "target_execution_worm_created": false,
+    "route_counts": {
+      "migrated": 11,
+      "pending": 600,
+      "cutover": 0
+    },
+    "full_target_parity_closed": false,
+    "route_migration_eligible": false,
+    "production_cutover_evidence": false,
+    "not_claimed": [
+      "real Tomcat transport for all 59 dispositions",
+      "PostgreSQL 16 execution for all 59 dispositions",
+      "HEAD, OPTIONS and CORS parity for all golden dispositions",
+      "real Redis connection refusal, interruption and recovery",
+      "production traffic or production cutover"
+    ]
+  },
+  "claim": {
+    "classification": "TARGET_EXECUTION_DISPOSITION_LEDGER",
+    "scope": "All 59 Phase 4B golden dispositions are executed by the fixed target test artifact: 57 inside the full Spring MockMvc context and production filter chain with real PostgreSQL/Redis, of which 49 reach business JDBC and 8 terminate before business JDBC as required by authentication semantics; the remaining 2 are explicit PostgreSQL typed dispositions.",
+    "full_target_execution_dispositions_closed": true,
+    "historical_bound_only_cases_remaining": 0,
+    "mocked_application_results_used": false,
+    "full_target_parity_closed": false,
+    "route_migration_eligible": false,
+    "cutover_evidence": false
+  },
+  "cases": [
+    {
+      "canonical_case_ordinal": 1,
+      "execution_ordinal": 1,
+      "case_id": "auth-session-owner-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "http_success_envelope"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-session-owner-api-alias",
+        "disposition_leaf_ordinal": 2
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-session-owner-api-alias",
+        "remote_address": "198.51.74.207",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS",
+          "QUESTION_SUMMARY"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 2,
+      "execution_ordinal": 2,
+      "case_id": "auth-bearer-owner-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "authentication_bearer_selection",
+        "http_success_envelope"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-bearer-owner-api-alias",
+        "disposition_leaf_ordinal": 3
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "valid_bearer_only",
+        "session_actor": "anonymous",
+        "bearer_actor": "owner"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-bearer-owner-api-alias",
+        "remote_address": "198.51.127.101",
+        "session_credential": "none",
+        "bearer_credential": "real_hs256_jwt"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS",
+          "QUESTION_SUMMARY"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 3,
+      "execution_ordinal": 3,
+      "case_id": "auth-bearer-precedes-session-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "authentication_bearer_selection",
+        "effective_actor_rate_budget",
+        "controller_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-009",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-bearer-precedes-session-api-alias",
+        "disposition_leaf_ordinal": 4
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session+valid_bearer",
+        "session_actor": "owner",
+        "bearer_actor": "other"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-bearer-precedes-session-api-alias",
+        "remote_address": "198.51.50.8",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "real_hs256_jwt"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 4,
+      "execution_ordinal": 4,
+      "case_id": "auth-invalid-bearer-falls-back-session-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "authentication_no_fallback",
+        "uniform_authentication_envelope"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-009",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-invalid-bearer-falls-back-session-api-alias",
+        "disposition_leaf_ordinal": 5
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session+invalid_bearer",
+        "session_actor": "owner",
+        "bearer_actor": "invalid"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 401,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-invalid-bearer-falls-back-session-api-alias",
+        "remote_address": "198.51.62.143",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "invalid_literal"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "unauthorized",
+          "message": "请先登录"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "AUTHENTICATION",
+        "business_jdbc_reached": false,
+        "business_execution_families_absent": [
+          "BANK_ACCESS",
+          "SHARE_ACCESS",
+          "TAG_MEMBERSHIP",
+          "FAVORITE_MEMBERSHIP",
+          "MISTAKE_MEMBERSHIP",
+          "QUESTION_SUMMARY"
+        ]
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 5,
+      "execution_ordinal": 5,
+      "case_id": "auth-state-invalid-bearer-does-not-fallback-session-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "bearer_state_invalid",
+        "uniform_authentication_envelope"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-009",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-state-invalid-bearer-does-not-fallback-session-api-alias",
+        "disposition_leaf_ordinal": 6
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session+state_invalid_bearer",
+        "session_actor": "owner",
+        "bearer_actor": "revoked"
+      },
+      "source_golden_response_status": 401,
+      "target_status": 401,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-state-invalid-bearer-does-not-fallback-session-api-alias",
+        "remote_address": "198.51.122.172",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "real_hs256_jwt"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "unauthorized",
+          "message": "请先登录"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [
+          "AUTHORITY_USERS"
+        ],
+        "termination": "AUTHENTICATION",
+        "business_jdbc_reached": false,
+        "business_execution_families_absent": [
+          "BANK_ACCESS",
+          "SHARE_ACCESS",
+          "TAG_MEMBERSHIP",
+          "FAVORITE_MEMBERSHIP",
+          "MISTAKE_MEMBERSHIP",
+          "QUESTION_SUMMARY"
+        ]
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 6,
+      "execution_ordinal": 6,
+      "case_id": "auth-anonymous-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "http_anonymous",
+        "uniform_authentication_envelope"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-anonymous-api-alias",
+        "disposition_leaf_ordinal": 7
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "none",
+        "session_actor": "anonymous",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 401,
+      "target_status": 401,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-anonymous-api-alias",
+        "remote_address": "198.51.84.203",
+        "session_credential": "none",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "unauthorized",
+          "message": "请先登录"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "AUTHENTICATION",
+        "business_jdbc_reached": false,
+        "business_execution_families_absent": [
+          "BANK_ACCESS",
+          "SHARE_ACCESS",
+          "TAG_MEMBERSHIP",
+          "FAVORITE_MEMBERSHIP",
+          "MISTAKE_MEMBERSHIP",
+          "QUESTION_SUMMARY"
+        ]
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 7,
+      "execution_ordinal": 7,
+      "case_id": "data-empty-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "zero_view_recheck",
+        "typed_postgresql_surface"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "data-empty-api-alias",
+        "disposition_leaf_ordinal": 8
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99557/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99557/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-data-empty-api-alias",
+        "remote_address": "198.51.216.192",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 8,
+      "execution_ordinal": 8,
+      "case_id": "access-status-zero-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "access_policy",
+        "controller_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-status-zero-api-alias",
+        "disposition_leaf_ordinal": 9
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99552/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99552/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-status-zero-api-alias",
+        "remote_address": "198.51.161.123",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 9,
+      "execution_ordinal": 9,
+      "case_id": "access-missing-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "access_policy",
+        "controller_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-missing-api-alias",
+        "disposition_leaf_ordinal": 10
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99999/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99999/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-missing-api-alias",
+        "remote_address": "198.51.117.215",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 10,
+      "execution_ordinal": 10,
+      "case_id": "access-public-other-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "access_policy",
+        "typed_postgresql_surface"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-public-other-api-alias",
+        "disposition_leaf_ordinal": 11
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99555/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "other",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99555/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-public-other-api-alias",
+        "remote_address": "198.51.136.129",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 11,
+      "execution_ordinal": 11,
+      "case_id": "filter-source-favorites-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "query_sequence"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-source-favorites-api-alias",
+        "disposition_leaf_ordinal": 12
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-source-favorites-api-alias",
+        "remote_address": "198.51.15.26",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 5,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 12,
+      "execution_ordinal": 12,
+      "case_id": "tag-normalized-sa2-empty-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "zero_view_recheck"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "tag-normalized-sa2-empty-api-alias",
+        "disposition_leaf_ordinal": 13
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "重点"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "重点"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-tag-normalized-sa2-empty-api-alias",
+        "remote_address": "198.51.236.49",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 1,
+            "favorites": 1,
+            "mistakes": 0,
+            "types": [
+              "选择题"
+            ],
+            "shuffle_options_available": true
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 13,
+      "execution_ordinal": 47,
+      "case_id": "fault-total-default-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_FAILURE",
+      "historical_binding_ids": [
+        "strict_failure_boundary"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-total-default-api-alias",
+        "disposition_leaf_ordinal": 48
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 500,
+      "target_status": 500,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-total-default-api-alias",
+        "remote_address": "198.51.228.150",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_STATUS_AND_REDACTION_ONLY",
+        "asserted_body": {
+          "status": "error"
+        },
+        "asserted_absent_substrings": [
+          "missing_phase4c_target_execution_column",
+          "42703",
+          "25P02"
+        ]
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 1,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": false
+      }
+    },
+    {
+      "canonical_case_ordinal": 14,
+      "execution_ordinal": 48,
+      "case_id": "fault-total-json-api-alias",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_FAILURE",
+      "historical_binding_ids": [
+        "strict_failure_boundary"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-total-json-api-alias",
+        "disposition_leaf_ordinal": 49
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 500,
+      "target_status": 500,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "application/json, text/plain;q=0.5",
+        "request_id": "phase4c-target-fault-total-json-api-alias",
+        "remote_address": "198.51.81.216",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_STATUS_AND_REDACTION_ONLY",
+        "asserted_body": {
+          "status": "error"
+        },
+        "asserted_absent_substrings": [
+          "missing_phase4c_target_execution_column",
+          "42703",
+          "25P02"
+        ]
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 1,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": false
+      }
+    },
+    {
+      "canonical_case_ordinal": 15,
+      "execution_ordinal": 13,
+      "case_id": "auth-session-owner-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "http_success_envelope"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-session-owner-web-alias",
+        "disposition_leaf_ordinal": 14
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-session-owner-web-alias",
+        "remote_address": "198.51.25.59",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS",
+          "QUESTION_SUMMARY"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 16,
+      "execution_ordinal": 14,
+      "case_id": "auth-bearer-owner-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "http_web_authorization",
+        "web_ip_rate_budget"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-bearer-owner-web-alias",
+        "disposition_leaf_ordinal": 15
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "valid_bearer_only",
+        "session_actor": "anonymous",
+        "bearer_actor": "owner"
+      },
+      "source_golden_response_status": 302,
+      "target_status": 302,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-bearer-owner-web-alias",
+        "remote_address": "198.51.10.224",
+        "session_credential": "none",
+        "bearer_credential": "real_hs256_jwt"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_HEADER_ONLY",
+        "asserted_headers": {
+          "Location": "/login"
+        },
+        "body_asserted": false
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "WEB_PRE_AUTHENTICATION",
+        "business_jdbc_reached": false
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 17,
+      "execution_ordinal": 15,
+      "case_id": "auth-bearer-precedes-session-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "http_web_authorization",
+        "web_ip_rate_budget"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-009"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-bearer-precedes-session-web-alias",
+        "disposition_leaf_ordinal": 16
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session+valid_bearer",
+        "session_actor": "owner",
+        "bearer_actor": "other"
+      },
+      "source_golden_response_status": 302,
+      "target_status": 302,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-bearer-precedes-session-web-alias",
+        "remote_address": "198.51.159.212",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "real_hs256_jwt"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_HEADER_ONLY",
+        "asserted_headers": {
+          "Location": "/login"
+        },
+        "body_asserted": false
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "WEB_PRE_AUTHENTICATION",
+        "business_jdbc_reached": false
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 18,
+      "execution_ordinal": 16,
+      "case_id": "auth-invalid-bearer-falls-back-session-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "authentication_no_fallback",
+        "http_web_authorization",
+        "web_ip_rate_budget"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-009"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-invalid-bearer-falls-back-session-web-alias",
+        "disposition_leaf_ordinal": 17
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session+invalid_bearer",
+        "session_actor": "owner",
+        "bearer_actor": "invalid"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 302,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-invalid-bearer-falls-back-session-web-alias",
+        "remote_address": "198.51.191.186",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "invalid_literal"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_HEADER_ONLY",
+        "asserted_headers": {
+          "Location": "/login"
+        },
+        "body_asserted": false
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "WEB_PRE_AUTHENTICATION",
+        "business_jdbc_reached": false
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 19,
+      "execution_ordinal": 17,
+      "case_id": "auth-state-invalid-bearer-does-not-fallback-session-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "bearer_state_invalid",
+        "http_web_authorization",
+        "web_ip_rate_budget"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-009"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-state-invalid-bearer-does-not-fallback-session-web-alias",
+        "disposition_leaf_ordinal": 18
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session+state_invalid_bearer",
+        "session_actor": "owner",
+        "bearer_actor": "revoked"
+      },
+      "source_golden_response_status": 302,
+      "target_status": 302,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-state-invalid-bearer-does-not-fallback-session-web-alias",
+        "remote_address": "198.51.107.223",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "real_hs256_jwt"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_HEADER_ONLY",
+        "asserted_headers": {
+          "Location": "/login"
+        },
+        "body_asserted": false
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "WEB_PRE_AUTHENTICATION",
+        "business_jdbc_reached": false
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 20,
+      "execution_ordinal": 18,
+      "case_id": "auth-anonymous-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "BOUND_AUTHENTICATION_ONLY",
+      "historical_binding_ids": [
+        "http_web_anonymous"
+      ],
+      "http_slice_difference_ids": [],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "auth-anonymous-web-alias",
+        "disposition_leaf_ordinal": 19
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "none",
+        "session_actor": "anonymous",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 302,
+      "target_status": 302,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-auth-anonymous-web-alias",
+        "remote_address": "198.51.25.193",
+        "session_credential": "none",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_HEADER_ONLY",
+        "asserted_headers": {
+          "Location": "/login"
+        },
+        "body_asserted": false
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "EXACT",
+        "execution_families": [],
+        "termination": "WEB_PRE_AUTHENTICATION",
+        "business_jdbc_reached": false
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 21,
+      "execution_ordinal": 19,
+      "case_id": "data-empty-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "zero_view_recheck",
+        "typed_postgresql_surface"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "data-empty-web-alias",
+        "disposition_leaf_ordinal": 20
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99557/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99557/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-data-empty-web-alias",
+        "remote_address": "198.51.163.114",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 22,
+      "execution_ordinal": 20,
+      "case_id": "access-status-zero-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "access_policy",
+        "controller_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-status-zero-web-alias",
+        "disposition_leaf_ordinal": 21
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99552/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99552/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-status-zero-web-alias",
+        "remote_address": "198.51.105.78",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 23,
+      "execution_ordinal": 21,
+      "case_id": "access-missing-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "access_policy",
+        "controller_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-missing-web-alias",
+        "disposition_leaf_ordinal": 22
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99999/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99999/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-missing-web-alias",
+        "remote_address": "198.51.178.75",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 24,
+      "execution_ordinal": 22,
+      "case_id": "access-public-other-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "access_policy",
+        "typed_postgresql_surface"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-public-other-web-alias",
+        "disposition_leaf_ordinal": 23
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99555/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "other",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99555/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-public-other-web-alias",
+        "remote_address": "198.51.74.146",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 25,
+      "execution_ordinal": 23,
+      "case_id": "filter-source-favorites-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "query_sequence"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-source-favorites-web-alias",
+        "disposition_leaf_ordinal": 24
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-source-favorites-web-alias",
+        "remote_address": "198.51.100.135",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 5,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 26,
+      "execution_ordinal": 24,
+      "case_id": "tag-normalized-sa2-empty-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "zero_view_recheck"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "tag-normalized-sa2-empty-web-alias",
+        "disposition_leaf_ordinal": 25
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "重点"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "重点"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-tag-normalized-sa2-empty-web-alias",
+        "remote_address": "198.51.12.226",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 1,
+            "favorites": 1,
+            "mistakes": 0,
+            "types": [
+              "选择题"
+            ],
+            "shuffle_options_available": true
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 27,
+      "execution_ordinal": 49,
+      "case_id": "fault-total-default-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_FAILURE",
+      "historical_binding_ids": [
+        "strict_failure_boundary"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-total-default-web-alias",
+        "disposition_leaf_ordinal": 50
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 500,
+      "target_status": 500,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-total-default-web-alias",
+        "remote_address": "198.51.79.223",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_CONTENT_TYPE_PREFIX_EXACT_BODY_AND_REDACTION",
+        "asserted_content_type_prefix": "text/html",
+        "asserted_body_text": "<h1>500 - 服务器错误</h1><p>发生了一个意外错误，请稍后再试。</p>",
+        "asserted_absent_substrings": [
+          "missing_phase4c_target_execution_column",
+          "42703",
+          "25P02"
+        ]
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 1,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": false
+      }
+    },
+    {
+      "canonical_case_ordinal": 28,
+      "execution_ordinal": 50,
+      "case_id": "fault-total-json-web-alias",
+      "route_id": "006913d0d956",
+      "alias": "web",
+      "source_case_classification": "MOCKMVC_FAILURE",
+      "historical_binding_ids": [
+        "strict_failure_boundary"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-total-json-web-alias",
+        "disposition_leaf_ordinal": 51
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 500,
+      "target_status": 500,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "application/json, text/plain;q=0.5",
+        "request_id": "phase4c-target-fault-total-json-web-alias",
+        "remote_address": "198.51.43.180",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_STATUS_AND_REDACTION_ONLY",
+        "asserted_body": {
+          "status": "error"
+        },
+        "asserted_absent_substrings": [
+          "missing_phase4c_target_execution_column",
+          "42703",
+          "25P02"
+        ]
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 1,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": false
+      }
+    },
+    {
+      "canonical_case_ordinal": 29,
+      "execution_ordinal": 25,
+      "case_id": "access-status-null-owner",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "access_policy"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-status-null-owner",
+        "disposition_leaf_ordinal": 26
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99553/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99553/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-status-null-owner",
+        "remote_address": "198.51.37.225",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 30,
+      "execution_ordinal": 26,
+      "case_id": "access-status-two-owner",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "access_policy"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-status-two-owner",
+        "disposition_leaf_ordinal": 27
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99554/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99554/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-status-two-owner",
+        "remote_address": "198.51.164.196",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 31,
+      "execution_ordinal": 27,
+      "case_id": "access-private-other-forbidden",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "access_policy",
+        "terminal_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-private-other-forbidden",
+        "disposition_leaf_ordinal": 28
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99556/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99556/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-private-other-forbidden",
+        "remote_address": "198.51.201.157",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 32,
+      "execution_ordinal": 28,
+      "case_id": "access-shared-future",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "access_policy"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-future",
+        "disposition_leaf_ordinal": 29
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_future",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-future",
+        "remote_address": "198.51.232.146",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 33,
+      "execution_ordinal": 29,
+      "case_id": "access-shared-null-expiry",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "access_policy"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-null-expiry",
+        "disposition_leaf_ordinal": 30
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_null",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-null-expiry",
+        "remote_address": "198.51.39.198",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 34,
+      "execution_ordinal": 30,
+      "case_id": "access-shared-equal-now-forbidden",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "terminal_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-equal-now-forbidden",
+        "disposition_leaf_ordinal": 31
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_equal",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-equal-now-forbidden",
+        "remote_address": "198.51.82.117",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 35,
+      "execution_ordinal": 31,
+      "case_id": "access-shared-expired-forbidden",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "terminal_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-expired-forbidden",
+        "disposition_leaf_ordinal": 32
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_expired",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-expired-forbidden",
+        "remote_address": "198.51.203.112",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 36,
+      "execution_ordinal": 32,
+      "case_id": "access-shared-inactive-forbidden",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "terminal_denial"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-inactive-forbidden",
+        "disposition_leaf_ordinal": 33
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_inactive",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-inactive-forbidden",
+        "remote_address": "198.51.34.254",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 37,
+      "execution_ordinal": 58,
+      "case_id": "access-shared-malformed-expiry-value-error",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "BOUND_TYPED_DATABASE_ONLY",
+      "historical_binding_ids": [
+        "typed_postgresql_surface",
+        "read_only_rows"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "tracking_note": "The legacy SQLite string is not representable by the typed PostgreSQL expires_at column; no target HTTP status is claimed.",
+      "execution_disposition": "EXECUTED_TYPED_REJECTION",
+      "http_execution": false,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "rejectsTheMalformedExpiryTypedDispositionWithoutPersistingARow",
+        "leaf_type": "test",
+        "dynamic_test_name": null,
+        "disposition_leaf_ordinal": 59
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_malformed",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 400,
+      "target_status": null,
+      "target_request": null,
+      "expected_target_projection": null,
+      "typed_evidence": {
+        "input": "malformed-expiry",
+        "operation": "CAST parameter AS timestamp without time zone during bank_shares insert",
+        "attempted_bank_share_id": 99656,
+        "attempted_bank_share_record_id": 99676,
+        "sqlstate": "22007",
+        "persisted_bank_share_row_count": 0,
+        "bank_shares_total_unchanged": true,
+        "bank_share_records_total_unchanged": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 38,
+      "execution_ordinal": 59,
+      "case_id": "access-shared-aware-expiry-type-error",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "BOUND_TYPED_DATABASE_ONLY",
+      "historical_binding_ids": [
+        "typed_postgresql_surface",
+        "read_only_rows"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "tracking_note": "The legacy Python aware/naive object mismatch is not representable after JDBC maps the typed PostgreSQL value to LocalDateTime; no target HTTP status is claimed.",
+      "execution_disposition": "EXECUTED_TYPED_COLLAPSE",
+      "http_execution": false,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "provesTheAwareExpiryCollapseAndApprovedNullExpiryRepresentation",
+        "leaf_type": "test",
+        "dynamic_test_name": null,
+        "disposition_leaf_ordinal": 60
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_aware",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 500,
+      "target_status": null,
+      "target_request": null,
+      "expected_target_projection": null,
+      "typed_evidence": {
+        "inputs": [
+          "2026-07-17 13:00:00+08:00",
+          "2026-07-17 13:00:00-05:00"
+        ],
+        "postgresql_type": "timestamp without time zone",
+        "projected_local_datetime": "2026-07-17T13:00:00",
+        "both_inputs_equal_after_projection": true,
+        "source_offset_provenance_erased": true,
+        "approved_null_expiry_bank_share_id": 99660,
+        "approved_null_expiry_is_sql_null": true,
+        "bank_shares_total_unchanged": true,
+        "bank_share_records_total_unchanged": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 39,
+      "execution_ordinal": 33,
+      "case_id": "access-shared-empty-expiry",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "BOUND_TYPED_DATABASE_ONLY",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "typed_postgresql_surface"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "target_data_source_case": "access-shared-null-expiry",
+      "tracking_note": "The empty SQLite string is represented by SQL NULL on the typed target; the equivalent target fixture is the null-expiry case, not an execution of this raw value.",
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-empty-expiry",
+        "disposition_leaf_ordinal": 34
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_empty",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-empty-expiry",
+        "remote_address": "198.51.27.112",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "historical_mapping_target_data_source_case",
+        "target_data_source_case": "access-shared-null-expiry"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 40,
+      "execution_ordinal": 34,
+      "case_id": "access-shared-fetchone-first-row",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "deterministic_share_grant",
+        "share_join_coherence"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "inherited_predecessor_difference_id": "P4C-LEARNING-006",
+      "target_data_source_case": "access-shared-future",
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-fetchone-first-row",
+        "disposition_leaf_ordinal": 35
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_multi",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 403,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-fetchone-first-row",
+        "remote_address": "198.51.143.173",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "historical_mapping_target_data_source_case",
+        "target_data_source_case": "access-shared-future"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 41,
+      "execution_ordinal": 35,
+      "case_id": "access-shared-cross-bank-record",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_DENIED",
+      "historical_binding_ids": [
+        "cross_bank_share_denied",
+        "share_join_coherence"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "inherited_predecessor_difference_id": "P4C-LEARNING-006",
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "access-shared-cross-bank-record",
+        "disposition_leaf_ordinal": 36
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_mismatch",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 403,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-access-shared-cross-bank-record",
+        "remote_address": "198.51.50.203",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "error",
+          "message": "无权访问此题库"
+        }
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 42,
+      "execution_ordinal": 36,
+      "case_id": "filter-q-type-choice",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-q-type-choice",
+        "disposition_leaf_ordinal": 37
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            " 选择题 "
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            " 选择题 "
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-q-type-choice",
+        "remote_address": "198.51.73.17",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 2,
+            "favorites": 2,
+            "mistakes": 0,
+            "types": [
+              "选择题"
+            ],
+            "shuffle_options_available": true
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 43,
+      "execution_ordinal": 37,
+      "case_id": "filter-q-type-all-uppercase",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-q-type-all-uppercase",
+        "disposition_leaf_ordinal": 38
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            "ALL"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            "ALL"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-q-type-all-uppercase",
+        "remote_address": "198.51.176.37",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 44,
+      "execution_ordinal": 38,
+      "case_id": "filter-q-type-unknown-maps-essay",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-q-type-unknown-maps-essay",
+        "disposition_leaf_ordinal": 39
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            "mystery"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            "mystery"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-q-type-unknown-maps-essay",
+        "remote_address": "198.51.64.176",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 1,
+            "favorites": 0,
+            "mistakes": 1,
+            "types": [
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 45,
+      "execution_ordinal": 39,
+      "case_id": "filter-source-mistakes",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "query_sequence"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-source-mistakes",
+        "disposition_leaf_ordinal": 40
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "mistakes"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "mistakes"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-source-mistakes",
+        "remote_address": "198.51.209.143",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 3,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "多选题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 46,
+      "execution_ordinal": 40,
+      "case_id": "filter-source-case-sensitive-fallback",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-source-case-sensitive-fallback",
+        "disposition_leaf_ordinal": 41
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "Favorites"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "Favorites"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-source-case-sensitive-fallback",
+        "remote_address": "198.51.55.152",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 47,
+      "execution_ordinal": 41,
+      "case_id": "filter-q-type-duplicate-first-wins",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-q-type-duplicate-first-wins",
+        "disposition_leaf_ordinal": 42
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            "选择题"
+          ],
+          [
+            "q_type",
+            "简答题"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "q_type",
+            "选择题"
+          ],
+          [
+            "q_type",
+            "简答题"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-q-type-duplicate-first-wins",
+        "remote_address": "198.51.157.106",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 2,
+            "favorites": 2,
+            "mistakes": 0,
+            "types": [
+              "选择题"
+            ],
+            "shuffle_options_available": true
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 48,
+      "execution_ordinal": 42,
+      "case_id": "filter-source-duplicate-first-wins",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "query_sequence"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-source-duplicate-first-wins",
+        "disposition_leaf_ordinal": 43
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ],
+          [
+            "source",
+            "mistakes"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ],
+          [
+            "source",
+            "mistakes"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-source-duplicate-first-wins",
+        "remote_address": "198.51.100.11",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 5,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 49,
+      "execution_ordinal": 43,
+      "case_id": "tag-all-bypasses-store",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "tag-all-bypasses-store",
+        "disposition_leaf_ordinal": 44
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "all"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "all"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-tag-all-bypasses-store",
+        "remote_address": "198.51.99.78",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 50,
+      "execution_ordinal": 44,
+      "case_id": "filter-tag-duplicate-first-all-wins",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "filter-tag-duplicate-first-all-wins",
+        "disposition_leaf_ordinal": 45
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "all"
+          ],
+          [
+            "tag",
+            "重点"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "all"
+          ],
+          [
+            "tag",
+            "重点"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-filter-tag-duplicate-first-all-wins",
+        "remote_address": "198.51.96.212",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 51,
+      "execution_ordinal": 45,
+      "case_id": "tag-case-sensitive-all-enters-store",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "controller_raw_parameters",
+        "filter_normalization"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "tag-case-sensitive-all-enters-store",
+        "disposition_leaf_ordinal": 46
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "All"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "All"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-tag-case-sensitive-all-enters-store",
+        "remote_address": "198.51.237.204",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 52,
+      "execution_ordinal": 46,
+      "case_id": "tag-legacy-migration-sa2-empty",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "legacy_tag_migration",
+        "zero_view_recheck"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllFortySixNonFaultHttpCasesThroughTheRealTarget",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "tag-legacy-migration-sa2-empty",
+        "disposition_leaf_ordinal": 47
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "旧标签"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "tag",
+            "旧标签"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-tag-legacy-migration-sa2-empty",
+        "remote_address": "198.51.72.71",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 0,
+            "favorites": 0,
+            "mistakes": 0,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "source_golden_case"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      }
+    },
+    {
+      "canonical_case_ordinal": 53,
+      "execution_ordinal": 51,
+      "case_id": "fault-favorites-sqlite-continues",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "favorite_failure_degradation"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-favorites-sqlite-continues",
+        "disposition_leaf_ordinal": 52
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-favorites-sqlite-continues",
+        "remote_address": "198.51.242.125",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 0,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 2,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 54,
+      "execution_ordinal": 52,
+      "case_id": "fault-favorites-postgresql-poison-simulation",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "favorite_failure_degradation",
+        "postgres_transaction_recovery"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-favorites-postgresql-poison-simulation",
+        "disposition_leaf_ordinal": 53
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-favorites-postgresql-poison-simulation",
+        "remote_address": "198.51.140.204",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 0,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 2,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 55,
+      "execution_ordinal": 53,
+      "case_id": "fault-mistakes-sqlite-continues",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "mistake_failure_degradation"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-mistakes-sqlite-continues",
+        "disposition_leaf_ordinal": 54
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-mistakes-sqlite-continues",
+        "remote_address": "198.51.74.219",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 0,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 3,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 56,
+      "execution_ordinal": 54,
+      "case_id": "fault-mistakes-postgresql-poison-simulation",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "mistake_failure_degradation",
+        "postgres_transaction_recovery"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-mistakes-postgresql-poison-simulation",
+        "disposition_leaf_ordinal": 55
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-mistakes-postgresql-poison-simulation",
+        "remote_address": "198.51.175.221",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 0,
+            "types": [
+              "判断题",
+              "简答题",
+              "填空题",
+              "多选题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 3,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 57,
+      "execution_ordinal": 55,
+      "case_id": "fault-types-degrades",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "type_failure_degradation"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-types-degrades",
+        "disposition_leaf_ordinal": 56
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-types-degrades",
+        "remote_address": "198.51.240.210",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 9,
+            "favorites": 5,
+            "mistakes": 3,
+            "types": [],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 4,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": false
+      }
+    },
+    {
+      "canonical_case_ordinal": 58,
+      "execution_ordinal": 56,
+      "case_id": "fault-source-favorites-second-count-postgresql-poison-simulation",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_AVAILABLE",
+      "historical_binding_ids": [
+        "type_failure_degradation",
+        "postgres_transaction_recovery"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-source-favorites-second-count-postgresql-poison-simulation",
+        "disposition_leaf_ordinal": 57
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ]
+        ],
+        "credential_mode": "session",
+        "session_actor": "owner",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 200,
+      "target_status": 200,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [
+          [
+            "source",
+            "favorites"
+          ]
+        ],
+        "accept": "*/*",
+        "request_id": "phase4c-target-fault-source-favorites-second-count-postgresql-poison-simulation",
+        "remote_address": "198.51.140.188",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_FIELDS_ONLY",
+        "asserted_body": {
+          "status": "success",
+          "code": 0,
+          "data": {
+            "total": 5,
+            "favorites": 0,
+            "mistakes": 3,
+            "types": [
+              "判断题",
+              "选择题",
+              "选择题",
+              "简答题"
+            ],
+            "shuffle_options_available": false
+          }
+        },
+        "data_projection_source": "java_test_explicit_override"
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "QUESTION_SUMMARY",
+        "occurrence": 2,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": true
+      }
+    },
+    {
+      "canonical_case_ordinal": 59,
+      "execution_ordinal": 57,
+      "case_id": "fault-share-access-hard-failure",
+      "route_id": "6858f6fa506f",
+      "alias": "api",
+      "source_case_classification": "MOCKMVC_FAILURE",
+      "historical_binding_ids": [
+        "strict_failure_boundary",
+        "typed_postgresql_surface"
+      ],
+      "http_slice_difference_ids": [
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-010"
+      ],
+      "execution_disposition": "EXECUTED_FULL_CONTEXT_HTTP_WITH_POSTGRES_ABORT",
+      "http_execution": true,
+      "junit": {
+        "class": "io.saksk.ti.integration.LegacyPersonalBankUserCountsGoldenTargetExecutionIT",
+        "factory_or_method": "executesAllElevenFaultCasesWithRealPostgresqlFailures",
+        "leaf_type": "dynamic_test",
+        "dynamic_test_name": "fault-share-access-hard-failure",
+        "disposition_leaf_ordinal": 58
+      },
+      "source_request": {
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "credential_mode": "session",
+        "session_actor": "shared_future",
+        "bearer_actor": "none"
+      },
+      "source_golden_response_status": 500,
+      "target_status": 500,
+      "target_request": {
+        "transport": "MockMvc",
+        "method": "GET",
+        "path": "/api/user/banks/api/99551/user-counts",
+        "query": [],
+        "accept": "application/json",
+        "request_id": "phase4c-target-fault-share-access-hard-failure",
+        "remote_address": "198.51.181.17",
+        "session_credential": "real_bootstrapped_target_session",
+        "bearer_credential": "none"
+      },
+      "expected_target_projection": {
+        "assertion_scope": "ASSERTED_JSON_STATUS_AND_REDACTION_ONLY",
+        "asserted_body": {
+          "status": "error"
+        },
+        "asserted_absent_substrings": [
+          "missing_phase4c_target_execution_column",
+          "42703",
+          "25P02"
+        ]
+      },
+      "sql_boundary": {
+        "execution_family_assertion": "CONTAINS",
+        "required_execution_families": [
+          "AUTHORITY_USERS",
+          "BANK_ACCESS"
+        ],
+        "authority_users_occurrence_count": 1,
+        "business_jdbc_reached": true,
+        "business_connections_read_only": true
+      },
+      "side_effect_assertions": {
+        "nine_table_database_fingerprint_unchanged": true,
+        "write_dml_count": 0,
+        "users_last_active_write_dml_count": 0,
+        "schema_mutation_count": 0,
+        "rate_limit_assertion_mode": "RESPONSE_HEADER_CONDITIONED"
+      },
+      "fault_evidence": {
+        "family": "SHARE_ACCESS",
+        "occurrence": 1,
+        "initial_sqlstate": "42703",
+        "poisoned_transaction_sqlstate": "25P02",
+        "fault_connection_read_only": true,
+        "rollback_after_fault_on_same_connection": true,
+        "failed_family_occurrence_has_no_success_record": true,
+        "later_same_family_success_after_rollback_on_different_connection_required": false
+      }
+    }
+  ],
+  "document_payload_sha256": "5ca521f808aa67ea4589d044d04a0037e448dc9d2a519e3b6af7d776b2cb89de"
+}

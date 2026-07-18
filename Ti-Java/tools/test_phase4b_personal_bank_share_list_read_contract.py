@@ -19,12 +19,18 @@ try:
         load_read_successor_contract,
         successor_sha256,
     )
+    from tools.phase4c_http_target_execution_successor_acceptance import (
+        fixed_source_sha256 as target_fixed_source_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_successor_acceptance import load_successor_contract
     from phase4c_read_successor_acceptance import (
         load_composition_predecessor_contract,
         load_read_successor_contract,
         successor_sha256,
+    )
+    from phase4c_http_target_execution_successor_acceptance import (
+        fixed_source_sha256 as target_fixed_source_sha256,
     )
 
 
@@ -228,6 +234,9 @@ PHASE3_AUTH_TIME_TEST_RELATIVE = (
 )
 PHASE3_AUTH_TIME_TEST_HISTORICAL_SHA256 = (
     "059abbf9fdf6d07acf4aebef55a6da1705f66142e4daea77ac093553441d0c76"
+)
+PHASE3_AUTH_TIME_ALL_SHARES_ENTRY_SHA256 = (
+    "cbafdbd774ab13429c834b20c7a89eab63f10f35edfc20173181bbbdf0e2e85c"
 )
 PROGRESS_FORWARD_HANDOFF_RELATIVE = "docs/refactor/05-progress.md"
 PROGRESS_HISTORICAL_SHA256 = (
@@ -788,8 +797,14 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
             ]
             self.assertEqual(PHASE3_AUTH_TIME_TEST_RELATIVE, phase3_handoff["source"])
             self.assertEqual(
-                sha256(ROOT / PHASE3_AUTH_TIME_TEST_RELATIVE),
+                PHASE3_AUTH_TIME_ALL_SHARES_ENTRY_SHA256,
                 phase3_handoff["sha256"],
+            )
+            self.assertEqual(
+                sha256(ROOT / PHASE3_AUTH_TIME_TEST_RELATIVE),
+                target_fixed_source_sha256(
+                    ROOT, PHASE3_AUTH_TIME_TEST_RELATIVE
+                ),
             )
             progress_handoff = successor["source_contracts"][
                 "progress_forward_handoff"
