@@ -1,0 +1,140 @@
+:root {
+  --app-bg: #f6f7f8;
+  --app-surface: #ffffff;
+  --app-surface-2: rgba(255, 255, 255, 0.78);
+  --app-text: #111827;
+  --app-muted: #6b7280;
+  --app-border: #e5e7eb;
+  --app-primary: #111827;
+  --app-primary-soft: rgba(17, 24, 39, 0.08);
+  --app-primary-contrast: #ffffff;
+  --app-cta: #111827;
+  --app-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+  --app-shadow-soft: 0 2px 10px rgba(2, 6, 23, 0.05);
+  --app-radius-xl: 18px;
+  --app-radius-lg: 14px;
+  --app-radius-md: 12px;
+  --app-radius-sm: 10px;
+  --app-sidebar-w: 200px;
+  --app-sidebar-w-collapsed: 64px;
+  --app-topbar-h: 56px;
+  --app-font-body: "Atkinson Hyperlegible", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  --app-font-heading: "Crimson Pro", "Songti SC", "STSong", "SimSun", serif;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --app-bg: #0b0b0c;
+  --app-surface: rgba(17, 17, 19, 0.92);
+  --app-surface-2: rgba(17, 17, 19, 0.72);
+  --app-text: #f3f4f6;
+  --app-muted: #a1a1aa;
+  --app-border: rgba(243, 244, 246, 0.14);
+  --app-primary: #f3f4f6;
+  --app-primary-soft: rgba(243, 244, 246, 0.12);
+  --app-primary-contrast: #0b0b0c;
+  --app-shadow: 0 16px 44px rgba(0, 0, 0, 0.35);
+  --app-shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
+}
+
+html[data-theme-style="mist"] {
+  --app-bg: #eef2ff;
+  --app-surface: #ffffff;
+  --app-surface-2: rgba(255, 255, 255, 0.86);
+  --app-border: #c7d2fe;
+  --app-primary: #4f46e5;
+  --app-primary-soft: rgba(79, 70, 229, 0.16);
+  --app-cta: #f97316;
+}
+
+html[data-theme-style="dune"] {
+  --app-bg: #fdfbf7;
+  --app-surface: #fffdf9;
+  --app-surface-2: rgba(255, 253, 249, 0.86);
+  --app-border: #e8e0d3;
+  --app-primary: #e07a2c;
+  --app-primary-soft: rgba(224, 122, 44, 0.16);
+  --app-cta: #ea580c;
+}
+
+html[data-theme-style="pine"] {
+  --app-bg: #f3f7f4;
+  --app-surface: #ffffff;
+  --app-surface-2: rgba(255, 255, 255, 0.86);
+  --app-border: #d8e4dd;
+  --app-primary: #2dba7d;
+  --app-primary-soft: rgba(45, 186, 125, 0.16);
+  --app-cta: #2dba7d;
+}
+
+html[data-theme-style="celadon"] {
+  --app-bg: #f0fdfa;
+  --app-surface: #ffffff;
+  --app-surface-2: rgba(255, 255, 255, 0.86);
+  --app-border: #5eead4;
+  --app-primary: #0d9488;
+  --app-primary-soft: rgba(13, 148, 136, 0.16);
+  --app-cta: #ea580c;
+}
+
+html[data-theme="dark"][data-theme-style="mist"] {
+  --app-bg: #0c111a;
+  --app-surface: rgba(20, 27, 39, 0.92);
+  --app-surface-2: rgba(20, 27, 39, 0.72);
+  --app-border: rgba(199, 210, 254, 0.16);
+  --app-primary: #818cf8;
+  --app-primary-soft: rgba(129, 140, 248, 0.2);
+  --app-cta: #f97316;
+}
+
+html[data-theme="dark"][data-theme-style="dune"] {
+  --app-bg: #15110d;
+  --app-surface: rgba(29, 24, 19, 0.92);
+  --app-surface-2: rgba(29, 24, 19, 0.72);
+  --app-border: rgba(224, 194, 162, 0.16);
+  --app-primary: #e7a46a;
+  --app-primary-soft: rgba(231, 164, 106, 0.2);
+  --app-cta: #e7a46a;
+}
+
+html[data-theme="dark"][data-theme-style="pine"] {
+  --app-bg: #0e1411;
+  --app-surface: rgba(18, 28, 23, 0.92);
+  --app-surface-2: rgba(18, 28, 23, 0.72);
+  --app-border: rgba(170, 210, 190, 0.16);
+  --app-primary: #63d29c;
+  --app-primary-soft: rgba(99, 210, 156, 0.2);
+  --app-cta: #63d29c;
+}
+
+html[data-theme="dark"][data-theme-style="celadon"] {
+  --app-bg: #0d1314;
+  --app-surface: rgba(18, 26, 27, 0.92);
+  --app-surface-2: rgba(18, 26, 27, 0.72);
+  --app-border: rgba(94, 234, 212, 0.18);
+  --app-primary: #2dd4bf;
+  --app-primary-soft: rgba(45, 212, 191, 0.2);
+  --app-cta: #ea580c;
+}
+
+html[data-theme-style="dune"] body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(36, 24, 12, 0.08) 1px, transparent 1px),
+    radial-gradient(rgba(36, 24, 12, 0.06) 1px, transparent 1px);
+  background-position: 0 0, 45px 30px;
+  background-size: 120px 120px, 90px 90px;
+  content: "";
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+html[data-theme="dark"][data-theme-style="dune"] body::before {
+  background-image:
+    radial-gradient(rgba(255, 248, 235, 0.08) 1px, transparent 1px),
+    radial-gradient(rgba(255, 248, 235, 0.06) 1px, transparent 1px);
+  opacity: 0.14;
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="SAK 题库广场只读浏览模块"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Crimson+Pro:wght@400;500;600;700&display=swap"
+    />
+    <script>
+      (() => {
+        try {
+          const storedTheme = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+          document.documentElement.dataset.theme = storedTheme || (prefersDark ? 'dark' : 'light');
+          document.documentElement.dataset.themeStyle =
+            localStorage.getItem('app_theme_style_v1') || 'default';
+          document.documentElement.classList.toggle(
+            'sidebar-collapsed',
+            localStorage.getItem('sidebar_collapsed') === '1',
+          );
+        } catch {
+          document.documentElement.dataset.theme = 'light';
+          document.documentElement.dataset.themeStyle = 'default';
+        }
+      })();
+    </script>
+    <title>题库广场 · SAK</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
