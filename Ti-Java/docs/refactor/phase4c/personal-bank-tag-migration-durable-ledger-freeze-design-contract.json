@@ -1,0 +1,510 @@
+{
+  "acl_and_sensitive_material_design": {
+    "fixture_role": "ti_phase4c_tag_design_operator",
+    "fixture_role_bypassrls": false,
+    "fixture_role_create_schema_or_table": false,
+    "fixture_role_createdb": false,
+    "fixture_role_createrole": false,
+    "fixture_role_direct_connect_grant": false,
+    "fixture_role_effective_connect_privilege": false,
+    "fixture_role_login": false,
+    "fixture_role_password_or_connect_grant": false,
+    "fixture_role_superuser": false,
+    "fixture_uses_owner_connection_then_set_role": true,
+    "ledger_select_insert_update_only": true,
+    "legacy_key_raw_payload_tag_secret_or_credential_in_ledger": false,
+    "legacy_key_raw_payload_tag_secret_or_credential_in_receipt": false,
+    "mutation_audit_migration_id_storage_type": "uuid",
+    "mutation_audit_not_visible_to_fixture_role": true,
+    "public_connect_revoked_in_disposable_database": true,
+    "receipt_select_insert_only": true,
+    "receipt_update_or_delete_rejected": true,
+    "sensitive_canary_absent_from_contract_payload": true,
+    "sensitive_canary_absent_from_ledger_receipt_and_mutation_audit": true,
+    "sensitive_canary_present_only_in_test_source_fixture": true,
+    "sensitive_canary_rejected_as_uuid_migration_id": true,
+    "source_select_only": true,
+    "statement_audit_not_visible_to_fixture_role": true,
+    "target_select_insert_only": true
+  },
+  "authorization": {
+    "backup_and_rollback_evidence_closed": false,
+    "bootstrap_control_sources_external_git_anchor_complete": true,
+    "bounded_40001_40P01_retry_implemented": false,
+    "client_gateway_or_proxy_change": false,
+    "current_node_control_sources_external_git_anchor_complete": false,
+    "flyway_baseline_or_migration": false,
+    "legacy_runtime_permanently_disabled": false,
+    "migration_design_closed": false,
+    "migration_durable_ledger_freeze_design_evidence_closed": true,
+    "migration_global_preflight_evidence_closed": true,
+    "newly_closed_gates": [
+      "migration_durable_ledger_freeze_design_evidence_closed"
+    ],
+    "operator_migration_implementation": false,
+    "production_connection_drain_evidence_closed": false,
+    "production_cutover": false,
+    "production_durable_ledger_or_tombstone": false,
+    "production_membership_write_freeze_or_digest_recheck_evidence_closed": false,
+    "production_schema_or_index": false,
+    "production_source_write_freeze_evidence_closed": false,
+    "production_target_write_freeze_evidence_closed": false,
+    "real_data_migration_execution": false,
+    "route_or_openapi_delta": false,
+    "semantic_successor_external_git_anchor_complete": true,
+    "source_successor_external_git_anchor_complete": true
+  },
+  "captured_at": "2026-07-19T13:20:00+08:00",
+  "contract_id": "ti.phase4c.personal-bank-tag-migration-durable-ledger-freeze-design-contract",
+  "document_payload_sha256": "fba73f917a285b85cb8fcd7afd22a94f60bac960beb508f173caf0ea96079ffa",
+  "durable_ledger_design": {
+    "arbitrary_text_migration_id_storable": false,
+    "database_identity": {
+      "cluster_database_identity_domain_separator": "ti:phase4c:tag-migration:cluster-database:v1",
+      "cluster_database_identity_inputs": [
+        "cluster_system_identifier",
+        "database_oid",
+        "server_version",
+        "server_address",
+        "server_port"
+      ],
+      "cluster_system_identifier_or_database_oid_stored_plain": false,
+      "domain_separator": "ti:phase4c:tag-migration:run-identity:v1",
+      "exact_match_required_for_cas_replay_and_ambiguity_recovery": true,
+      "ledger_receipt_and_fresh_recovery_identity_exact_match": true,
+      "one_time_migration_run_uuid_required": true,
+      "plain_database_name_or_user_stored": false,
+      "run_identity_inputs": [
+        "backup_manifest_sha256",
+        "migration_run_uuid",
+        "cluster_database_identity_sha256"
+      ],
+      "stored_as_sha256_only": true
+    },
+    "fixture_only": true,
+    "flyway_migration_created": false,
+    "migration_id_storage_type": "uuid",
+    "owner": "learning",
+    "production_relation_created": false,
+    "receipt_protocol": {
+      "append_only": true,
+      "confirmed_replay_business_dml": 0,
+      "deferred_commit_constraint_checks_target_count": true,
+      "deferred_commit_constraint_requires_applied": true,
+      "empty_noop_requires_explicit_receipt": true,
+      "empty_noop_requires_zero_target_rows": true,
+      "every_frozen_source_has_exactly_one_receipt": true,
+      "exact_receipt_match_required": true,
+      "frozen_source_scope": "all_test_fixture_source_rows",
+      "local_file_redis_or_user_progress_marker_allowed": false,
+      "material_disposition_requires_positive_target_rows": true,
+      "primary_key": [
+        "migration_id",
+        "source_row_id"
+      ],
+      "receipt_and_target_insert_require_applying": true,
+      "receipt_first_replay": true,
+      "receipt_freeze_restore_digests_have_ledger_foreign_key": true,
+      "receipt_identity_and_digests_have_ledger_foreign_key": true,
+      "receipt_inserted_before_target": true,
+      "receipt_mismatch_blocks": true,
+      "receipt_source_row_has_source_foreign_key": true,
+      "receipt_target_and_applied_state_single_transaction": true,
+      "target_has_receipt_foreign_key": true,
+      "zero_row_or_on_conflict_dml_attempt_detected_by_statement_audit": true
+    },
+    "state_machine": {
+      "all_empty_noop_with_explicit_receipts_allowed": true,
+      "applied_transition_deferred_commit_guard": true,
+      "applied_transition_immediate_complete_disposition_guard": true,
+      "arbitrary_blocked_message_forbidden": true,
+      "blocked_code_allowlist": [
+        "DIGEST_DRIFT",
+        "RECEIPT_MISMATCH",
+        "TARGET_MISMATCH",
+        "IDENTITY_MISMATCH",
+        "ILLEGAL_STATE"
+      ],
+      "compare_and_swap_predicate": [
+        "migration_id",
+        "expected_state",
+        "expected_version",
+        "migration_run_uuid",
+        "backup_manifest_sha256",
+        "cluster_database_identity_sha256",
+        "database_identity_sha256",
+        "preflight_digest_sha256",
+        "plan_digest_sha256",
+        "source_digest_sha256",
+        "target_digest_sha256",
+        "membership_digest_sha256",
+        "source_writer_stop_receipt_sha256",
+        "target_writer_stop_receipt_sha256",
+        "membership_writer_stop_receipt_sha256",
+        "restored_backup_sha256"
+      ],
+      "created_at_immutable": true,
+      "exactly_one_concurrent_winner": true,
+      "freeze_and_restore_digests_immutable_after_first_freeze": true,
+      "identity_and_digest_columns_immutable": true,
+      "illegal_transition_fails_closed": true,
+      "initial_state": "PLANNED",
+      "initial_version": 0,
+      "insert_requires_clean_planned_v0": true,
+      "state_and_version_advance_together": true,
+      "state_version_mapping_database_checked": true,
+      "states": [
+        "PLANNED",
+        "FROZEN",
+        "APPLYING",
+        "APPLIED",
+        "BLOCKED"
+      ],
+      "terminal_states": [
+        "APPLIED",
+        "BLOCKED"
+      ],
+      "transitions": [
+        {
+          "from": "PLANNED",
+          "next_version": 1,
+          "to": "FROZEN",
+          "version": 0
+        },
+        {
+          "from": "FROZEN",
+          "next_version": 2,
+          "to": "APPLYING",
+          "version": 1
+        },
+        {
+          "from": "APPLYING",
+          "next_version": 3,
+          "to": "APPLIED",
+          "version": 2
+        },
+        {
+          "from": "PLANNED",
+          "next_version": 1,
+          "to": "BLOCKED",
+          "version": 0
+        },
+        {
+          "from": "FROZEN",
+          "next_version": 2,
+          "to": "BLOCKED",
+          "version": 1
+        },
+        {
+          "from": "APPLYING",
+          "next_version": 3,
+          "to": "BLOCKED",
+          "version": 2
+        }
+      ],
+      "unexplained_zero_target_applied_transition_allowed": false,
+      "zero_receipt_applied_transition_allowed": false
+    },
+    "tables": {
+      "ledger": "phase4c_tag_migration_design_ledger",
+      "mutation_audit": "phase4c_tag_migration_design_mutation_audit",
+      "receipt": "phase4c_tag_migration_design_receipt",
+      "statement_audit": "phase4c_tag_migration_design_statement_audit",
+      "target": "phase4c_tag_migration_design_target"
+    },
+    "target_fact_digest_protocol": {
+      "applied_transition_compares_canonical_digest_to_all_receipts": true,
+      "applied_transition_compares_canonical_digest_to_ledger": true,
+      "caller_supplied_target_fact_digest_column_present": false,
+      "canonical_inputs": [
+        "distinct question_id",
+        "tag_utf8"
+      ],
+      "canonical_order": [
+        "question_id_ascending",
+        "tag_C_collation"
+      ],
+      "domain_separator": "ti:phase4c:tag-migration:canonical-target-facts:v1",
+      "field_encoding": "utf8_byte_length_prefix_then_value",
+      "java_recovery_independently_recomputes_canonical_digest": true,
+      "postgresql_recomputes_digest_from_canonical_facts": true,
+      "wrong_facts_cannot_be_masked_by_caller_digest": true,
+      "wrong_facts_transition_to_blocked_target_mismatch": true
+    }
+  },
+  "evidence": {
+    "ack_discard_fixture_ambiguity_recovery": true,
+    "ack_discard_fixture_real_network": false,
+    "actual_40001_and_40P01_from_postgresql": true,
+    "actual_40001_and_40P01_traverse_bounded_retry_loop": true,
+    "canonical_target_digest_postgresql_java_parity": true,
+    "cas_state_machine_and_illegal_transition": true,
+    "classification": "test-only PostgreSQL design evidence; no production connection, schema, freeze or migration",
+    "complete_disposition_set_guarded_on_applied_transition": true,
+    "concurrent_cas_one_winner_one_loser": true,
+    "container_images_fixed_by_phase2": true,
+    "database_identity_digest": true,
+    "explicit_empty_noop_receipt_for_canary_source": true,
+    "independent_java_acceptance_claimed": false,
+    "integration_test_class": "io.saksk.ti.integration.Phase4cLegacyPersonalBankTagDurableLedgerFreezeDesignIT",
+    "integration_test_methods": [
+      "durableLedgerFreezeDesignEvidenceHoldsOnPostgres16",
+      "durableLedgerFreezeDesignEvidenceHoldsOnPostgres18"
+    ],
+    "java_contract_parity_loaded_from_same_integration_test": true,
+    "only_40001_40P01_bounded_retry_classifier": true,
+    "postgresql_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "production_credentials_read": false,
+    "production_data_read_or_mutated": false,
+    "production_database_connected": false,
+    "production_operator_executed": false,
+    "public_connect_effective_privilege_removed": true,
+    "receipt_first_replay_zero_business_dml": true,
+    "receipt_target_state_atomic_commit_and_rollback": true,
+    "restricted_role_acl": true,
+    "sensitive_canary_exclusion": true,
+    "user_compose_or_production_docker_mutated": false,
+    "wrong_target_fact_and_digest_masking_blocked": true
+  },
+  "freeze_protocol_design": {
+    "advisory_lock_alone_is_freeze_evidence": false,
+    "all_existing_database_connections_drained_or_terminated": true,
+    "all_process_stop_required": [
+      "legacy_web",
+      "legacy_worker",
+      "legacy_scheduler",
+      "java_web",
+      "java_worker",
+      "java_scheduler"
+    ],
+    "backup_restored_into_new_isolated_target_database": true,
+    "freeze_receipts_bound_to_database_identity_and_backup_digest": true,
+    "java_advisory_lock_is_only_cooperative_coordination": true,
+    "legacy_writer_snapshots": {
+      "bank_tag_get_fallback_writer": {
+        "byte_count": 11710,
+        "commits_without_java_advisory_lock": true,
+        "git_blob_oid": "06e4a87d006ee152bd920c77c9606aebe2a14661",
+        "mode": "100644",
+        "reads_reserved_bank_tag_key": true,
+        "repository_path": "app/modules/user_bank/routes/api_tags.py",
+        "sha256": "e627d5dd64e27d80b28f2c200ec5e110bb9aedb6d73c225337071d5490284407",
+        "writes_target_when_target_is_empty": true
+      },
+      "generic_progress_writer": {
+        "accepts_arbitrary_p_key_delete": true,
+        "accepts_arbitrary_p_key_post": true,
+        "byte_count": 11340,
+        "commits_without_java_advisory_lock": true,
+        "git_blob_oid": "a2dd8d426a3a441cd9099ece0c87376d893153a8",
+        "mode": "100644",
+        "repository_path": "app/modules/quiz/routes/api_components/progress_tags_notifications.py",
+        "sha256": "4dfaa547800ee6a1e01d57fac4ccd235a524e98d1be90ec14e466b2094eddbfc"
+      }
+    },
+    "legacy_writers_take_java_advisory_lock": false,
+    "new_connections_rejected_during_freeze": true,
+    "old_runtime_must_never_restart_after_applying_begins": true,
+    "preflight_and_source_target_membership_digests_rechecked_after_restore": true,
+    "production_backup_restore_evidenced": false,
+    "production_connection_drain_evidenced": false,
+    "production_membership_write_freeze_or_digest_recheck_evidenced": false,
+    "production_source_write_freeze_evidenced": false,
+    "production_target_write_freeze_evidenced": false
+  },
+  "next_gate": {
+    "node_b_design_evidence_is_apply_authorization": false,
+    "production_execution_requires_explicit_user_authorization": true,
+    "required_next": "implement an explicitly authorized production ledger/schema and Operator, then prove real all-process freeze, connection drain, restored-backup identity, bounded retry, backup/rollback and apply"
+  },
+  "node_a_git_authority": {
+    "bootstrap_control_source_count": 11,
+    "external_anchor_checkpoint": {
+      "added_count": 6,
+      "added_total_bytes": 190723,
+      "artifacts": {
+        "docs/refactor/phase4c/personal-bank-tag-migration-global-preflight-post-push-anchor-contract.json": {
+          "byte_count": 66318,
+          "git_blob_oid": "4870efa2769668590d356c8e8052ddf8f453e1ca",
+          "mode": "100644",
+          "sha256": "66394e93b15088c4fbcd3db1dd190306c10b816b504b85e3dca8c89b1c3980d3"
+        },
+        "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightPostPushAnchorContractParityTest.java": {
+          "byte_count": 12763,
+          "git_blob_oid": "d94a60b74bb1735f4758772ccc3f348988b9b7bc",
+          "mode": "100644",
+          "sha256": "9481b95ed60e559dae1919d83aa50b70f33649a968c4d24c33bd4c22aac1ff4a"
+        },
+        "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightPostPushAnchorSuccessorAcceptance.java": {
+          "byte_count": 22265,
+          "git_blob_oid": "cdfef7bce7d51eae5420719f3acd9fb06e34b2d2",
+          "mode": "100644",
+          "sha256": "d0cf01bb7a0d626962d9740e2175fc8546e4e2bda9e8b4f5a779c8cf367a74e0"
+        },
+        "tools/build_phase4c_tag_migration_global_preflight_post_push_anchor_contract.py": {
+          "byte_count": 50605,
+          "git_blob_oid": "c7bfb875c49edbfdbe11ce78c19ea9484e53503f",
+          "mode": "100644",
+          "sha256": "6e7b8f27e7587c3430e27f9adeec8ec12bf4c5be325e3ae616cae4d8fbdbec27"
+        },
+        "tools/phase4c_tag_migration_global_preflight_post_push_anchor_successor_acceptance.py": {
+          "byte_count": 25770,
+          "git_blob_oid": "a019840144f495d886030177cf4c04e4af5d1220",
+          "mode": "100644",
+          "sha256": "3e2b3d6c06cff592176713578b779c5bac36f104a6ac52d30e187414763f05e3"
+        },
+        "tools/test_phase4c_tag_migration_global_preflight_post_push_anchor_contract.py": {
+          "byte_count": 13002,
+          "git_blob_oid": "5943729f4fc0e98390314047ba6c0e186d9034d4",
+          "mode": "100644",
+          "sha256": "0a1b044fc082edd4449d845c44d9da3dc5d10ea85c346a2c1fe8d093f8cf34bb"
+        }
+      },
+      "authored_at": "2026-07-19T11:45:59+08:00",
+      "changed_path_count": 6,
+      "commit_oid": "345deff63d2d3e867926f1e0d05d5e6d90885c4a",
+      "committed_at": "2026-07-19T11:45:59+08:00",
+      "deleted_count": 0,
+      "deleted_line_count": 0,
+      "inserted_line_count": 3426,
+      "modified_count": 0,
+      "numstat_sha256": "9b7c2d8d38ec68119ce6e1b0539c3839565390d97e500e3e65e4fe4fe0937c12",
+      "object_format": "sha1",
+      "parent_oid": "256d5b347e2e5266eef084221807337427ceb16f",
+      "parent_root_tree_oid": "efcd304e85f597ac22840110630d9fc0ae9a8fb0",
+      "parent_server_src_main_tree_oid": "21fe4902d57a11998502e63041b5a56fb039a090",
+      "parent_server_tree_oid": "0adfaa0bf6e0edeba2aceebce6c267421e3b8144",
+      "parent_ti_java_tree_oid": "e47d851f451fdf045d2c456065ae6913c69229d2",
+      "parent_web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215",
+      "raw_delta_sha256": "a2f2d57fa6e0d051fde8d5d4e536369b62f12b2a3186433eded6e39ef33c74ff",
+      "root_tree_oid": "a59ee94d6cf533555d5d853ef11fa39e7612a22b",
+      "server_src_main_tree_oid": "21fe4902d57a11998502e63041b5a56fb039a090",
+      "server_tree_oid": "4749b6ab453516ff7ca060d59d3759ffd2da6d6b",
+      "subject": "test(java): anchor tag migration global preflight",
+      "ti_java_tree_oid": "87da31003c4d545762bac2a0de12ef4712300f04",
+      "web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215"
+    },
+    "fixed_source_count": 72,
+    "implementation_checkpoint": {
+      "added_count": 17,
+      "changed_path_count": 63,
+      "commit_oid": "256d5b347e2e5266eef084221807337427ceb16f",
+      "deleted_count": 0,
+      "modified_count": 46,
+      "numstat_sha256": "8f06547f62f829b0b3c20f7596f0e5879377a76d08b5ee03ff5860f74792c7dd",
+      "parent_oid": "08328c3fe18e074f581bb9e782ee4ae86cf46c53",
+      "parent_root_tree_oid": "ffd636fbedd6f39dc1975a8752b3a250a4bd184c",
+      "parent_server_src_main_tree_oid": "7130e1d1fde766030689658cdd508794ab9a12d6",
+      "parent_server_tree_oid": "0471b8408a1149f38b3c98d57b1a11cab8288d3a",
+      "parent_ti_java_tree_oid": "0e2fbc42f39f00753c4588e1ddc690725413b88c",
+      "parent_web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215",
+      "raw_delta_sha256": "035e51e17ce5b2596b604e479c244a1b2af711f14940730095a268257209ebcf",
+      "root_tree_oid": "efcd304e85f597ac22840110630d9fc0ae9a8fb0",
+      "server_src_main_tree_oid": "21fe4902d57a11998502e63041b5a56fb039a090",
+      "server_tree_oid": "0adfaa0bf6e0edeba2aceebce6c267421e3b8144",
+      "subject": "refactor(java): close tag migration global preflight",
+      "ti_java_tree_oid": "e47d851f451fdf045d2c456065ae6913c69229d2",
+      "web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215"
+    },
+    "implementation_checkpoint_exact_artifact_count": 63,
+    "live_head_or_ref_used": false,
+    "ordinary_build_requires_git": false,
+    "semantic_consumer_path_count": 26,
+    "source_successor_path_count": 42
+  },
+  "predecessor": {
+    "byte_count": 66318,
+    "captured_at": "2026-07-19T11:15:25+08:00",
+    "contract_id": "ti.phase4c.personal-bank-tag-migration-global-preflight-post-push-anchor-contract",
+    "document_payload_sha256": "85a3bf65e560e8240e0c38f5689401e93e5c716e8523125afa5b6589495bb01e",
+    "immutable": true,
+    "node_a_contract": {
+      "byte_count": 102931,
+      "document_payload_sha256": "c7a94e88772a2453743f9821b165ae10f52650a41bf6dab78006d7058951159e",
+      "sha256": "65803c1aacc50592eb04404e1b16d4d139a844022e37198df23453ad61dc598e"
+    },
+    "scope": "phase4c-personal-bank-tag-migration-global-preflight-post-push-external-anchor",
+    "sha256": "66394e93b15088c4fbcd3db1dd190306c10b816b504b85e3dca8c89b1c3980d3",
+    "source": "docs/refactor/phase4c/personal-bank-tag-migration-global-preflight-post-push-anchor-contract.json",
+    "status": "global_preflight_checkpoint_externally_anchored_migration_design_operator_apply_and_cutover_unauthorized"
+  },
+  "retry_and_ambiguity_design": {
+    "ack_discard_after_commit_fixture_evidenced": true,
+    "ack_discard_fixture_is_real_network_failure": false,
+    "ambiguous_commit_confirmation_business_dml": 0,
+    "ambiguous_commit_confirmation_requires": [
+      "exact_receipt",
+      "matching_one_time_migration_run_uuid",
+      "matching_backup_manifest_sha256",
+      "matching_cluster_database_identity_sha256",
+      "matching_database_identity_sha256",
+      "matching_target_digest_sha256",
+      "independently_recomputed_canonical_question_tag_digest",
+      "complete_disposition_receipt_set",
+      "ledger_state_APPLIED"
+    ],
+    "any_mismatch_blocks_without_retrying_apply": true,
+    "fresh_transaction_per_attempt": true,
+    "maximum_attempts": 3,
+    "maximum_retries": 2,
+    "non_retryable_sqlstate_attempts": 1,
+    "non_retryable_sqlstate_retries": 0,
+    "production_retry_implementation_present": false,
+    "real_network_commit_ack_loss_evidenced": false,
+    "real_postgresql_40001_evidenced": true,
+    "real_postgresql_40001_traversed_retry_loop": true,
+    "real_postgresql_40P01_evidenced": true,
+    "real_postgresql_40P01_traversed_retry_loop": true,
+    "retryable_sqlstates": [
+      "40001",
+      "40P01"
+    ],
+    "unknown_or_missing_sqlstate_fails_closed": true
+  },
+  "route_state": {
+    "legacy_flask_remains_production_owner": true,
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-learning-owned-tag-migration-durable-ledger-freeze-design",
+  "source_authority": {
+    "absolute_parent_escape_or_symlink": "reject",
+    "control_source_count": 8,
+    "control_sources": [
+      "docs/refactor/phase4c/personal-bank-tag-migration-durable-ledger-freeze-design-contract.json",
+      "docs/refactor/phase4c/personal-bank-tag-migration-durable-ledger-freeze-design.md",
+      "server/src/test/java/io/saksk/ti/integration/Phase4cLegacyPersonalBankTagDurableLedgerFreezeDesignIT.java",
+      "server/src/test/resources/db/phase4c/074-legacy-personal-bank-tag-durable-ledger-freeze-design-schema.sql",
+      "server/src/test/resources/db/phase4c/075-legacy-personal-bank-tag-durable-ledger-freeze-design-seed.sql",
+      "tools/build_phase4c_tag_migration_durable_ledger_freeze_design_contract.py",
+      "tools/phase4c_tag_migration_durable_ledger_freeze_design_successor_acceptance.py",
+      "tools/test_phase4c_tag_migration_durable_ledger_freeze_design_contract.py"
+    ],
+    "control_sources_excluded_from_self_authority": true,
+    "control_sources_external_git_anchor_complete": false,
+    "dynamic_source_discovery": false,
+    "fixed_source_allowlist": [
+      "docs/refactor/phase4c/personal-bank-tag-migration-global-preflight-post-push-anchor-contract.json"
+    ],
+    "fixed_source_allowlist_exact": true,
+    "fixed_source_count": 1,
+    "fixed_sources": {
+      "docs/refactor/phase4c/personal-bank-tag-migration-global-preflight-post-push-anchor-contract.json": {
+        "byte_count": 66318,
+        "document_payload_sha256": "85a3bf65e560e8240e0c38f5689401e93e5c716e8523125afa5b6589495bb01e",
+        "sha256": "66394e93b15088c4fbcd3db1dd190306c10b816b504b85e3dca8c89b1c3980d3"
+      }
+    },
+    "historical_contract_overwrite": false,
+    "live_head_or_ref_authority": false,
+    "ordinary_build_and_load_are_gitless": true,
+    "unknown_source": "reject"
+  },
+  "status": "durable_ledger_freeze_design_test_evidence_closed_production_freeze_schema_operator_apply_backup_and_cutover_unauthorized"
+}
