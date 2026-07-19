@@ -337,6 +337,30 @@ CURRENT_NODE_SOURCES = (
     "tools/phase4c_http_typed_normalization_successor_acceptance.py",
     "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_contract.py",
 )
+NODEA_OWNED_POST_PUSH_SOURCES = {
+    (
+        "tools/build_phase4c_personal_bank_user_counts_http_"
+        "target_execution_contract.py"
+    ): "8f729d39a528cf0c5acb93802e9f6d830d8fc79bc80421c2a80d37a6ead58209",
+    (
+        "tools/build_phase4c_personal_bank_user_counts_http_"
+        "target_execution_post_push_contract.py"
+    ): "a215e6b65624630de990dcae7e8d718e8a38a1fadae3e00ee0f3ccb81788959f",
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java"
+    ): "46f68412ea0cf42687133ba87a2184b86fe1b0c29625b1ee3f6e8f7301399efa",
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpTargetExecutionSuccessorAcceptance.java"
+    ): "945ddfd83ed4f8e0be4db02b1bd58abf74450eaf8996a92a12554ab8b81da578",
+    "tools/phase4c_http_target_execution_successor_acceptance.py": (
+        "95e00e9d136e212cbcb5501d2abae46b9679bb2412d07ba6fcf79cbb9dd4de1a"
+    ),
+    "tools/phase4c_http_target_execution_post_push_successor_acceptance.py": (
+        "944c925704e1b237a7d8e16c76591a0e8b7965d388bedd9e2a52492e0511c90c"
+    ),
+}
 
 # The only third-hop transitions this node is allowed to expose.  The accepted
 # hashes are the bytes in the immutable c38 checkpoint; successor hashes bind
@@ -1184,7 +1208,18 @@ def accepted_sha256(relative: str) -> str | None:
     """Return the c38 hash for one of the nine fixed third-hop paths."""
 
     descriptor = THIRD_HOP_SOURCES.get(relative)
-    return None if descriptor is None else descriptor["accepted_sha256"]
+    if descriptor is not None:
+        return descriptor["accepted_sha256"]
+    declared = NODEA_OWNED_POST_PUSH_SOURCES.get(relative)
+    if declared is None:
+        return None
+    acceptance = _load_tag_preflight_successor_acceptance()
+    accepted_lookup = getattr(acceptance, "accepted_sha256", None)
+    if not callable(accepted_lookup) or accepted_lookup(relative) != declared:
+        raise AssertionError(
+            f"tag-preflight successor does not accept typed-owned source: {relative}"
+        )
+    return declared
 
 
 def _load_typed_normalization_anchor_successor_acceptance() -> object:
@@ -1209,6 +1244,26 @@ def _load_typed_normalization_anchor_successor_acceptance() -> object:
         ) from error
 
 
+def _load_tag_preflight_successor_acceptance() -> object:
+    qualified_name = (
+        "tools.phase4c_tag_migration_global_preflight_successor_acceptance"
+    )
+    direct_name = "phase4c_tag_migration_global_preflight_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed tag-preflight successor acceptance is required"
+        ) from error
+
+
 def _current_or_typed_normalization_anchor_successor_sha256(
         root: Path,
         relative: str,
@@ -1224,15 +1279,37 @@ def _current_or_typed_normalization_anchor_successor_sha256(
     successor_lookup = getattr(anchor, "successor_sha256", None)
     if not callable(accepted_lookup) or not callable(successor_lookup):
         raise AssertionError("typed-normalization anchor successor API is incomplete")
-    if accepted_lookup(relative) != declared_sha256:
+    anchor_accepted = accepted_lookup(relative)
+    if anchor_accepted is not None:
+        if anchor_accepted != declared_sha256:
+            raise AssertionError(
+                "typed-normalization anchor does not accept historical source: "
+                f"{relative}"
+            )
+        if successor_lookup(root, relative) != physical_sha256:
+            raise AssertionError(
+                "typed-normalization anchor does not bind current source: "
+                f"{relative}"
+            )
+        return physical_sha256
+    fixed_nodea_accepted = NODEA_OWNED_POST_PUSH_SOURCES.get(relative)
+    if fixed_nodea_accepted is None or fixed_nodea_accepted != declared_sha256:
         raise AssertionError(
             "typed-normalization anchor does not accept historical source: "
             f"{relative}"
         )
-    if successor_lookup(root, relative) != physical_sha256:
+    nodea = _load_tag_preflight_successor_acceptance()
+    nodea_accepted = getattr(nodea, "accepted_sha256", None)
+    nodea_successor = getattr(nodea, "successor_sha256", None)
+    if not callable(nodea_accepted) or not callable(nodea_successor):
+        raise AssertionError("tag-preflight successor API is incomplete")
+    if nodea_accepted(relative) != declared_sha256:
         raise AssertionError(
-            "typed-normalization anchor does not bind current source: "
-            f"{relative}"
+            f"tag-preflight successor does not accept historical source: {relative}"
+        )
+    if nodea_successor(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"tag-preflight successor does not bind current source: {relative}"
         )
     return physical_sha256
 
@@ -1249,12 +1326,20 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     """
 
     descriptor = THIRD_HOP_SOURCES.get(relative)
-    if descriptor is None:
+    fixed_nodea_accepted = NODEA_OWNED_POST_PUSH_SOURCES.get(relative)
+    if descriptor is None and fixed_nodea_accepted is None:
         return None
     root = ti_java_root.resolve(strict=True)
     _validate_contract_physical_bytes(root)
     payload = _fixed_regular_file(root, relative).read_bytes()
     physical = _sha256_bytes(payload)
+    if descriptor is None:
+        return _current_or_typed_normalization_anchor_successor_sha256(
+            root,
+            relative,
+            fixed_nodea_accepted,
+            physical,
+        )
     transitioned = _current_or_typed_normalization_anchor_successor_sha256(
         root,
         relative,

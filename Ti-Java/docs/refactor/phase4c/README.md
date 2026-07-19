@@ -149,3 +149,47 @@ PG IT 在 PostgreSQL 16.14/18.4 各自固定 backend PID、权威与业务 SQL f
 `effective-route-parity-successor-status.json` 按 successor delta > Phase 4C pending delta > Phase 4A effective predecessor 的固定优先级物化 592 条规则/611 个 operation，拒绝未知 key 和层内重复 key，最终为 **13 migrated、598 pending、0 production cutover**。`personal-bank-user-counts-route-promotion-contract.json` 同时绑定 frozen matrix、Phase 4A effective predecessor、历史 pending delta、successor delta、full-parity eligibility anchor 与有效状态的 SHA-256/字节数，并由 Python/Java acceptance/parity 交叉验证。
 
 本节点没有修改生产 Java、`SecurityConfiguration`、共享认证过滤器、OpenAPI、data ownership、Compose、`server/pom.xml`、schema/index 或 WORM；旧 Flask 仍是生产 owner。operator、真实标签迁移、客户端/网关和 production cutover 继续禁止。
+
+## Personal-bank legacy tag 全局预检 Node A（当前 bootstrap）
+
+Node A 新增显式调用、非 Spring 自动注册的生产侧只读组件
+`LegacyPersonalBankTagGlobalPreflight`。它在一条 dedicated JDBC connection 上先取得固定的
+session-level advisory lock，再以 `SERIALIZABLE READ ONLY DEFERRABLE` 事务扫描全部
+`bank_%_tags` reserved source。执行面只有固定 SELECT、事务控制和 advisory lock/unlock，
+没有业务 DML、DDL、Runner、Scheduler、HTTP 或自动启动入口。
+
+每个 source 都会得到确定性的 all-or-block 处置：canonical/near-miss key、规范化 bank
+碰撞、严格 JSON 形状、Unicode `Nd` 整数、Python whitespace/tag 截断语义、目标真子集或
+冲突、bank 存在性及 question membership。source 查询在 PostgreSQL 侧只 materialize 不超过
+1 MiB 的 payload；整轮另有 100,000 行和 256 MiB 总 UTF-8 长度上限。NUL 与孤立 surrogate
+以 `TAG_NOT_LOSSLESS` 拒绝，避免 Java UTF-8 replacement 让不同输入产生相同 digest；合法
+surrogate pair 保持可用。报告只包含稳定 code、计数、domain-separated digest 和脱敏数据库
+identity digest，不保存 legacy key、raw JSON、tag、数据库名、数据库用户或 Secret。
+
+最初生成的第六 WORM `personal-bank-tag-global-preflight-worm-evidence.json` 物理 SHA-256 为
+`283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72`，绑定早期
+build-context `2b2f2b9956a9188a81606b50405ac82ded0253bbe2539d6fb841575b4c21dcf9`。
+独立审计发现载荷 materialization 与 PostgreSQL-lossy Unicode 风险后，没有覆盖该报告，
+而是修复生产实现并追加第七 hardening WORM
+`personal-bank-tag-global-preflight-hardening-worm-evidence.json`：物理 SHA-256
+`93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344`，build-context
+`a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17`，唯一前驱正是第六
+报告。两份报告均绑定同一 Dockerfile `bb99afb…f499` 与 PG18.4 70 表/617 列恢复、read-role
+ACL、Hibernate `validate`、startup/readiness；生产数据库版本仍为 unknown，Flyway baseline
+仍未创建。
+
+Unit 20/20 覆盖 parser/global 关键分支与持锁失败清理；PG16.14/18.4 IT 2/2 覆盖 11 类
+disposition、锁竞争、只读事务事实及业务表指纹不变。Node A 另固定 42 条单向
+source-successor（其中 26 条是语义 consumer）、72 个 fixed source 与 11 个自排除 control；全量
+source discovery 704/704、UTC `clean verify` 767 Surefire + 169 Failsafe，全部
+0 failure/error/skip。七节点 fixed WORM chain 与 Node A 合同只允许新增
+`global_preflight_closed=true`。当前 bootstrap 的控制源还必须由下一次固定 Git
+外锚承接，不能自授权。`isApplyEligible()` 永远返回 false；durable ledger、write freeze、
+Operator、生产 schema/index、Flyway、真实 apply、旧 Flask 永久下线及 production cutover 均保持
+false。路由权威不变：**13 migrated、598 pending、0 production cutover**。
+
+旧 Flask tag GET 在目标为空时会执行 DDL/DML/commit，通用 `/api/progress` 也可写或删除
+任意 `p_key`，所以 advisory lock 不能代替全停机冻结。后继 Node B 只能先关闭 durable ledger
+与 freeze protocol 的设计/test-only PG16/18 证据；真实迁移必须在旧 Web/Worker/Scheduler 和
+既有连接全部停止、冻结备份已恢复到新目标库、Phase 8 Flyway baseline 获准之后执行，且一旦
+apply 开始就不得恢复旧 Flask。

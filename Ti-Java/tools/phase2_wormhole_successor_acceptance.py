@@ -92,6 +92,32 @@ PHASE4C_HTTP_IMPLEMENTATION_DOCKERFILE_SHA256 = (
     "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
 )
 
+PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH = (
+    "docs/refactor/phase4c/personal-bank-tag-global-preflight-worm-evidence.json"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256 = (
+    "283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_BUILD_CONTEXT_SHA256 = (
+    "2b2f2b9956a9188a81606b50405ac82ded0253bbe2539d6fb841575b4c21dcf9"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256 = (
+    "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH = (
+    "docs/refactor/phase4c/"
+    "personal-bank-tag-global-preflight-hardening-worm-evidence.json"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256 = (
+    "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256 = (
+    "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17"
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256 = (
+    "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+)
+
 READ_SUCCESSOR_MODULE = "tools.phase4c_read_successor_acceptance"
 TARGET_EXECUTION_SUCCESSOR_MODULE = (
     "tools.phase4c_http_target_execution_successor_acceptance"
@@ -107,6 +133,9 @@ TYPED_NORMALIZATION_SUCCESSOR_MODULE = (
 )
 TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE = (
     "tools.phase4c_http_typed_normalization_anchor_successor_acceptance"
+)
+TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_global_preflight_successor_acceptance"
 )
 
 
@@ -170,12 +199,30 @@ PHASE4C_HTTP_IMPLEMENTATION_SUCCESSOR = EvidenceDescriptor(
     dockerfile_sha256=PHASE4C_HTTP_IMPLEMENTATION_DOCKERFILE_SHA256,
     predecessor_sha256=PHASE4C_READ_ACCESS_REPORT_SHA256,
 )
+PHASE4C_TAG_GLOBAL_PREFLIGHT_SUCCESSOR = EvidenceDescriptor(
+    label="phase4c-personal-bank-tag-global-preflight",
+    relative_path=PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
+    sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
+    build_context_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_BUILD_CONTEXT_SHA256,
+    dockerfile_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256,
+    predecessor_sha256=PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
+)
+PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_SUCCESSOR = EvidenceDescriptor(
+    label="phase4c-personal-bank-tag-global-preflight-hardening",
+    relative_path=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH,
+    sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
+    build_context_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
+    dockerfile_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256,
+    predecessor_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
+)
 FIXED_EVIDENCE_CHAIN = (
     HISTORICAL_ANCHOR,
     PHASE4C_SUCCESSOR,
     PHASE4C_READ_SUCCESSOR,
     PHASE4C_READ_ACCESS_SUCCESSOR,
     PHASE4C_HTTP_IMPLEMENTATION_SUCCESSOR,
+    PHASE4C_TAG_GLOBAL_PREFLIGHT_SUCCESSOR,
+    PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_SUCCESSOR,
 )
 FIXED_IMMUTABLE_MIRRORS = (
     ImmutableMirror(
@@ -600,6 +647,11 @@ def validate_fixed_acceptance(
         "phase4c_http_typed_normalization_anchor_successor_acceptance",
         "Phase4C fixed HTTP typed-normalization anchor successor acceptance",
     )
+    tag_global_preflight_successor = _load_fixed_successor_module(
+        TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE,
+        "phase4c_tag_migration_global_preflight_successor_acceptance",
+        "Phase4C fixed tag global-preflight successor acceptance",
+    )
 
     load_read_successor_contract = _required_loader(
         read_successor,
@@ -630,6 +682,11 @@ def validate_fixed_acceptance(
         typed_normalization_anchor_successor,
         "load",
         "Phase4C fixed HTTP typed-normalization anchor successor acceptance",
+    )
+    load_tag_global_preflight_successor = _required_loader(
+        tag_global_preflight_successor,
+        "load",
+        "Phase4C fixed tag global-preflight successor acceptance",
     )
 
     require(
@@ -668,6 +725,10 @@ def validate_fixed_acceptance(
         ),
         "Phase4C fixed HTTP typed-normalization anchor successor contract is required",
     )
+    require(
+        isinstance(load_tag_global_preflight_successor(ti_java_root), dict),
+        "Phase4C fixed tag global-preflight successor contract is required",
+    )
 
     return validate_fixed_chain(
         ti_java_root,
@@ -683,13 +744,12 @@ def validate_fixed_chain(
     current_dockerfile_sha256: str,
     current_build_context_sha256: str,
 ) -> EvidenceDescriptor:
-    """Validate the fixed bytes without using the successor contract as authority.
+    """Validate fixed physical WORM bytes without importing successor contracts.
 
-    Contract builders use this path before the terminal target-execution
-    contract exists.  The production static gate calls
-    ``validate_fixed_acceptance`` and therefore additionally requires the
-    bootstrap-validated target successor.  Route promotion remains blocked
-    until a later Git-anchored node fixes the physical bridge bytes.
+    Terminal contract builders use this independent path to bind the reviewed
+    chain tip without recursively loading their own acceptance module.  The
+    production static gate calls ``validate_fixed_acceptance`` and therefore
+    additionally requires every code-fixed logical successor contract.
     """
 
     return validate_evidence_chain(

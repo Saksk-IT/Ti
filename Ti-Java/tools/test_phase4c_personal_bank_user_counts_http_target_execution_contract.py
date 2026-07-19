@@ -29,6 +29,9 @@ CONTRACT_PATH = ROOT / acceptance.CONTRACT_RELATIVE
 EVIDENCE_PATH = ROOT / builder.TARGET_EVIDENCE_RELATIVE
 GOLDEN_PATH = ROOT / builder.GOLDEN_RELATIVE
 MAPPING_PATH = ROOT / builder.PARTIAL_MAPPING_RELATIVE
+TAG_PREFLIGHT_CURRENT_WORM_SHA256 = (
+    "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344"
+)
 
 REMOVED_UNUSED_SEED_SOURCE_KEYS = {
     "share_list_seed",
@@ -108,6 +111,23 @@ def read_json(path: Path) -> dict:
     if not isinstance(document, dict):
         raise AssertionError(f"JSON source is not an object: {path}")
     return document
+
+
+def validate_worm_successor(*args, **kwargs):
+    try:
+        from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_worm_successor as validate_successor,
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        from phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_worm_successor as validate_successor,
+        )
+    return validate_successor(*args, **kwargs)
 
 
 def target_fault_occurrence(case_id: str) -> int:
@@ -272,10 +292,33 @@ class Phase4cTargetExecutionFixedRootsTest(unittest.TestCase):
         self.assertEqual(builder.JAVA_BUILD_CONTEXT_SHA256, worm[
             "java_build_context_sha256"])
         self.assertFalse(worm["new_worm"])
-        self.assertEqual(
-            builder.JAVA_BUILD_CONTEXT_SHA256,
-            builder.java_build_context_sha256(),
-        )
+        physical_build_context = builder.java_build_context_sha256()
+        if physical_build_context == builder.JAVA_BUILD_CONTEXT_SHA256:
+            self.assertEqual(
+                builder.JAVA_BUILD_CONTEXT_SHA256,
+                physical_build_context,
+            )
+        else:
+            successor = validate_worm_successor(
+                ROOT,
+                builder.WORM_SHA256,
+                builder.JAVA_BUILD_CONTEXT_SHA256,
+            )
+            self.assertEqual(builder.WORM_SHA256, successor.accepted_report_sha256)
+            self.assertEqual(
+                builder.JAVA_BUILD_CONTEXT_SHA256,
+                successor.accepted_build_context_sha256,
+            )
+            self.assertEqual(5, successor.accepted_chain_node_count)
+            self.assertEqual(
+                TAG_PREFLIGHT_CURRENT_WORM_SHA256,
+                successor.current_report_sha256,
+            )
+            self.assertEqual(
+                physical_build_context,
+                successor.current_build_context_sha256,
+            )
+            self.assertEqual(7, successor.current_chain_node_count)
         fixed_chain = predecessor["worm_evidence"]["fixed_phase2_chain"]
         self.assertEqual(5, fixed_chain["node_count"])
         self.assertEqual(builder.WORM_SHA256, fixed_chain["tip_sha256"])

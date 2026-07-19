@@ -18,6 +18,7 @@ try:
         load_composition_predecessor_contract,
         load_read_successor_contract,
         successor_sha256,
+        validate_tag_preflight_production_runtime_successor,
     )
     from tools.phase4c_http_target_execution_successor_acceptance import (
         fixed_source_sha256 as target_fixed_source_sha256,
@@ -28,6 +29,7 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         load_composition_predecessor_contract,
         load_read_successor_contract,
         successor_sha256,
+        validate_tag_preflight_production_runtime_successor,
     )
     from phase4c_http_target_execution_successor_acceptance import (
         fixed_source_sha256 as target_fixed_source_sha256,
@@ -502,13 +504,21 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                     self.assertEqual(hashes[name], current_hash, name)
 
         if self.read_successor is not None:
+            accepted_manifest = self.read_successor["implementation"][
+                "learning_and_personalbank_main_source_manifest"
+            ]
             current_manifest = learning_and_personalbank_main_source_manifest()
-            self.assertEqual(40, len(current_manifest))
-            self.assertEqual(
-                self.read_successor["implementation"]
-                ["learning_and_personalbank_main_source_manifest"],
+            runtime = validate_tag_preflight_production_runtime_successor(
+                ROOT,
+                accepted_manifest,
                 current_manifest,
+                view="learning_personalbank_main",
             )
+            self.assertEqual(40, runtime.accepted_file_count)
+            self.assertEqual(43, runtime.current_file_count)
+            self.assertEqual(3, len(runtime.added_files))
+            self.assertEqual((), runtime.changed_files)
+            self.assertEqual((), runtime.deleted_files)
 
     def test_04_api_dto_optional_and_immutability_shapes_are_exact(self):
         application = self.contract["application_contract"]

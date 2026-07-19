@@ -63,7 +63,6 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         successor_sha256 as target_execution_successor_sha256,
     )
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = (
     ROOT / "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json"
@@ -80,6 +79,46 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def validate_production_runtime_successor(*args, **kwargs):
+    try:
+        from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_production_runtime_successor as validate_successor,
+        )
+    except ModuleNotFoundError as error:  # Direct script execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        from phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_production_runtime_successor as validate_successor,
+        )
+    return validate_successor(*args, **kwargs)
+
+
+def tag_preflight_source_successor(
+    root: Path,
+    relative: str,
+    accepted_sha256: str,
+) -> str | None:
+    try:
+        from tools import (
+            phase4c_tag_migration_global_preflight_successor_acceptance
+            as successor
+        )
+    except ModuleNotFoundError as error:  # Direct script execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        import phase4c_tag_migration_global_preflight_successor_acceptance \
+            as successor
+    if successor.accepted_sha256(relative) != accepted_sha256:
+        return None
+    return successor.successor_sha256(root, relative)
 
 
 def canonical_json(value) -> str:
@@ -160,6 +199,14 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
                         == reference["sha256"]):
                     self.assertEqual(current_hash, target_successor, name)
                     continue
+                tag_successor = tag_preflight_source_successor(
+                    ROOT,
+                    relative,
+                    reference["sha256"],
+                )
+                if tag_successor is not None:
+                    self.assertEqual(current_hash, tag_successor, name)
+                    continue
                 implementation_successor = implementation_successor_sha256(
                     ROOT, relative
                 )
@@ -211,12 +258,24 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
         self.assertEqual([], implementation["deleted_main_sources"])
 
         current_main = builder.main_source_manifest()
+        accepted_main = implementation[
+            "learning_and_personalbank_main_source_manifest"
+        ]
+        if current_main == accepted_main:
+            self.assertEqual(40, len(current_main))
+        else:
+            main_successor = validate_production_runtime_successor(
+                ROOT,
+                accepted_main,
+                current_main,
+                view="learning_personalbank_main",
+            )
+            self.assertEqual(40, main_successor.accepted_file_count)
+            self.assertEqual(43, main_successor.current_file_count)
+            self.assertEqual([], list(main_successor.changed_files))
+            self.assertEqual([], list(main_successor.deleted_files))
         self.assertEqual(
-            current_main,
-            implementation["learning_and_personalbank_main_source_manifest"],
-        )
-        self.assertEqual(
-            builder.sha256_json(current_main),
+            builder.sha256_json(accepted_main),
             implementation["learning_and_personalbank_main_source_manifest_sha256"],
         )
         runtime = implementation["production_runtime_surface"]
@@ -230,8 +289,20 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
             "manifest_sha256": runtime["manifest_sha256"],
         }, transition["predecessor"])
         current_runtime = builder.production_runtime_manifest()
-        self.assertEqual(297, len(current_runtime))
-        self.assertEqual(current_runtime, transition["current"]["files"])
+        accepted_runtime = transition["current"]["files"]
+        if current_runtime == accepted_runtime:
+            self.assertEqual(297, len(current_runtime))
+        else:
+            runtime_successor = validate_production_runtime_successor(
+                ROOT,
+                accepted_runtime,
+                current_runtime,
+                view="full_runtime",
+            )
+            self.assertEqual(297, runtime_successor.accepted_file_count)
+            self.assertEqual(300, runtime_successor.current_file_count)
+            self.assertEqual([], list(runtime_successor.changed_files))
+            self.assertEqual([], list(runtime_successor.deleted_files))
 
     def test_03_exact_twenty_seven_method_shape_and_http_neutral_apis_close(self):
         methods = self.contract["implementation"]["public_application_methods"]
@@ -447,6 +518,13 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
                 if target_successor is not None and (
                         target_execution_accepted_sha256(relative) == expected):
                     expected = target_successor
+                tag_successor = tag_preflight_source_successor(
+                    ROOT,
+                    relative,
+                    expected,
+                )
+                if tag_successor is not None:
+                    expected = tag_successor
                 self.assertEqual(sha256(ROOT / relative), expected)
                 self.assertNotEqual(reference["accepted_sha256"], "")
 

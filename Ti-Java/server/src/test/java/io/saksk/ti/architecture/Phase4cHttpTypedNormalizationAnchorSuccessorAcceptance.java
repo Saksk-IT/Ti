@@ -281,6 +281,20 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
             "tools/test_phase4c_personal_bank_user_counts_http_"
                     + "typed_normalization_anchor_contract.py");
 
+    private static final Set<String> TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS =
+            Set.of(
+                    "infra/phase2/README.md",
+                    "infra/phase2/verify-static.sh",
+                    "server/src/test/java/io/saksk/ti/architecture/"
+                            + "Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+                    "tools/phase2_wormhole_successor_acceptance.py",
+                    "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+                    "tools/test_phase2_wormhole_successor_acceptance.py",
+                    "tools/test_phase4c_personal_bank_user_counts_http_"
+                            + "target_execution_post_push_contract.py",
+                    "tools/test_phase4c_personal_bank_user_counts_http_"
+                            + "target_execution_post_push_anchor_contract.py");
+
     private Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance() {
     }
 
@@ -326,6 +340,21 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
                             + relative);
             return physicalSha256;
         }
+        if (TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS.contains(relative)) {
+            String tagAccepted =
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .acceptedSha256(relative);
+            require(declared.successorSha256().equals(tagAccepted),
+                    "tag-preflight source successor does not accept "
+                            + "typed-anchor bytes: " + relative);
+            String tagSuccessor =
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .successorSha256(root, relative);
+            require(physicalSha256.equals(tagSuccessor),
+                    "tag-preflight source successor does not bind current bytes: "
+                            + relative);
+            return physicalSha256;
+        }
         String phase6Accepted =
                 Phase6WebFoundationSourceSuccessorAcceptance
                         .acceptedHash(relative);
@@ -362,6 +391,9 @@ final class Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance {
         paths.addAll(SUCCESSORS.keySet());
         paths.addAll(Phase6WebFoundationSourceSuccessorAcceptance
                 .minimalFixturePaths());
+        paths.add(
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                        .contractRelative());
         return Set.copyOf(paths);
     }
 

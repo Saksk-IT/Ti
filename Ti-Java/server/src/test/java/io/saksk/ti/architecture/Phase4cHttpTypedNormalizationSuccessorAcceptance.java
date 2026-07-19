@@ -167,6 +167,24 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
             "Ti-Java/tools/test_phase4c_personal_bank_user_counts_http_"
                     + "target_execution_post_push_contract.py");
 
+    private static final Map<String, String> NODEA_OWNED_POST_PUSH_SOURCES = Map.of(
+            "tools/build_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_contract.py",
+            "8f729d39a528cf0c5acb93802e9f6d830d8fc79bc80421c2a80d37a6ead58209",
+            "tools/build_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_post_push_contract.py",
+            "a215e6b65624630de990dcae7e8d718e8a38a1fadae3e00ee0f3ccb81788959f",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+            "46f68412ea0cf42687133ba87a2184b86fe1b0c29625b1ee3f6e8f7301399efa",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+            "945ddfd83ed4f8e0be4db02b1bd58abf74450eaf8996a92a12554ab8b81da578",
+            "tools/phase4c_http_target_execution_successor_acceptance.py",
+            "95e00e9d136e212cbcb5501d2abae46b9679bb2412d07ba6fcf79cbb9dd4de1a",
+            "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+            "944c925704e1b237a7d8e16c76591a0e8b7965d388bedd9e2a52492e0511c90c");
+
     private static final Map<String, AnchoredSource> ANCHORED_SOURCES = Map.ofEntries(
             anchor(PREDECESSOR_RELATIVE,
                     "a010939ba208dd03387595ba191807eca5612ee8",
@@ -438,7 +456,19 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
 
     static String acceptedHash(String relative) {
         SuccessorSource source = THIRD_HOP_SUCCESSORS.get(relative);
-        return source == null ? null : source.acceptedSha256();
+        if (source != null) {
+            return source.acceptedSha256();
+        }
+        String declared = NODEA_OWNED_POST_PUSH_SOURCES.get(relative);
+        if (declared == null) {
+            return null;
+        }
+        require(declared.equals(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .acceptedSha256(relative)),
+                "tag-preflight successor does not accept typed-owned source: "
+                        + relative);
+        return declared;
     }
 
     static Set<String> successorPaths() {
@@ -447,7 +477,8 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
 
     static String successorHash(Path tiJavaRoot, String relative) throws IOException {
         SuccessorSource source = THIRD_HOP_SUCCESSORS.get(relative);
-        if (source == null) {
+        String fixedNodeaAccepted = NODEA_OWNED_POST_PUSH_SOURCES.get(relative);
+        if (source == null && fixedNodeaAccepted == null) {
             return null;
         }
         Path root = tiJavaRoot.toRealPath();
@@ -457,6 +488,10 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
         validateContractPhysicalBytes(root);
         Path path = fixedRegularFile(root, relative);
         String physical = sha256(path);
+        if (source == null) {
+            return currentOrTypedNormalizationAnchorSuccessorHash(
+                    root, relative, fixedNodeaAccepted, physical);
+        }
         String transitioned = currentOrTypedNormalizationAnchorSuccessorHash(
                 root, relative, source.successorSha256(), physical);
         require(!source.successorSha256().equals(physical)
@@ -474,16 +509,32 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
         if (declared.equals(physical)) {
             return physical;
         }
-        require(declared.equals(
-                        Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
-                                .acceptedHash(relative)),
+        String anchorAccepted =
+                Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                        .acceptedHash(relative);
+        if (anchorAccepted != null) {
+            require(declared.equals(anchorAccepted),
+                    "typed-normalization anchor does not accept historical bytes: "
+                            + relative);
+            require(physical.equals(
+                            Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                                    .successorHash(root, relative)),
+                    "typed-normalization anchor does not bind current bytes: "
+                            + relative);
+            return physical;
+        }
+        require(declared.equals(NODEA_OWNED_POST_PUSH_SOURCES.get(relative)),
                 "typed-normalization anchor does not accept historical bytes: "
                         + relative);
-        require(physical.equals(
-                        Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
-                                .successorHash(root, relative)),
-                "typed-normalization anchor does not bind current bytes: "
+        require(declared.equals(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .acceptedSha256(relative)),
+                "tag-preflight successor does not accept historical bytes: "
                         + relative);
+        require(physical.equals(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .successorSha256(root, relative)),
+                "tag-preflight successor does not bind current bytes: " + relative);
         return physical;
     }
 
@@ -494,6 +545,9 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
         paths.addAll(SOURCE_CONTRACTS.keySet());
         paths.add(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                        .contractRelative());
+        paths.add(
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                         .contractRelative());
         return Set.copyOf(paths);
     }

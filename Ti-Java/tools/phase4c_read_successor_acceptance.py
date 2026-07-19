@@ -20,6 +20,11 @@ try:
         accepted_sha256 as http_target_execution_accepted_sha256,
         successor_sha256 as http_target_execution_successor_sha256,
     )
+    from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+        accepted_sha256 as tag_preflight_accepted_sha256,
+        successor_sha256 as tag_preflight_successor_sha256,
+        validate_production_runtime_successor as validate_tag_preflight_runtime,
+    )
     from tools.phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
         successor_sha256 as composition_successor_sha256,
@@ -37,6 +42,11 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_target_execution_successor_acceptance import (
         accepted_sha256 as http_target_execution_accepted_sha256,
         successor_sha256 as http_target_execution_successor_sha256,
+    )
+    from phase4c_tag_migration_global_preflight_successor_acceptance import (
+        accepted_sha256 as tag_preflight_accepted_sha256,
+        successor_sha256 as tag_preflight_successor_sha256,
+        validate_production_runtime_successor as validate_tag_preflight_runtime,
     )
     from phase4c_successor_acceptance import (
         SUCCESSOR_SOURCES as COMPOSITION_SUCCESSOR_SOURCES,
@@ -235,7 +245,17 @@ def validate_read_successor_contract(contract: dict, ti_java_root: Path) -> None
                             f"successor for {relative}"
                         )
                     physical_hash = implementation_successor
-        if not resolved.is_file() or _sha256(resolved) != physical_hash:
+        current_hash = _sha256(resolved)
+        if current_hash != physical_hash:
+            tag_successor = tag_preflight_successor_sha256(root, relative)
+            if tag_successor is not None:
+                if tag_preflight_accepted_sha256(relative) != physical_hash:
+                    raise AssertionError(
+                        "tag preflight did not accept the exact historical "
+                        f"read successor for {relative}"
+                    )
+                physical_hash = tag_successor
+        if not resolved.is_file() or current_hash != physical_hash:
             raise AssertionError(f"read successor file hash drift for {relative}")
 
 
@@ -286,6 +306,16 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
                 )
             return implementation_successor
         if fixed is not None:
+            tag_successor = tag_preflight_successor_sha256(
+                ti_java_root, relative
+            )
+            if tag_successor is not None:
+                if tag_preflight_accepted_sha256(relative) != fixed[1]:
+                    raise AssertionError(
+                        "tag preflight did not accept the exact historical "
+                        f"read successor for {relative}"
+                    )
+                return tag_successor
             return fixed[1]
         composition_fixed = COMPOSITION_SUCCESSOR_SOURCES.get(relative)
         if composition_fixed is None:
@@ -293,3 +323,19 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
         load_composition_predecessor_contract(ti_java_root)
         return composition_fixed["successor_sha256"]
     return composition_successor_sha256(ti_java_root, relative)
+
+
+def validate_tag_preflight_production_runtime_successor(
+    ti_java_root: Path,
+    accepted_files: dict[str, str],
+    current_files: dict[str, str],
+    *,
+    view: str,
+):
+    """Admit only Node A's exact 40→43 or 297→300 runtime transition."""
+    return validate_tag_preflight_runtime(
+        ti_java_root,
+        accepted_files,
+        current_files,
+        view=view,
+    )

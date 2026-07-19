@@ -517,14 +517,24 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
         JsonNode production = contract.path("production_surface");
         require(production.path("files").equals(predecessorCurrent.path("files")),
                 "target-execution contract changed predecessor runtime files");
+        Map<String, String> accepted = textMap(predecessorCurrent.path("files"));
         Map<String, String> physical = productionRuntimeManifest(root);
-        require(physical.size() == PRODUCTION_FILE_COUNT,
-                "physical production runtime file count drifted");
-        require(PRODUCTION_MANIFEST_SHA256.equals(
-                        canonicalNodeSha256(JSON.valueToTree(physical))),
-                "physical production runtime manifest drifted");
-        require(JSON.valueToTree(physical).equals(production.path("files")),
-                "target-execution production surface differs from worktree");
+        if (!physical.equals(accepted)) {
+            Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                    .ProductionRuntimeSuccessor successor =
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .validateProductionRuntimeSuccessor(
+                                    root, accepted, physical, "full_runtime");
+            require(successor.acceptedFileCount() == PRODUCTION_FILE_COUNT
+                            && successor.acceptedManifestSha256().equals(
+                            PRODUCTION_MANIFEST_SHA256)
+                            && successor.currentFileCount() == physical.size()
+                            && successor.currentManifestSha256().equals(
+                            canonicalNodeSha256(JSON.valueToTree(physical)))
+                            && successor.changedFiles().isEmpty()
+                            && successor.deletedFiles().isEmpty(),
+                    "tag preflight runtime successor descriptor drifted");
+        }
     }
 
     private static void validateExecutionEvidence(Path root, JsonNode contract)
@@ -1134,8 +1144,17 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
                         && "validate".equals(
                         worm.path("java").path("hibernateDdlAuto").asString()),
                 "physical implementation WORM drifted");
-        require(BUILD_CONTEXT_SHA256.equals(javaBuildContextSha256(root)),
-                "physical Java build context drifted");
+        String physicalBuildContext = javaBuildContextSha256(root);
+        if (!BUILD_CONTEXT_SHA256.equals(physicalBuildContext)) {
+            Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.WormSuccessor
+                    successor = Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                    .validateWormSuccessor(root, WORM_SHA256, BUILD_CONTEXT_SHA256);
+            require(successor.acceptedChainNodeCount() == 5
+                            && successor.currentBuildContextSha256().equals(
+                            physicalBuildContext)
+                            && successor.currentChainNodeCount() == 7,
+                    "tag preflight WORM successor descriptor drifted");
+        }
     }
 
     private static String validateTerminalSource(
@@ -1150,15 +1169,32 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
         if (declaredSha256.equals(physicalSha256)) {
             return physicalSha256;
         }
+        String postPushAccepted =
+                Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
+                        .acceptedHash(relative);
+        if (postPushAccepted != null) {
+            require(declaredSha256.equals(postPushAccepted),
+                    "post-push successor did not accept exact " + label + ": "
+                            + relative);
+            String successorSha256 =
+                    Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
+                            .successorHash(root, relative);
+            require(physicalSha256.equals(successorSha256),
+                    "post-push successor file hash drift for " + label + ": "
+                            + relative);
+            return physicalSha256;
+        }
         require(declaredSha256.equals(
-                        Phase4cHttpTargetExecutionPostPushSuccessorAcceptance
-                                .acceptedHash(relative)),
-                "post-push successor did not accept exact " + label + ": " + relative);
-        String successorSha256 =
-                Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.successorHash(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .acceptedSha256(relative)),
+                "tag-preflight successor did not accept exact " + label + ": "
+                        + relative);
+        String tagPreflightSuccessor =
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.successorSha256(
                         root, relative);
-        require(physicalSha256.equals(successorSha256),
-                "post-push successor file hash drift for " + label + ": " + relative);
+        require(physicalSha256.equals(tagPreflightSuccessor),
+                "tag-preflight successor file hash drift for " + label + ": "
+                        + relative);
         return physicalSha256;
     }
 
@@ -1246,6 +1282,13 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
         Map<String, Integer> values = new LinkedHashMap<>();
         object.properties().forEach(entry -> values.put(
                 entry.getKey(), entry.getValue().asInt()));
+        return Map.copyOf(values);
+    }
+
+    private static Map<String, String> textMap(JsonNode object) {
+        Map<String, String> values = new TreeMap<>();
+        object.properties().forEach(entry -> values.put(
+                entry.getKey(), entry.getValue().asString()));
         return Map.copyOf(values);
     }
 

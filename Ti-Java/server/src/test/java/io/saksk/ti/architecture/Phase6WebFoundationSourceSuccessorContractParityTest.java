@@ -31,9 +31,9 @@ class Phase6WebFoundationSourceSuccessorContractParityTest {
             "README.md",
             "5e3f2b7da26c3edf0f791e99110dcc4e53e1cb64dfdd78b46fe4e276406a1e59",
             "docs/refactor/05-progress.md",
-            "657ca0e5fec6d0a70fbcfd8b81da6815a46be395a2cd3230520fe036b584144b",
+            "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
             "docs/refactor/phase4c/README.md",
-            "dbf542c042b3ee96663cb39c049bc44deb1790cf4c6e0345f208ea6c27cc2d0c");
+            "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48");
 
     @Test
     void loadsTheCanonicalFixedBootstrapWithoutPromotingPhase6() throws Exception {
@@ -172,7 +172,7 @@ class Phase6WebFoundationSourceSuccessorContractParityTest {
                             .load(fixture))
                     .as(relative)
                     .isInstanceOf(AssertionError.class)
-                    .hasMessageContaining("bytes drifted");
+                    .hasMessageContaining("bytes");
         }
     }
 

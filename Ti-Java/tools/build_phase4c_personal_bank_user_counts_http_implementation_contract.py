@@ -17,7 +17,13 @@ from pathlib import Path
 try:
     from tools import build_phase4c_personal_bank_user_counts_read_contract as read_builder
     from tools import phase2_wormhole_successor_acceptance as phase2_worm
-except ModuleNotFoundError:  # Direct execution from tools/.
+except ModuleNotFoundError as error:  # Direct execution from tools/.
+    if error.name not in {
+        "tools",
+        "tools.build_phase4c_personal_bank_user_counts_read_contract",
+        "tools.phase2_wormhole_successor_acceptance",
+    }:
+        raise
     import build_phase4c_personal_bank_user_counts_read_contract as read_builder
     import phase2_wormhole_successor_acceptance as phase2_worm
 
@@ -30,6 +36,23 @@ DEFAULT_OUTPUT = ROOT / (
 CONTRACT_ID = "ti.phase4c.personal-bank-user-counts-http-implementation-contract"
 CONTRACT_STATUS = "implementation_present_parity_incomplete_routes_pending"
 CONTRACT_SCOPE = "phase4c-personal-bank-user-counts-http-implementation"
+
+
+def tag_preflight_successor():
+    try:
+        from tools import (
+            phase4c_tag_migration_global_preflight_successor_acceptance
+            as successor
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        import phase4c_tag_migration_global_preflight_successor_acceptance \
+            as successor
+    return successor
 
 PREDECESSOR_RELATIVE = (
     "docs/refactor/phase4c/personal-bank-user-counts-http-entry-contract.json"
@@ -495,7 +518,30 @@ def validate_runtime_transition(predecessor: dict, read: dict) -> dict:
     if entry_surface["production_runtime_manifest_sha256"] != baseline["manifest_sha256"]:
         raise ValueError("HTTP entry runtime hash does not match read predecessor")
 
-    current_files = read_builder.production_runtime_manifest()
+    physical_files = read_builder.production_runtime_manifest()
+    accepted_paths = set(baseline_files) | set(EXPECTED_ADDED_RUNTIME_PATHS)
+    if not accepted_paths <= set(physical_files):
+        raise ValueError("HTTP implementation historical runtime paths are missing")
+    current_files = {
+        path: physical_files[path]
+        for path in sorted(accepted_paths)
+    }
+    if physical_files != current_files:
+        successor = tag_preflight_successor().validate_production_runtime_successor(
+            ROOT,
+            current_files,
+            physical_files,
+            view="full_runtime",
+        )
+        if (
+            successor.accepted_file_count != EXPECTED_CURRENT_RUNTIME_FILE_COUNT
+            or successor.accepted_manifest_sha256 != sha256_json(current_files)
+            or successor.current_file_count != len(physical_files)
+            or successor.current_manifest_sha256 != sha256_json(physical_files)
+            or successor.changed_files
+            or successor.deleted_files
+        ):
+            raise ValueError("tag preflight runtime successor descriptor drifted")
     added = {
         path: current_files[path]
         for path in sorted(set(current_files) - set(baseline_files))
@@ -518,12 +564,25 @@ def validate_runtime_transition(predecessor: dict, read: dict) -> dict:
     if len(current_files) != EXPECTED_CURRENT_RUNTIME_FILE_COUNT:
         raise ValueError("unexpected HTTP implementation runtime file count")
 
-    learning_personalbank = read_builder.main_source_manifest()
+    physical_learning_personalbank = read_builder.main_source_manifest()
     predecessor_main = read["implementation"][
         "learning_and_personalbank_main_source_manifest"
     ]
-    if learning_personalbank != predecessor_main:
-        raise ValueError("learning/personalbank production sources changed in the HTTP slice")
+    if physical_learning_personalbank != predecessor_main:
+        successor = tag_preflight_successor().validate_production_runtime_successor(
+            ROOT,
+            predecessor_main,
+            physical_learning_personalbank,
+            view="learning_personalbank_main",
+        )
+        if (
+            successor.accepted_file_count != EXPECTED_MAIN_FILE_COUNT
+            or successor.accepted_manifest_sha256 != EXPECTED_MAIN_MANIFEST_SHA256
+            or successor.changed_files
+            or successor.deleted_files
+        ):
+            raise ValueError("tag preflight main-source successor descriptor drifted")
+    learning_personalbank = predecessor_main
     if len(learning_personalbank) != EXPECTED_MAIN_FILE_COUNT:
         raise ValueError("unexpected learning/personalbank source count")
     if sha256_json(learning_personalbank) != EXPECTED_MAIN_MANIFEST_SHA256:
@@ -1099,23 +1158,48 @@ def validate_worm(build_context_sha256: str) -> dict:
 
 def validate_phase2_fixed_chain(build_context_sha256: str) -> dict:
     dockerfile_sha256 = sha256(fixed_regular_file("server/Dockerfile"))
-    tip = phase2_worm.validate_fixed_chain(
-        ROOT,
-        fixed_regular_file("infra/phase2/reference-drift-manifest.json"),
-        dockerfile_sha256,
-        build_context_sha256,
-    )
-    if tip.relative_path != WORM_RELATIVE:
-        raise ValueError("Phase2 fixed WORM chain does not end at the HTTP checkpoint")
-    if tip.sha256 != sha256(fixed_regular_file(WORM_RELATIVE)):
-        raise ValueError("Phase2 fixed WORM tip digest does not bind the HTTP checkpoint")
-    if tip.predecessor_sha256 != phase2_worm.PHASE4C_READ_ACCESS_REPORT_SHA256:
-        raise ValueError("Phase2 fixed WORM tip predecessor drifted")
+    accepted_report_sha256 = sha256(fixed_regular_file(WORM_RELATIVE))
+    physical_build_context_sha256 = read_builder.java_build_context_sha256()
+    if physical_build_context_sha256 == build_context_sha256:
+        accepted_chain = phase2_worm.FIXED_EVIDENCE_CHAIN[:5]
+        tip = phase2_worm.validate_evidence_chain(
+            ROOT,
+            fixed_regular_file("infra/phase2/reference-drift-manifest.json"),
+            dockerfile_sha256,
+            build_context_sha256,
+            chain=accepted_chain,
+            immutable_mirrors=phase2_worm.FIXED_IMMUTABLE_MIRRORS,
+        )
+        if tip.relative_path != WORM_RELATIVE or tip.sha256 != accepted_report_sha256:
+            raise ValueError("Phase2 fixed WORM chain does not end at the HTTP checkpoint")
+        if tip.predecessor_sha256 != phase2_worm.PHASE4C_READ_ACCESS_REPORT_SHA256:
+            raise ValueError("Phase2 fixed WORM tip predecessor drifted")
+        accepted_chain_node_count = len(accepted_chain)
+    else:
+        successor = tag_preflight_successor().validate_worm_successor(
+            ROOT,
+            accepted_report_sha256,
+            build_context_sha256,
+        )
+        tip = phase2_worm.validate_fixed_chain(
+            ROOT,
+            fixed_regular_file("infra/phase2/reference-drift-manifest.json"),
+            dockerfile_sha256,
+            successor.current_build_context_sha256,
+        )
+        if (
+            tip.sha256 != successor.current_report_sha256
+            or tip.build_context_sha256 != successor.current_build_context_sha256
+            or len(phase2_worm.FIXED_EVIDENCE_CHAIN)
+            != successor.current_chain_node_count
+        ):
+            raise ValueError("Phase2 terminal WORM successor chain drifted")
+        accepted_chain_node_count = successor.accepted_chain_node_count
     return {
-        "node_count": len(phase2_worm.FIXED_EVIDENCE_CHAIN),
-        "tip_label": tip.label,
-        "tip_sha256": tip.sha256,
-        "predecessor_sha256": tip.predecessor_sha256,
+        "node_count": accepted_chain_node_count,
+        "tip_label": "phase4c-personal-bank-user-counts-http-implementation",
+        "tip_sha256": accepted_report_sha256,
+        "predecessor_sha256": phase2_worm.PHASE4C_READ_ACCESS_REPORT_SHA256,
         "dockerfile_sha256": dockerfile_sha256,
         "java_build_context_sha256": build_context_sha256,
     }
@@ -1127,7 +1211,9 @@ def build_contract() -> dict:
     route = validate_route_and_openapi()
     ownership = validate_data_ownership()
     verification = validate_verification_evidence()
-    build_context = read_builder.java_build_context_sha256()
+    build_context = load_json(fixed_regular_file(WORM_RELATIVE))["java"][
+        "buildContextSha256"
+    ]
     fixed_worm_chain = validate_phase2_fixed_chain(build_context)
     worm = validate_worm(build_context)
     worm["fixed_phase2_chain"] = fixed_worm_chain

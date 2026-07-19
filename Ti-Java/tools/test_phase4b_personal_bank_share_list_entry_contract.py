@@ -13,11 +13,13 @@ try:
     from tools.phase4c_read_successor_acceptance import (
         load_read_successor_contract,
         successor_sha256,
+        validate_tag_preflight_production_runtime_successor,
     )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_read_successor_acceptance import (
         load_read_successor_contract,
         successor_sha256,
+        validate_tag_preflight_production_runtime_successor,
     )
 
 
@@ -622,13 +624,21 @@ class Phase4bPersonalBankShareListEntryContractTest(unittest.TestCase):
         if self.read_successor is None:
             self.assertEqual(expected_current_manifest, actual_manifest)
         else:
+            accepted_manifest = self.read_successor["implementation"][
+                "learning_and_personalbank_main_source_manifest"
+            ]
             current_manifest = learning_and_personalbank_main_source_manifest()
-            self.assertEqual(40, len(current_manifest))
-            self.assertEqual(
-                self.read_successor["implementation"]
-                ["learning_and_personalbank_main_source_manifest"],
+            runtime = validate_tag_preflight_production_runtime_successor(
+                TI_JAVA_ROOT,
+                accepted_manifest,
                 current_manifest,
+                view="learning_personalbank_main",
             )
+            self.assertEqual(40, runtime.accepted_file_count)
+            self.assertEqual(43, runtime.current_file_count)
+            self.assertEqual(3, len(runtime.added_files))
+            self.assertEqual((), runtime.changed_files)
+            self.assertEqual((), runtime.deleted_files)
 
         with (TI_JAVA_ROOT / "docs/refactor/02-route-parity-matrix.csv").open(
             newline="", encoding="utf-8"

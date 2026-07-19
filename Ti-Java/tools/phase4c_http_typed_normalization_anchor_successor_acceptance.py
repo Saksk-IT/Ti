@@ -188,6 +188,25 @@ PHASE6_SOURCE_SUCCESSOR_PATHS = (
     "docs/refactor/05-progress.md",
     "docs/refactor/phase4c/README.md",
 )
+TAG_PREFLIGHT_SOURCE_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_global_preflight_successor_acceptance"
+)
+TAG_PREFLIGHT_SOURCE_SUCCESSOR_SCRIPT_MODULE = (
+    "phase4c_tag_migration_global_preflight_successor_acceptance"
+)
+TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS = (
+    "infra/phase2/README.md",
+    "infra/phase2/verify-static.sh",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+    "tools/phase2_wormhole_successor_acceptance.py",
+    "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+    "tools/test_phase2_wormhole_successor_acceptance.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_"
+    "target_execution_post_push_contract.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_"
+    "target_execution_post_push_anchor_contract.py",
+)
 
 
 def _canonical_json(value: Any) -> str:
@@ -261,6 +280,13 @@ def _load_phase6_source_successor_acceptance() -> object:
     try:
         return importlib.import_module(PHASE6_SOURCE_SUCCESSOR_MODULE)
     except ModuleNotFoundError as package_error:
+        if package_error.name not in {
+            "tools",
+            PHASE6_SOURCE_SUCCESSOR_MODULE,
+        }:
+            raise AssertionError(
+                "fixed Phase6 Web-foundation source-successor dependency is unavailable"
+            ) from package_error
         try:
             return importlib.import_module(PHASE6_SOURCE_SUCCESSOR_SCRIPT_MODULE)
         except (ImportError, ModuleNotFoundError) as script_error:
@@ -273,6 +299,31 @@ def _load_phase6_source_successor_acceptance() -> object:
         ) from error
 
 
+def _load_tag_preflight_source_successor_acceptance() -> object:
+    try:
+        return importlib.import_module(TAG_PREFLIGHT_SOURCE_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as package_error:
+        if package_error.name not in {
+            "tools",
+            TAG_PREFLIGHT_SOURCE_SUCCESSOR_MODULE,
+        }:
+            raise AssertionError(
+                "fixed tag-preflight source-successor dependency is unavailable"
+            ) from package_error
+        try:
+            return importlib.import_module(
+                TAG_PREFLIGHT_SOURCE_SUCCESSOR_SCRIPT_MODULE
+            )
+        except (ImportError, ModuleNotFoundError) as script_error:
+            raise AssertionError(
+                "fixed tag-preflight source-successor module is unavailable"
+            ) from script_error
+    except ImportError as error:
+        raise AssertionError(
+            "fixed tag-preflight source-successor module is unavailable"
+        ) from error
+
+
 def _validate_current_successor(root: Path, relative: str) -> str:
     expected_sha = SUCCESSOR_SHA256[relative]
     expected_bytes = SUCCESSOR_BYTE_COUNT[relative]
@@ -281,6 +332,27 @@ def _validate_current_successor(root: Path, relative: str) -> str:
     payload = _fixed_regular_file(root, relative).read_bytes()
     physical_sha = _sha256_bytes(payload)
     if physical_sha == expected_sha and len(payload) == expected_bytes:
+        return physical_sha
+    if relative in TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS:
+        successor = _load_tag_preflight_source_successor_acceptance()
+        accepted = getattr(successor, "accepted_sha256", None)
+        terminal = getattr(successor, "successor_sha256", None)
+        if not callable(accepted) or not callable(terminal):
+            raise AssertionError("fixed tag-preflight source-successor API drifted")
+        if accepted(relative) != expected_sha:
+            raise AssertionError(
+                "tag-preflight successor rejected typed-anchor historical hash"
+            )
+        try:
+            terminal_sha = terminal(root, relative)
+        except AssertionError as error:
+            raise AssertionError(
+                f"typed anchor tag-preflight successor rejected current bytes: {relative}"
+            ) from error
+        if terminal_sha != physical_sha:
+            raise AssertionError(
+                "tag-preflight successor did not bind current bytes"
+            )
         return physical_sha
     if relative not in PHASE6_SOURCE_SUCCESSOR_PATHS:
         raise AssertionError(f"typed anchor fixed bytes drifted: {relative}")
@@ -340,6 +412,10 @@ def minimal_fixture_paths() -> tuple[str, ...]:
     successor_fixture_paths = getattr(successor, "minimal_fixture_paths", None)
     if not callable(successor_fixture_paths):
         raise AssertionError("fixed Phase6 source-successor fixture API drifted")
+    tag_successor = _load_tag_preflight_source_successor_acceptance()
+    tag_fixture_paths = getattr(tag_successor, "minimal_fixture_paths", None)
+    if not callable(tag_fixture_paths):
+        raise AssertionError("fixed tag-preflight source-successor fixture API drifted")
     return tuple(sorted({
         CONTRACT_RELATIVE,
         PREDECESSOR_RELATIVE,
@@ -347,6 +423,7 @@ def minimal_fixture_paths() -> tuple[str, ...]:
         WORM_RELATIVE,
         *SUCCESSOR_PATHS,
         *successor_fixture_paths(),
+        *tag_fixture_paths(),
     }))
 
 

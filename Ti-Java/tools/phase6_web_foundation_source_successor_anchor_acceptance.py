@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -225,6 +226,26 @@ CURRENT_CONTROL_SOURCES = (
     "tools/phase6_web_foundation_source_successor_anchor_acceptance.py",
     "tools/test_phase6_web_foundation_source_successor_anchor_contract.py",
 )
+TAG_PREFLIGHT_SOURCE_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_global_preflight_successor_acceptance"
+)
+TAG_PREFLIGHT_SOURCE_SUCCESSOR_SCRIPT_MODULE = (
+    "phase4c_tag_migration_global_preflight_successor_acceptance"
+)
+TAG_PREFLIGHT_DELEGATED_PATHS = (
+    "docs/refactor/05-progress.md",
+    "docs/refactor/phase4c/README.md",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+    "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_"
+    "typed_normalization_anchor_contract.py",
+    "tools/test_phase6_web_foundation_source_successor_contract.py",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase6WebFoundationSourceSuccessorContractParityTest.java",
+)
 
 
 def _canonical_json(value: Any) -> str:
@@ -275,6 +296,59 @@ def _read_json(root: Path, relative: str, sha256: str,
     return value
 
 
+def _load_tag_preflight_source_successor_acceptance() -> object:
+    try:
+        return importlib.import_module(TAG_PREFLIGHT_SOURCE_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as package_error:
+        if package_error.name not in {
+            "tools",
+            TAG_PREFLIGHT_SOURCE_SUCCESSOR_MODULE,
+        }:
+            raise AssertionError(
+                "fixed tag-preflight source-successor dependency is unavailable"
+            ) from package_error
+        try:
+            return importlib.import_module(
+                TAG_PREFLIGHT_SOURCE_SUCCESSOR_SCRIPT_MODULE
+            )
+        except (ImportError, ModuleNotFoundError) as error:
+            raise AssertionError(
+                "fixed tag-preflight source-successor module is unavailable"
+            ) from error
+    except ImportError as error:
+        raise AssertionError(
+            "fixed tag-preflight source-successor module is unavailable"
+        ) from error
+
+
+def _tag_preflight_successor_sha256(
+    root: Path,
+    relative: str,
+    accepted_sha256: str,
+    physical_sha256: str,
+) -> str:
+    successor = _load_tag_preflight_source_successor_acceptance()
+    accepted = getattr(successor, "accepted_sha256", None)
+    terminal = getattr(successor, "successor_sha256", None)
+    if not callable(accepted) or not callable(terminal):
+        raise AssertionError("fixed tag-preflight source-successor API drifted")
+    if accepted(relative) != accepted_sha256:
+        raise AssertionError(
+            f"tag-preflight successor rejected Phase6 accepted bytes: {relative}"
+        )
+    try:
+        terminal_sha256 = terminal(root, relative)
+    except AssertionError as error:
+        raise AssertionError(
+            f"tag-preflight successor rejected Phase6 current bytes: {relative}"
+        ) from error
+    if terminal_sha256 != physical_sha256:
+        raise AssertionError(
+            f"tag-preflight successor did not bind Phase6 current bytes: {relative}"
+        )
+    return physical_sha256
+
+
 def accepted_sha256(relative: str) -> str | None:
     descriptor = SOURCE_SUCCESSORS.get(relative)
     return None if descriptor is None else str(descriptor["accepted_sha256"])
@@ -287,13 +361,21 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     root = ti_java_root.resolve(strict=True)
     payload = _fixed_regular_file(root, relative).read_bytes()
     physical = _sha256_bytes(payload)
-    if (physical != descriptor["successor_sha256"]
-            or len(payload) != descriptor["successor_byte_count"]):
+    if (physical == descriptor["successor_sha256"]
+            and len(payload) == descriptor["successor_byte_count"]):
+        return physical
+    if relative not in TAG_PREFLIGHT_DELEGATED_PATHS:
         raise AssertionError(f"Phase6 anchor successor bytes drifted: {relative}")
-    return physical
+    return _tag_preflight_successor_sha256(
+        root, relative, str(descriptor["successor_sha256"]), physical
+    )
 
 
 def minimal_fixture_paths() -> tuple[str, ...]:
+    tag_successor = _load_tag_preflight_source_successor_acceptance()
+    tag_fixture_paths = getattr(tag_successor, "minimal_fixture_paths", None)
+    if not callable(tag_fixture_paths):
+        raise AssertionError("fixed tag-preflight source-successor fixture API drifted")
     return tuple(sorted({
         CONTRACT_RELATIVE,
         PREDECESSOR_RELATIVE,
@@ -302,6 +384,8 @@ def minimal_fixture_paths() -> tuple[str, ...]:
         DOCKERFILE_RELATIVE,
         WORM_RELATIVE,
         *SOURCE_PATHS,
+        *TYPED_ANCHOR_BRIDGE_SOURCES,
+        *tag_fixture_paths(),
     }))
 
 
@@ -333,6 +417,30 @@ def _validate_artifact_group(section: dict[str, Any], expected_paths: tuple[str,
                 or len(str(artifact.get("sha256", ""))) != 64
                 or not isinstance(artifact.get("byte_count"), int)):
             raise AssertionError(f"Phase6 anchor artifact drifted: {relative}")
+
+
+def _validate_current_typed_bridge_source(
+    root: Path,
+    relative: str,
+    artifact: dict[str, Any],
+) -> None:
+    payload = _fixed_regular_file(root, relative).read_bytes()
+    physical = _sha256_bytes(payload)
+    if (
+        physical == artifact.get("sha256")
+        and len(payload) == artifact.get("byte_count")
+    ):
+        return
+    if relative not in TAG_PREFLIGHT_DELEGATED_PATHS:
+        raise AssertionError(
+            f"Phase6 anchor typed bridge bytes drifted: {relative}"
+        )
+    _tag_preflight_successor_sha256(
+        root,
+        relative,
+        str(artifact.get("sha256")),
+        physical,
+    )
 
 
 def validate(document: dict[str, Any], ti_java_root: Path) -> None:
@@ -420,6 +528,12 @@ def validate(document: dict[str, Any], ti_java_root: Path) -> None:
         document["typed_anchor_bridge_source_anchor"],
         TYPED_ANCHOR_BRIDGE_SOURCES,
         "typed_anchor_bridge_sources_external_git_anchor_complete")
+    for relative in TYPED_ANCHOR_BRIDGE_SOURCES:
+        _validate_current_typed_bridge_source(
+            root,
+            relative,
+            document["typed_anchor_bridge_source_anchor"]["artifacts"][relative],
+        )
 
     successors = document["source_successors"]
     if (successors.get("paths") != list(SOURCE_PATHS)

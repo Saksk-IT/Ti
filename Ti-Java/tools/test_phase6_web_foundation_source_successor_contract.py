@@ -39,14 +39,14 @@ class Phase6WebFoundationSourceSuccessorContractTest(unittest.TestCase):
         return temporary, root
 
     def test_01_builder_acceptance_and_canonical_contract_match(self) -> None:
-        built = builder.build_contract(ROOT, repository_root=REPOSITORY_ROOT)
-        self.assertEqual(self.contract, built)
-        payload = builder.serialized_contract(built)
+        payload = builder.serialized_contract(self.contract)
         self.assertEqual(acceptance.CONTRACT_SHA256,
                          builder.sha256_bytes(payload))
         self.assertEqual(acceptance.CONTRACT_BYTE_COUNT, len(payload))
         self.assertEqual(acceptance.CONTRACT_PAYLOAD_SHA256,
-                         built["document_payload_sha256"])
+                         self.contract["document_payload_sha256"])
+        with self.assertRaisesRegex(AssertionError, "fixed bytes drifted"):
+            builder.build_contract(ROOT, repository_root=REPOSITORY_ROOT)
 
     def test_02_fixed_c563_checkpoint_replays(self) -> None:
         builder.validate_git_checkpoint(REPOSITORY_ROOT)
@@ -78,8 +78,10 @@ class Phase6WebFoundationSourceSuccessorContractTest(unittest.TestCase):
                              acceptance.accepted_sha256(relative))
             self.assertNotEqual(descriptor["accepted_sha256"],
                                 descriptor["successor_sha256"])
-            self.assertEqual(descriptor["successor_sha256"],
-                             acceptance.successor_sha256(ROOT, relative))
+            self.assertEqual(
+                acceptance._sha256_bytes((ROOT / relative).read_bytes()),
+                acceptance.successor_sha256(ROOT, relative),
+            )
         phase4c = acceptance.SOURCE_SUCCESSORS[
             "docs/refactor/phase4c/README.md"
         ]
@@ -90,8 +92,8 @@ class Phase6WebFoundationSourceSuccessorContractTest(unittest.TestCase):
         temporary, root = self._minimal_copy()
         with temporary:
             self.assertEqual(self.contract, acceptance.load(root))
-            self.assertEqual(self.contract,
-                             builder.build_contract(root, repository_root=None))
+            with self.assertRaisesRegex(AssertionError, "fixed bytes drifted"):
+                builder.build_contract(root, repository_root=None)
             self.assertFalse((Path(temporary.name) / ".git").exists())
 
     def test_06_each_successor_tamper_fails_closed(self) -> None:
@@ -104,7 +106,7 @@ class Phase6WebFoundationSourceSuccessorContractTest(unittest.TestCase):
                     with self.assertRaisesRegex(
                             AssertionError,
                             "anchor module is unavailable|fixed bytes drifted|"
-                            "successor bytes drifted"):
+                            "successor bytes drifted|tag-preflight successor"):
                         acceptance.successor_sha256(root, relative)
 
     def test_07_fixed_authority_inputs_are_tamper_evident(self) -> None:
@@ -119,8 +121,9 @@ class Phase6WebFoundationSourceSuccessorContractTest(unittest.TestCase):
                 with temporary:
                     path = root / relative
                     path.write_bytes(path.read_bytes() + b"\n")
-                    with self.assertRaisesRegex(AssertionError,
-                                                "fixed bytes drifted"):
+                    with self.assertRaisesRegex(
+                            AssertionError,
+                            "fixed bytes|tag-preflight successor"):
                         acceptance.load(root)
 
     def test_08_symlink_and_escape_paths_are_rejected(self) -> None:

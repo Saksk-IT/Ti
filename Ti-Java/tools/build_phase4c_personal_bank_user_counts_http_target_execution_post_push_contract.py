@@ -339,6 +339,15 @@ SUCCESSOR_BYTE_COUNT = {
         "Phase4cHttpTargetExecutionSuccessorAcceptance.java"
     ): 89014,
 }
+NODEA_SEMANTIC_SUCCESSOR_PATHS = frozenset({
+    "tools/"
+    "build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+    "tools/phase4c_http_target_execution_successor_acceptance.py",
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpTargetExecutionSuccessorAcceptance.java"
+    ),
+})
 
 CURRENT_POST_PUSH_SOURCES = [
     "docs/refactor/phase4c/"
@@ -404,6 +413,26 @@ def _load_post_push_anchor_successor_acceptance() -> object:
         ) from error
 
 
+def _load_tag_preflight_successor_acceptance() -> object:
+    qualified_name = (
+        "tools.phase4c_tag_migration_global_preflight_successor_acceptance"
+    )
+    direct_name = "phase4c_tag_migration_global_preflight_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed tag-preflight successor acceptance is required"
+        ) from error
+
+
 def _validate_current_or_anchor_successor(
         root: Path,
         relative: str,
@@ -423,13 +452,33 @@ def _validate_current_or_anchor_successor(
     successor_lookup = getattr(acceptance, "successor_sha256", None)
     if not callable(accepted_lookup) or not callable(successor_lookup):
         raise AssertionError("post-push anchor successor API is incomplete")
-    if accepted_lookup(relative) != accepted_sha256:
+    anchor_accepted = accepted_lookup(relative)
+    if anchor_accepted is not None:
+        if anchor_accepted != accepted_sha256:
+            raise AssertionError(
+                f"post-push anchor does not accept historical bytes: {relative}"
+            )
+        if successor_lookup(root, relative) != physical_sha256:
+            raise AssertionError(
+                f"post-push anchor does not bind current bytes: {relative}"
+            )
+        return
+    if relative not in NODEA_SEMANTIC_SUCCESSOR_PATHS:
         raise AssertionError(
             f"post-push anchor does not accept historical bytes: {relative}"
         )
-    if successor_lookup(root, relative) != physical_sha256:
+    nodea = _load_tag_preflight_successor_acceptance()
+    nodea_accepted = getattr(nodea, "accepted_sha256", None)
+    nodea_successor = getattr(nodea, "successor_sha256", None)
+    if not callable(nodea_accepted) or not callable(nodea_successor):
+        raise AssertionError("tag-preflight successor API is incomplete")
+    if nodea_accepted(relative) != accepted_sha256:
         raise AssertionError(
-            f"post-push anchor does not bind current bytes: {relative}"
+            f"tag-preflight successor does not accept post-push source: {relative}"
+        )
+    if nodea_successor(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"tag-preflight successor does not bind post-push source: {relative}"
         )
 
 

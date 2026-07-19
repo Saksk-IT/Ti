@@ -493,28 +493,77 @@ def _validate_worm(root: Path) -> None:
 def _replay_phase2_fixed_acceptance(ti_java_root: Path) -> None:
     """Lazily import and replay Phase 2 only for an explicit caller."""
     try:
-        from tools.phase2_wormhole_successor_acceptance import (
-            validate_fixed_acceptance,
-        )
-    except ModuleNotFoundError:  # Direct execution from tools/.
-        from phase2_wormhole_successor_acceptance import validate_fixed_acceptance
+        from tools import phase2_wormhole_successor_acceptance as phase2_worm
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase2_wormhole_successor_acceptance",
+        }:
+            raise
+        import phase2_wormhole_successor_acceptance as phase2_worm
 
     root = ti_java_root.resolve(strict=True)
-    tip = validate_fixed_acceptance(
+    result = subprocess.run(
+        [str(_fixed_regular_file(root, "infra/phase2/hash-java-build-context.sh"))],
+        cwd=root,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    physical_build_context = result.stdout.strip()
+    if physical_build_context == JAVA_BUILD_CONTEXT_SHA256:
+        tip = phase2_worm.validate_evidence_chain(
+            root,
+            _fixed_regular_file(root, DRIFT_MANIFEST_RELATIVE),
+            DOCKERFILE_SHA256,
+            JAVA_BUILD_CONTEXT_SHA256,
+            chain=phase2_worm.FIXED_EVIDENCE_CHAIN[:5],
+            immutable_mirrors=phase2_worm.FIXED_IMMUTABLE_MIRRORS,
+        )
+        if (
+            tip.label != "phase4c-personal-bank-user-counts-http-implementation"
+            or tip.relative_path != WORM_RELATIVE
+            or tip.sha256 != WORM_SHA256
+            or tip.predecessor_sha256 != WORM_PREDECESSOR_SHA256
+            or tip.dockerfile_sha256 != DOCKERFILE_SHA256
+            or tip.build_context_sha256 != JAVA_BUILD_CONTEXT_SHA256
+        ):
+            raise AssertionError("Phase 2 historical fifth WORM replay drifted")
+        return
+
+    try:
+        from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_worm_successor,
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        from phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_worm_successor,
+        )
+    successor = validate_worm_successor(
+        root, WORM_SHA256, JAVA_BUILD_CONTEXT_SHA256
+    )
+    tip = phase2_worm.validate_fixed_acceptance(
         root,
         _fixed_regular_file(root, DRIFT_MANIFEST_RELATIVE),
         DOCKERFILE_SHA256,
-        JAVA_BUILD_CONTEXT_SHA256,
+        successor.current_build_context_sha256,
     )
     if (
-        tip.label != "phase4c-personal-bank-user-counts-http-implementation"
-        or tip.relative_path != WORM_RELATIVE
-        or tip.sha256 != WORM_SHA256
-        or tip.predecessor_sha256 != WORM_PREDECESSOR_SHA256
+        successor.accepted_report_sha256 != WORM_SHA256
+        or successor.accepted_build_context_sha256 != JAVA_BUILD_CONTEXT_SHA256
+        or successor.accepted_chain_node_count != 5
+        or tip.sha256 != successor.current_report_sha256
         or tip.dockerfile_sha256 != DOCKERFILE_SHA256
-        or tip.build_context_sha256 != JAVA_BUILD_CONTEXT_SHA256
+        or tip.build_context_sha256 != successor.current_build_context_sha256
+        or successor.current_chain_node_count != 7
     ):
-        raise AssertionError("Phase 2 fixed acceptance replay drifted")
+        raise AssertionError("Phase 2 terminal WORM successor replay drifted")
 
 
 def validate_contract(document: dict[str, Any], ti_java_root: Path) -> None:

@@ -640,19 +640,30 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
                                     relative)),
                     "target-execution successor did not accept the exact " + label
                             + ": " + relative);
-        } else {
-            require(fixedSha256.equals(physicalSha256),
-                    "unauthorized target-execution successor path for " + label
-                            + ": " + relative);
+            if (fixedSha256.equals(physicalSha256)) {
+                return physicalSha256;
+            }
+            String terminalSha256 =
+                    Phase4cHttpTargetExecutionSuccessorAcceptance.successorHash(
+                            root, relative);
+            require(physicalSha256.equals(terminalSha256),
+                    "target-execution successor file hash drift for " + relative);
+            return physicalSha256;
         }
         if (fixedSha256.equals(physicalSha256)) {
             return physicalSha256;
         }
-        String terminalSha256 =
-                Phase4cHttpTargetExecutionSuccessorAcceptance.successorHash(
+        require(fixedSha256.equals(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .acceptedSha256(relative)),
+                "tag-preflight successor did not accept exact " + label + ": "
+                        + relative);
+        String tagPreflightSuccessor =
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.successorSha256(
                         root, relative);
-        require(physicalSha256.equals(terminalSha256),
-                "target-execution successor file hash drift for " + relative);
+        require(physicalSha256.equals(tagPreflightSuccessor),
+                "tag-preflight successor did not bind current " + label + ": "
+                        + relative);
         return physicalSha256;
     }
 
@@ -672,12 +683,28 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
                         canonicalNodeSha256(baseline.path("files"))),
                 "invalid embedded read-runtime predecessor files");
 
-        Map<String, String> physical = productionRuntimeManifest(root);
         JsonNode transition = contract.path("implementation")
                 .path("production_runtime_transition");
-        require(JSON.valueToTree(physical).equals(transition.path("current").path("files")),
-                "HTTP implementation runtime manifest differs from worktree");
-        require(canonicalNodeSha256(JSON.valueToTree(physical)).equals(
+        Map<String, String> accepted = textMap(
+                transition.path("current").path("files"));
+        Map<String, String> physical = productionRuntimeManifest(root);
+        if (!physical.equals(accepted)) {
+            Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                    .ProductionRuntimeSuccessor successor =
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .validateProductionRuntimeSuccessor(
+                                    root, accepted, physical, "full_runtime");
+            require(successor.acceptedFileCount() == 297
+                            && successor.acceptedManifestSha256().equals(
+                            canonicalNodeSha256(JSON.valueToTree(accepted)))
+                            && successor.currentFileCount() == physical.size()
+                            && successor.currentManifestSha256().equals(
+                            canonicalNodeSha256(JSON.valueToTree(physical)))
+                            && successor.changedFiles().isEmpty()
+                            && successor.deletedFiles().isEmpty(),
+                    "tag preflight runtime successor descriptor drifted");
+        }
+        require(canonicalNodeSha256(JSON.valueToTree(accepted)).equals(
                         transition.path("current").path("manifest_sha256").asString()),
                 "invalid HTTP implementation runtime manifest hash");
 
@@ -685,7 +712,7 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
         Map<String, String> added = new LinkedHashMap<>();
         Map<String, Map<String, String>> changed = new LinkedHashMap<>();
         List<String> deleted = new ArrayList<>();
-        for (Map.Entry<String, String> entry : physical.entrySet()) {
+        for (Map.Entry<String, String> entry : accepted.entrySet()) {
             String oldHash = baselineFiles.get(entry.getKey());
             if (oldHash == null) {
                 added.put(entry.getKey(), entry.getValue());
@@ -696,7 +723,7 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
             }
         }
         for (String relative : baselineFiles.keySet()) {
-            if (!physical.containsKey(relative)) {
+            if (!accepted.containsKey(relative)) {
                 deleted.add(relative);
             }
         }
@@ -720,7 +747,7 @@ final class Phase4cHttpImplementationSuccessorAcceptance {
                 "public application methods changed from HTTP entry");
         for (String relative : FORBIDDEN_MAIN_PATHS) {
             require(transition.path("forbidden_main_sources").path("files")
-                            .path(relative).asString().equals(physical.get(relative)),
+                            .path(relative).asString().equals(accepted.get(relative)),
                     "forbidden main source drifted: " + relative);
         }
     }

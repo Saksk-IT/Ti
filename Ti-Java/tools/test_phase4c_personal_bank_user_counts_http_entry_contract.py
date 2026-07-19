@@ -53,6 +53,23 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_production_runtime_successor(*args, **kwargs):
+    try:
+        from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_production_runtime_successor as validate_successor,
+        )
+    except ModuleNotFoundError as error:  # Direct script execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        from phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_production_runtime_successor as validate_successor,
+        )
+    return validate_successor(*args, **kwargs)
+
+
 def canonical_json(value) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
@@ -139,9 +156,28 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
             self.predecessor["implementation"]["public_application_methods"],
             surface["public_application_methods"],
         )
+        transition = self.implementation["implementation"][
+            "production_runtime_transition"
+        ]
+        accepted_main = transition["learning_and_personalbank"]["files"]
         main = builder.read_builder.main_source_manifest()
-        self.assertEqual(40, len(main))
-        self.assertEqual(builder.EXPECTED_MAIN_MANIFEST_SHA256, builder.sha256_json(main))
+        if main == accepted_main:
+            self.assertEqual(40, len(main))
+        else:
+            successor = validate_production_runtime_successor(
+                ROOT,
+                accepted_main,
+                main,
+                view="learning_personalbank_main",
+            )
+            self.assertEqual(40, successor.accepted_file_count)
+            self.assertEqual(43, successor.current_file_count)
+            self.assertEqual([], list(successor.changed_files))
+            self.assertEqual([], list(successor.deleted_files))
+        self.assertEqual(
+            builder.EXPECTED_MAIN_MANIFEST_SHA256,
+            builder.sha256_json(accepted_main),
+        )
         self.assertEqual(
             288, surface["production_runtime_file_count"]
         )
@@ -158,9 +194,6 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
             builder.EXPECTED_BUILD_CONTEXT_SHA256,
             surface["java_build_context_sha256"],
         )
-        transition = self.implementation["implementation"][
-            "production_runtime_transition"
-        ]
         self.assertEqual(288, transition["predecessor"]["file_count"])
         self.assertEqual(297, transition["current"]["file_count"])
         self.assertEqual(

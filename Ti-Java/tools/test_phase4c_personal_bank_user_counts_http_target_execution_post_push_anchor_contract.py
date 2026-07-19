@@ -30,10 +30,15 @@ try:
         phase4c_http_typed_normalization_successor_acceptance
         as typed_acceptance,
     )
+    from tools import (
+        phase4c_tag_migration_global_preflight_successor_acceptance
+        as tag_preflight,
+    )
 except ModuleNotFoundError:  # Direct discovery from tools/.
     import build_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract as builder
     import phase4c_http_target_execution_post_push_anchor_successor_acceptance as acceptance
     import phase4c_http_typed_normalization_successor_acceptance as typed_acceptance
+    import phase4c_tag_migration_global_preflight_successor_acceptance as tag_preflight
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,7 +160,11 @@ class Phase4cTargetExecutionPostPushAnchorContractTest(unittest.TestCase):
             expected = (
                 typed_acceptance.successor_sha256(ROOT, relative)
                 if relative in typed_acceptance.THIRD_HOP_SOURCES
-                else acceptance.SUCCESSOR_SHA256[relative]
+                else (
+                    tag_preflight.successor_sha256(ROOT, relative)
+                    if relative in typed_acceptance.NODEA_OWNED_POST_PUSH_SOURCES
+                    else acceptance.SUCCESSOR_SHA256[relative]
+                )
             )
             self.assertEqual(expected, acceptance.successor_sha256(ROOT, relative))
         for relative in acceptance.CURRENT_ANCHOR_SOURCES + [
@@ -275,6 +284,7 @@ class Phase4cTargetExecutionPostPushAnchorContractTest(unittest.TestCase):
             typed_acceptance.CONTRACT_RELATIVE,
             typed_acceptance.PREDECESSOR_RELATIVE,
             *typed_acceptance.LOCAL_SOURCES,
+            *tag_preflight.minimal_fixture_paths(),
             "docs/refactor/phase4c/"
             "personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
         }

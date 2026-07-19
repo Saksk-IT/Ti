@@ -25,6 +25,23 @@ CONTRACT_STATUS = (
 )
 CONTRACT_SCOPE = "phase4c-personal-bank-user-counts-http-target-execution"
 CAPTURED_AT = "2026-07-18T10:00:00+08:00"
+
+
+def tag_preflight_successor():
+    try:
+        from tools import (
+            phase4c_tag_migration_global_preflight_successor_acceptance
+            as successor
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        import phase4c_tag_migration_global_preflight_successor_acceptance \
+            as successor
+    return successor
 NEXT_GATE = (
     "commit_and_push_this_bootstrap_checkpoint_then_anchor_its_git_commit_"
     "contract_sha256_and_both_bridge_sha256_in_the_next_node_before_typed_"
@@ -237,6 +254,16 @@ READ_PREDECESSOR_SUCCESSOR_ALLOWLIST = (
     "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
     "tools/test_phase4b_personal_bank_share_list_read_contract.py",
 )
+TAG_PREFLIGHT_NORMALIZED_SUCCESSOR_PATHS = frozenset(
+    {
+        "tools/phase4c_read_successor_acceptance.py",
+        (
+            "server/src/test/java/io/saksk/ti/architecture/"
+            "Phase4cReadSuccessorAcceptance.java"
+        ),
+        *READ_PREDECESSOR_SUCCESSOR_ALLOWLIST,
+    }
+)
 PHASE4B_ALL_SHARES_ENTRY_SUCCESSOR_ALLOWLIST = (
     "server/src/test/java/io/saksk/ti/integration/Phase3AuthenticationIT.java",
 )
@@ -383,6 +410,33 @@ BRIDGE_PROVENANCE_SENTINEL = "<bridge-self-provenance-sha256>"
 # historical builder must keep reproducing that document even after the listed
 # files advance; current bytes are authorized only by the successor contract.
 POST_PUSH_CHECKPOINT_ACCEPTED_SHA256 = {
+    "tools/phase4c_http_implementation_successor_acceptance.py": (
+        "54438d9ee44d391b813a1c3503444dd65d627e3b5932971e49ef549650fbbff4"
+    ),
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cHttpImplementationSuccessorAcceptance.java"
+    ): (
+        "1d2c193fb7a63173850bfee7ce382e7b4bc417c5b3879f3ef4bb43187f980275"
+    ),
+    "tools/test_phase4c_personal_bank_user_counts_composition_contract.py": (
+        "b81c8fb13f2ce4dd0d917a0876b88a20804bd1d272a7c261563dad9513d42f17"
+    ),
+    "tools/test_phase4c_personal_bank_user_counts_read_contract.py": (
+        "641c90d33de50daeb3a1a1c9a3ae5027562273f780f88e6a26cf00ad3bd462ac"
+    ),
+    (
+        "tools/test_phase4c_personal_bank_user_counts_"
+        "http_target_execution_contract.py"
+    ): (
+        "a8ce7fc93fe022d16a10e4bdd0fa9bff55788b076eb78601efba373c29c54a4b"
+    ),
+    (
+        "tools/test_phase4c_personal_bank_user_counts_"
+        "http_implementation_contract.py"
+    ): (
+        "9c61d6cefdd980457197fb850f690c6adc1a84fdb3d21905a2a5cfdb1bc258c2"
+    ),
     "README.md": (
         "321d23e47d0df0714ea632b2c8c1d3d05d0e67bf69d53e3a52e387e4a949bda4"
     ),
@@ -406,6 +460,21 @@ POST_PUSH_CHECKPOINT_ACCEPTED_SHA256 = {
     ),
     "tools/phase4c_http_target_execution_successor_acceptance.py": (
         "891e4c7c48c76b76697b064e8e6fd55f5cb549b751a7bff3562868f62d76c75c"
+    ),
+    "tools/phase4c_read_successor_acceptance.py": (
+        "1e494bce628e87bc2db3d01742fb929752fedaefd7563defccad7b972c951980"
+    ),
+    (
+        "server/src/test/java/io/saksk/ti/architecture/"
+        "Phase4cReadSuccessorAcceptance.java"
+    ): (
+        "5047c8b0a36450a72ba74a460db115ab33a58861b64216fa2cc67a7ddb0a026d"
+    ),
+    "tools/test_phase4b_personal_bank_all_shares_entry_contract.py": (
+        "e37b0418e8018d58135c5b1c55149d9679dfedb21f8b67fca3425b874ea23efc"
+    ),
+    "tools/test_phase4b_personal_bank_share_list_read_contract.py": (
+        "ffde7c337edf81ba8cf1a457800e89e3150df10b44ea7da50e99436534caa671"
     ),
     (
         "server/src/test/java/io/saksk/ti/architecture/"
@@ -593,15 +662,26 @@ def validate_production_surface(predecessor: dict) -> dict:
         raise ValueError("fixed read-contract runtime manifest implementation drifted")
     current = production_runtime_manifest()
     if current != embedded_files:
-        raise ValueError("production runtime changed after the implementation predecessor")
-    if len(current) != EXPECTED_RUNTIME_FILE_COUNT:
-        raise ValueError("current production runtime file count drifted")
-    if sha256_json(current) != EXPECTED_RUNTIME_MANIFEST_SHA256:
-        raise ValueError("current production runtime manifest drifted")
+        successor = tag_preflight_successor().validate_production_runtime_successor(
+            ROOT,
+            embedded_files,
+            current,
+            view="full_runtime",
+        )
+        if (
+            successor.accepted_file_count != EXPECTED_RUNTIME_FILE_COUNT
+            or successor.accepted_manifest_sha256
+            != EXPECTED_RUNTIME_MANIFEST_SHA256
+            or successor.current_file_count != len(current)
+            or successor.current_manifest_sha256 != sha256_json(current)
+            or successor.changed_files
+            or successor.deleted_files
+        ):
+            raise ValueError("tag preflight runtime successor descriptor drifted")
     return {
         "file_count": EXPECTED_RUNTIME_FILE_COUNT,
         "manifest_sha256": EXPECTED_RUNTIME_MANIFEST_SHA256,
-        "files": current,
+        "files": embedded_files,
         "unchanged_from_predecessor": True,
     }
 
@@ -1159,7 +1239,17 @@ def validate_worm() -> dict:
         raise ValueError("fixed implementation WORM bytes drifted")
     build_context = java_build_context_sha256()
     if build_context != JAVA_BUILD_CONTEXT_SHA256:
-        raise ValueError("Java build context drifted after the implementation WORM")
+        successor = tag_preflight_successor().validate_worm_successor(
+            ROOT,
+            WORM_SHA256,
+            JAVA_BUILD_CONTEXT_SHA256,
+        )
+        if (
+            successor.accepted_chain_node_count != 5
+            or successor.current_build_context_sha256 != build_context
+            or successor.current_chain_node_count != 7
+        ):
+            raise ValueError("tag preflight WORM successor descriptor drifted")
     worm = load_json(path)
     java = worm.get("java", {})
     if java.get("buildContextSha256") != JAVA_BUILD_CONTEXT_SHA256:
@@ -1299,6 +1389,19 @@ def validate_historical_successor_acceptance(predecessor: dict) -> dict:
             raise ValueError(
                 f"allowlisted source has no predecessor-anchored hash: {relative}"
             )
+        normalized = POST_PUSH_CHECKPOINT_ACCEPTED_SHA256.get(relative)
+        if relative in TAG_PREFLIGHT_NORMALIZED_SUCCESSOR_PATHS:
+            successor = tag_preflight_successor()
+            if (
+                normalized is None
+                or successor.accepted_sha256(relative) != normalized
+                or successor.successor_sha256(ROOT, relative)
+                != sha256(fixed_regular_file(relative))
+            ):
+                raise ValueError(
+                    "tag preflight historical source normalization drifted: "
+                    f"{relative}"
+                )
         overrides[relative] = {
             "source": relative,
             "accepted_sha256": accepted,

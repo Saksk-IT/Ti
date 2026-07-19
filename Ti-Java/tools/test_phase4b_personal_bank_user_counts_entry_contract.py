@@ -20,6 +20,7 @@ try:
         load_composition_predecessor_contract,
         load_read_successor_contract,
         successor_sha256,
+        validate_tag_preflight_production_runtime_successor,
     )
     from tools.phase4c_http_implementation_successor_acceptance import (
         accepted_sha256 as implementation_accepted_sha256,
@@ -37,6 +38,7 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         load_composition_predecessor_contract,
         load_read_successor_contract,
         successor_sha256,
+        validate_tag_preflight_production_runtime_successor,
     )
     from phase4c_http_implementation_successor_acceptance import (
         accepted_sha256 as implementation_accepted_sha256,
@@ -393,13 +395,21 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 requirements["implemented_public_application_method_count"],
                 successor["implemented_public_application_method_count"],
             )
+            read_manifest = successor[
+                "learning_and_personalbank_main_source_manifest"
+            ]
             current_manifest = learning_and_personalbank_main_source_manifest()
-            self.assertTrue(current_manifest)
-            self.assertEqual(40, len(current_manifest))
-            self.assertEqual(
+            runtime = validate_tag_preflight_production_runtime_successor(
+                ROOT,
+                read_manifest,
                 current_manifest,
-                successor["learning_and_personalbank_main_source_manifest"],
+                view="learning_personalbank_main",
             )
+            self.assertEqual(40, runtime.accepted_file_count)
+            self.assertEqual(43, runtime.current_file_count)
+            self.assertEqual(3, len(runtime.added_files))
+            self.assertEqual((), runtime.changed_files)
+            self.assertEqual((), runtime.deleted_files)
             self.assertEqual(
                 requirements["exact_main_source_scope"],
                 successor["main_source_scope"],
@@ -407,32 +417,32 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
             historical_manifest = self.phase4c_composition["production_baseline"][
                 "learning_and_personalbank_main_source_manifest"
             ]
-            self.assertNotEqual(historical_manifest, current_manifest)
+            self.assertNotEqual(historical_manifest, read_manifest)
             expected_changed = set(requirements["expected_changed_main_sources"])
             expected_added = set(requirements["expected_added_main_sources"])
             self.assertEqual(
                 expected_added,
-                set(current_manifest) - set(historical_manifest),
+                set(read_manifest) - set(historical_manifest),
             )
-            self.assertEqual(set(), set(historical_manifest) - set(current_manifest))
+            self.assertEqual(set(), set(historical_manifest) - set(read_manifest))
             self.assertEqual(
                 expected_changed,
                 {
-                    relative for relative in set(historical_manifest) & set(current_manifest)
-                    if historical_manifest[relative] != current_manifest[relative]
+                    relative for relative in set(historical_manifest) & set(read_manifest)
+                    if historical_manifest[relative] != read_manifest[relative]
                 },
             )
             for relative in requirements["expected_changed_main_sources"]:
                 self.assertIn(relative, historical_manifest)
-                self.assertIn(relative, current_manifest)
+                self.assertIn(relative, read_manifest)
                 self.assertNotEqual(
-                    historical_manifest[relative], current_manifest[relative], relative
+                    historical_manifest[relative], read_manifest[relative], relative
                 )
             for relative, fragments in requirements[
                 "expected_added_main_sources"
             ].items():
                 self.assertNotIn(relative, historical_manifest)
-                self.assertIn(relative, current_manifest)
+                self.assertIn(relative, read_manifest)
                 compact = compact_java_code(ROOT / relative)
                 for fragment in fragments:
                     self.assertIn(fragment, compact, relative)
@@ -459,9 +469,19 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                     "manifest_sha256"
                 ],
             }, transition["predecessor"])
+            accepted_surface = transition["current"]["files"]
             current_surface = production_runtime_manifest()
-            self.assertEqual(297, len(current_surface))
-            self.assertEqual(current_surface, transition["current"]["files"])
+            full_runtime = validate_tag_preflight_production_runtime_successor(
+                ROOT,
+                accepted_surface,
+                current_surface,
+                view="full_runtime",
+            )
+            self.assertEqual(297, full_runtime.accepted_file_count)
+            self.assertEqual(300, full_runtime.current_file_count)
+            self.assertEqual(3, len(full_runtime.added_files))
+            self.assertEqual((), full_runtime.changed_files)
+            self.assertEqual((), full_runtime.deleted_files)
             self.assertEqual(9, transition["exact_delta"]["added_file_count"])
             self.assertEqual(6, transition["exact_delta"]["changed_file_count"])
             self.assertEqual(0, transition["exact_delta"]["deleted_file_count"])

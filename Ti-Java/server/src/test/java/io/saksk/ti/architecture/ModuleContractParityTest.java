@@ -250,8 +250,13 @@ class ModuleContractParityTest {
         currentOwnerApis.stream()
                 .map(className -> className.replace('.', '/') + ".java")
                 .forEach(trackedApiSources::add);
+        JsonNode tagPreflight =
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.load(tiJavaRoot);
         assertCurrentLearningAndPersonalbankManifest(
-                currentImplementation.path("learning_and_personalbank_main_source_manifest"));
+                currentImplementation.path("learning_and_personalbank_main_source_manifest"),
+                tagPreflight.path("historical_semantic_successors")
+                        .path("production_runtime_manifest")
+                        .path("learning_personalbank_main"));
 
         Path javaRoot = resolveInsideTiJava("server/src/main/java");
         try (var sources = Files.walk(javaRoot)) {
@@ -2859,9 +2864,16 @@ class ModuleContractParityTest {
         return Set.copyOf(byOwner.keySet());
     }
 
-    private static void assertCurrentLearningAndPersonalbankManifest(JsonNode manifest)
-            throws IOException {
-        assertThat(manifest).hasSize(40);
+    private static void assertCurrentLearningAndPersonalbankManifest(
+            JsonNode manifest,
+            JsonNode successor
+    ) throws IOException {
+        assertThat(manifest).hasSize(successor.path("accepted_file_count").asInt());
+        assertThat(successor.path("unchanged_file_count").asInt())
+                .isEqualTo(manifest.size());
+        assertThat(successor.path("changed_files")).isEmpty();
+        assertThat(successor.path("deleted_files")).isEmpty();
+        assertThat(successor.path("exact_additions_only").asBoolean()).isTrue();
         Map<String, String> actual = new TreeMap<>();
         for (String module : List.of("learning", "personalbank")) {
             Path moduleRoot = resolveInsideTiJava(
@@ -2880,13 +2892,21 @@ class ModuleContractParityTest {
                 }
             }
         }
-        assertThat(actual).hasSize(40);
-        assertThat(manifest.propertyNames())
-                .containsExactlyInAnyOrderElementsOf(actual.keySet());
-        for (Map.Entry<String, String> entry : actual.entrySet()) {
-            assertThat(manifest.path(entry.getKey()).asString())
-                    .as("current main source %s", entry.getKey())
-                    .isEqualTo(entry.getValue());
+        JsonNode addedFiles = successor.path("added_files");
+        assertThat(actual).hasSize(successor.path("successor_file_count").asInt());
+        Set<String> expectedCurrent = new LinkedHashSet<>(manifest.propertyNames());
+        expectedCurrent.addAll(addedFiles.propertyNames());
+        assertThat(actual.keySet())
+                .containsExactlyInAnyOrderElementsOf(expectedCurrent);
+        for (String relative : manifest.propertyNames()) {
+            assertThat(actual.get(relative))
+                    .as("unchanged current main source %s", relative)
+                    .isEqualTo(manifest.path(relative).asString());
+        }
+        for (String relative : addedFiles.propertyNames()) {
+            assertThat(actual.get(relative))
+                    .as("Node A added current main source %s", relative)
+                    .isEqualTo(addedFiles.path(relative).asString());
         }
     }
 

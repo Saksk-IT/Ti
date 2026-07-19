@@ -349,6 +349,50 @@ def _load_post_push_anchor_successor_acceptance() -> object:
         ) from error
 
 
+def _load_tag_preflight_successor_acceptance() -> object:
+    qualified_name = (
+        "tools.phase4c_tag_migration_global_preflight_successor_acceptance"
+    )
+    direct_name = "phase4c_tag_migration_global_preflight_successor_acceptance"
+    try:
+        return importlib.import_module(qualified_name)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", qualified_name}:
+            raise
+    try:
+        return importlib.import_module(direct_name)
+    except ModuleNotFoundError as error:
+        if error.name != direct_name:
+            raise
+        raise AssertionError(
+            "fixed tag-preflight successor acceptance is required"
+        ) from error
+
+
+def _tag_preflight_successor_sha256(
+        root: Path,
+        relative: str,
+        declared_sha256: str,
+        physical_sha256: str,
+        *,
+        label: str,
+) -> str:
+    acceptance = _load_tag_preflight_successor_acceptance()
+    accepted_lookup = getattr(acceptance, "accepted_sha256", None)
+    successor_lookup = getattr(acceptance, "successor_sha256", None)
+    if not callable(accepted_lookup) or not callable(successor_lookup):
+        raise AssertionError("tag-preflight successor API is incomplete")
+    if accepted_lookup(relative) != declared_sha256:
+        raise AssertionError(
+            f"tag-preflight successor does not accept historical {label}: {relative}"
+        )
+    if successor_lookup(root, relative) != physical_sha256:
+        raise AssertionError(
+            f"tag-preflight successor does not bind current {label}: {relative}"
+        )
+    return physical_sha256
+
+
 def _current_or_post_push_anchor_successor_sha256(
         root: Path,
         relative: str,
@@ -357,7 +401,7 @@ def _current_or_post_push_anchor_successor_sha256(
         *,
         label: str,
 ) -> str:
-    """Accept current bytes directly or one exact code-fixed second hop."""
+    """Accept current bytes or one exact anchor/NodeA fixed successor hop."""
     if declared_sha256 == physical_sha256:
         return physical_sha256
     acceptance = _load_post_push_anchor_successor_acceptance()
@@ -365,15 +409,24 @@ def _current_or_post_push_anchor_successor_sha256(
     successor_lookup = getattr(acceptance, "successor_sha256", None)
     if not callable(accepted_lookup) or not callable(successor_lookup):
         raise AssertionError("post-push anchor successor API is incomplete")
-    if accepted_lookup(relative) != declared_sha256:
-        raise AssertionError(
-            f"post-push anchor does not accept historical {label}: {relative}"
-        )
-    if successor_lookup(root, relative) != physical_sha256:
-        raise AssertionError(
-            f"post-push anchor does not bind current {label}: {relative}"
-        )
-    return physical_sha256
+    anchor_accepted_sha256 = accepted_lookup(relative)
+    if anchor_accepted_sha256 is not None:
+        if anchor_accepted_sha256 != declared_sha256:
+            raise AssertionError(
+                f"post-push anchor does not accept historical {label}: {relative}"
+            )
+        if successor_lookup(root, relative) != physical_sha256:
+            raise AssertionError(
+                f"post-push anchor does not bind current {label}: {relative}"
+            )
+        return physical_sha256
+    return _tag_preflight_successor_sha256(
+        root,
+        relative,
+        declared_sha256,
+        physical_sha256,
+        label=label,
+    )
 
 
 def _fixed_regular_file(root: Path, relative: str) -> Path:

@@ -31,6 +31,10 @@ try:
         phase4c_http_typed_normalization_successor_acceptance
         as typed_acceptance,
     )
+    from tools import (
+        phase4c_tag_migration_global_preflight_successor_acceptance
+        as tag_preflight,
+    )
     from tools import phase4c_http_target_execution_successor_acceptance as target
 except ModuleNotFoundError:  # Direct discovery from tools/.
     import build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract as builder
@@ -39,6 +43,8 @@ except ModuleNotFoundError:  # Direct discovery from tools/.
         as post_push_anchor
     import phase4c_http_typed_normalization_successor_acceptance \
         as typed_acceptance
+    import phase4c_tag_migration_global_preflight_successor_acceptance \
+        as tag_preflight
     import phase4c_http_target_execution_successor_acceptance as target
 
 
@@ -243,6 +249,7 @@ print("post-push-import-isolation=ok")
             typed_acceptance.CONTRACT_RELATIVE,
             typed_acceptance.PREDECESSOR_RELATIVE,
             *typed_acceptance.LOCAL_SOURCES,
+            *tag_preflight.minimal_fixture_paths(),
             "docs/refactor/phase4c/"
             "personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
         }

@@ -130,7 +130,7 @@ class Phase4cHttpImplementationHistoricalBytesTest(unittest.TestCase):
 
         with self.assertRaisesRegex(
             AssertionError,
-            "unauthorized target successor path",
+            "tag-preflight successor does not accept negative unknown path",
         ):
             acceptance._validated_current_sha256(
                 ROOT,

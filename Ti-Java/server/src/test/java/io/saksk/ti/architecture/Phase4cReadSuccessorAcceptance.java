@@ -178,7 +178,21 @@ final class Phase4cReadSuccessorAcceptance {
                     }
                 }
             }
-            require(expected.equals(sha256(source)),
+            String physical = sha256(source);
+            if (!expected.equals(physical)) {
+                String tagPreflightSuccessor =
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .successorSha256(root, entry.getKey());
+                if (tagPreflightSuccessor != null) {
+                    require(expected.equals(
+                                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                            .acceptedSha256(entry.getKey())),
+                            "tag preflight did not accept the exact historical "
+                                    + "read successor for " + entry.getKey());
+                    expected = tagPreflightSuccessor;
+                }
+            }
+            require(expected.equals(physical),
                     "Phase4C read successor file hash drift for " + entry.getKey());
             terminalHashes.put(entry.getKey(), expected);
         }

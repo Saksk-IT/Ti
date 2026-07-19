@@ -19,6 +19,33 @@ from pathlib import Path
 import subprocess
 
 
+def _tag_preflight_successor():
+    try:
+        from tools import (
+            phase4c_tag_migration_global_preflight_successor_acceptance
+            as successor
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        import phase4c_tag_migration_global_preflight_successor_acceptance \
+            as successor
+    return successor
+
+
+def _validate_runtime_successor(*args, **kwargs):
+    return _tag_preflight_successor().validate_production_runtime_successor(
+        *args, **kwargs
+    )
+
+
+def _validate_worm_successor(*args, **kwargs):
+    return _tag_preflight_successor().validate_worm_successor(*args, **kwargs)
+
+
 CONTRACT_ID = (
     "ti.phase4c.personal-bank-user-counts-http-target-execution-contract"
 )
@@ -531,12 +558,13 @@ def _current_or_post_push_successor_sha256(
         *,
         label: str,
 ) -> str:
-    """Accept current bytes directly or through one exact fixed successor.
+    """Accept current bytes directly or through one exact owned successor.
 
-    The terminal successor must independently name the historical declaration
-    as its accepted hash and the current regular file as its successor hash.
-    A missing module, unknown path, malformed declaration, or either mismatch
-    fails closed.
+    A non-null post-push acceptance owns the path exclusively.  NodeA is
+    consulted only when that predecessor explicitly returns ``None``.  The
+    selected owner must independently name both the historical declaration and
+    current regular-file hash; every malformed or unknown transition fails
+    closed.
     """
     if declared_sha256 == physical_sha256:
         return physical_sha256
@@ -550,13 +578,30 @@ def _current_or_post_push_successor_sha256(
         raise AssertionError(
             "fixed target-execution post-push successor API is incomplete"
         )
-    if accepted_lookup(relative) != declared_sha256:
+    post_push_accepted = accepted_lookup(relative)
+    if post_push_accepted is not None:
+        if post_push_accepted != declared_sha256:
+            raise AssertionError(
+                f"post-push successor does not accept historical bytes: {relative}"
+            )
+        if successor_lookup(root, relative) != physical_sha256:
+            raise AssertionError(
+                f"post-push successor does not bind current bytes: {relative}"
+            )
+        return physical_sha256
+
+    nodea = _tag_preflight_successor()
+    nodea_accepted = getattr(nodea, "accepted_sha256", None)
+    nodea_successor = getattr(nodea, "successor_sha256", None)
+    if not callable(nodea_accepted) or not callable(nodea_successor):
+        raise AssertionError("tag-preflight successor API is incomplete")
+    if nodea_accepted(relative) != declared_sha256:
         raise AssertionError(
-            f"post-push successor does not accept historical bytes: {relative}"
+            f"tag-preflight successor does not accept historical bytes: {relative}"
         )
-    if successor_lookup(root, relative) != physical_sha256:
+    if nodea_successor(root, relative) != physical_sha256:
         raise AssertionError(
-            f"post-push successor does not bind current bytes: {relative}"
+            f"tag-preflight successor does not bind current bytes: {relative}"
         )
     return physical_sha256
 
@@ -1267,12 +1312,26 @@ def _validate_production_surface(root: Path, contract: dict, predecessor: dict) 
     predecessor_files = predecessor_current.get("files")
     if not isinstance(predecessor_files, dict) or len(predecessor_files) != 297:
         raise AssertionError("predecessor production manifest is incomplete")
+    if _sha256_json(predecessor_files) != PRODUCTION_MANIFEST_SHA256:
+        raise AssertionError("predecessor production manifest files drifted")
 
     physical_files = _production_runtime_manifest(root)
     if physical_files != predecessor_files:
-        raise AssertionError("target execution changed the production runtime surface")
-    if _sha256_json(physical_files) != PRODUCTION_MANIFEST_SHA256:
-        raise AssertionError("physical production manifest digest drifted")
+        successor = _validate_runtime_successor(
+            root,
+            predecessor_files,
+            physical_files,
+            view="full_runtime",
+        )
+        if (
+            successor.accepted_file_count != PRODUCTION_FILE_COUNT
+            or successor.accepted_manifest_sha256 != PRODUCTION_MANIFEST_SHA256
+            or successor.current_file_count != len(physical_files)
+            or successor.current_manifest_sha256 != _sha256_json(physical_files)
+            or successor.changed_files
+            or successor.deleted_files
+        ):
+            raise AssertionError("tag preflight runtime successor descriptor drifted")
     surface = contract.get("production_surface")
     if surface != {
         "file_count": PRODUCTION_FILE_COUNT,
@@ -1302,8 +1361,19 @@ def _validate_worm_and_routes(root: Path, contract: dict, predecessor: dict) -> 
         stderr=subprocess.PIPE,
         text=True,
     )
-    if result.stdout.strip() != JAVA_BUILD_CONTEXT_SHA256:
-        raise AssertionError("physical Java build context drifted")
+    physical_build_context = result.stdout.strip()
+    if physical_build_context != JAVA_BUILD_CONTEXT_SHA256:
+        successor = _validate_worm_successor(
+            root,
+            WORM_SHA256,
+            JAVA_BUILD_CONTEXT_SHA256,
+        )
+        if (
+            successor.accepted_chain_node_count != 5
+            or successor.current_build_context_sha256 != physical_build_context
+            or successor.current_chain_node_count != 7
+        ):
+            raise AssertionError("tag preflight WORM successor descriptor drifted")
     read_role = worm.get("readRole", {})
     for field in (
         "selectPassed",

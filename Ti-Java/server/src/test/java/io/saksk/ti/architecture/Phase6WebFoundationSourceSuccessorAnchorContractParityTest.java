@@ -157,9 +157,20 @@ class Phase6WebFoundationSourceSuccessorAnchorContractParityTest {
             assertThat(Phase6WebFoundationSourceSuccessorAnchorAcceptance
                     .acceptedSha256(relative)).as(relative)
                     .isEqualTo(entry.getValue().accepted());
+            String expectedCurrent = entry.getValue().successor();
+            String tagPreflightAccepted =
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .acceptedSha256(relative);
+            if (tagPreflightAccepted != null) {
+                assertThat(tagPreflightAccepted).as(relative)
+                        .isEqualTo(expectedCurrent);
+                expectedCurrent =
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .successorSha256(root(), relative);
+            }
             assertThat(Phase6WebFoundationSourceSuccessorAnchorAcceptance
                     .successorSha256(root(), relative)).as(relative)
-                    .isEqualTo(entry.getValue().successor());
+                    .isEqualTo(expectedCurrent);
         }
 
         for (String forbidden : Set.of(

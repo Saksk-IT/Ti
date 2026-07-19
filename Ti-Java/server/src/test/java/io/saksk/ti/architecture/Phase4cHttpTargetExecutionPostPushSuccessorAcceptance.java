@@ -326,16 +326,12 @@ final class Phase4cHttpTargetExecutionPostPushSuccessorAcceptance {
                     "post-push successor physical byte count drifted: " + relative);
             return physical;
         }
-        require(source.successorSha256().equals(
-                        Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
-                                .acceptedHash(relative)),
-                "post-push external anchor did not accept exact successor: " + relative);
-        String anchoredSuccessor =
-                Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.successorHash(
-                        root, relative);
-        require(physical.equals(anchoredSuccessor),
-                "post-push external-anchor file hash drifted: " + relative);
-        return physical;
+        return currentOrPostPushAnchorOrTagPreflightSuccessor(
+                root,
+                relative,
+                source.successorSha256(),
+                physical,
+                "successor");
     }
 
     private static void validatePredecessorReference(JsonNode predecessor) {
@@ -682,16 +678,51 @@ final class Phase4cHttpTargetExecutionPostPushSuccessorAcceptance {
                     "post-push successor source byte count drifted: " + relative);
             return physical;
         }
-        require(expected.successorSha256().equals(
-                        Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
-                                .acceptedHash(relative)),
-                "post-push external anchor did not accept exact source: " + relative);
-        String anchoredSuccessor =
-                Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance.successorHash(
+        return currentOrPostPushAnchorOrTagPreflightSuccessor(
+                root,
+                relative,
+                expected.successorSha256(),
+                physical,
+                "source");
+    }
+
+    private static String currentOrPostPushAnchorOrTagPreflightSuccessor(
+            Path root,
+            String relative,
+            String declaredSha256,
+            String physicalSha256,
+            String label
+    ) throws IOException {
+        if (declaredSha256.equals(physicalSha256)) {
+            return physicalSha256;
+        }
+        String anchorAccepted =
+                Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
+                        .acceptedHash(relative);
+        if (anchorAccepted != null) {
+            require(declaredSha256.equals(anchorAccepted),
+                    "post-push external anchor did not accept exact " + label + ": "
+                            + relative);
+            String anchored =
+                    Phase4cHttpTargetExecutionPostPushAnchorSuccessorAcceptance
+                            .successorHash(root, relative);
+            require(physicalSha256.equals(anchored),
+                    "post-push external anchor did not bind current " + label + ": "
+                            + relative);
+            return physicalSha256;
+        }
+        require(declaredSha256.equals(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .acceptedSha256(relative)),
+                "tag-preflight successor did not accept exact " + label + ": "
+                        + relative);
+        String tagPreflightSuccessor =
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.successorSha256(
                         root, relative);
-        require(physical.equals(anchoredSuccessor),
-                "post-push external-anchor source drifted: " + relative);
-        return physical;
+        require(physicalSha256.equals(tagPreflightSuccessor),
+                "tag-preflight successor did not bind current " + label + ": "
+                        + relative);
+        return physicalSha256;
     }
 
     private static JsonNode readJson(Path path) throws IOException {

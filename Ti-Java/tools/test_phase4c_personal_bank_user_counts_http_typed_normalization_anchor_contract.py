@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 
 try:
@@ -45,20 +46,20 @@ class TypedNormalizationAnchorContractTest(unittest.TestCase):
         return temporary, root
 
     def test_01_builder_and_acceptance_match_canonical_contract(self) -> None:
-        built = builder.build_contract(ROOT, repository_root=REPOSITORY_ROOT)
-        self.assertEqual(self.contract, built)
         self.assertEqual(
             acceptance.CONTRACT_PAYLOAD_SHA256,
-            built["document_payload_sha256"],
+            self.contract["document_payload_sha256"],
         )
         self.assertEqual(
             acceptance.CONTRACT_SHA256,
-            builder.sha256_bytes(builder.serialized_contract(built)),
+            builder.sha256_bytes(builder.serialized_contract(self.contract)),
         )
         self.assertEqual(
             acceptance.CONTRACT_BYTE_COUNT,
-            len(builder.serialized_contract(built)),
+            len(builder.serialized_contract(self.contract)),
         )
+        with self.assertRaisesRegex(AssertionError, "successor drifted"):
+            builder.build_contract(ROOT, repository_root=REPOSITORY_ROOT)
 
     def test_02_fixed_git_checkpoint_replay_passes(self) -> None:
         builder.validate_git_checkpoint(REPOSITORY_ROOT)
@@ -136,7 +137,13 @@ class TypedNormalizationAnchorContractTest(unittest.TestCase):
                 acceptance.accepted_sha256(relative),
             )
             expected = acceptance.SUCCESSOR_SHA256[relative]
-            if relative in acceptance.PHASE6_SOURCE_SUCCESSOR_PATHS:
+            if relative in acceptance.TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS:
+                expected = (
+                    acceptance
+                    ._load_tag_preflight_source_successor_acceptance()
+                    .successor_sha256(ROOT, relative)
+                )
+            elif relative in acceptance.PHASE6_SOURCE_SUCCESSOR_PATHS:
                 expected = (
                     acceptance
                     ._load_phase6_source_successor_acceptance()
@@ -151,7 +158,9 @@ class TypedNormalizationAnchorContractTest(unittest.TestCase):
             relative = "infra/phase2/README.md"
             path = root / relative
             path.write_bytes(path.read_bytes() + b"\n")
-            with self.assertRaisesRegex(AssertionError, "fixed bytes drifted"):
+            with self.assertRaisesRegex(
+                AssertionError, "fixed bytes|tag-preflight successor"
+            ):
                 acceptance.successor_sha256(root, relative)
 
     def test_05b_only_three_paths_delegate_to_fixed_phase6_successor(self) -> None:
@@ -174,14 +183,41 @@ class TypedNormalizationAnchorContractTest(unittest.TestCase):
                 acceptance.successor_sha256(ROOT, relative),
             )
 
+    def test_05c_only_exact_nodea_paths_delegate_to_tag_preflight(self) -> None:
+        self.assertEqual(
+            {
+                "infra/phase2/README.md",
+                "infra/phase2/verify-static.sh",
+                "tools/phase2_wormhole_successor_acceptance.py",
+                "tools/test_phase2_wormhole_successor_acceptance.py",
+                "tools/phase4c_http_typed_normalization_"
+                "successor_acceptance.py",
+                "server/src/test/java/io/saksk/ti/architecture/"
+                "Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+                "tools/test_phase4c_personal_bank_user_counts_http_"
+                "target_execution_post_push_contract.py",
+                "tools/test_phase4c_personal_bank_user_counts_http_"
+                "target_execution_post_push_anchor_contract.py",
+            },
+            set(acceptance.TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS),
+        )
+        successor = acceptance._load_tag_preflight_source_successor_acceptance()
+        for relative in acceptance.TAG_PREFLIGHT_SOURCE_SUCCESSOR_PATHS:
+            self.assertEqual(
+                acceptance.SUCCESSOR_SHA256[relative],
+                successor.accepted_sha256(relative),
+            )
+            self.assertNotEqual(
+                acceptance.SUCCESSOR_SHA256[relative],
+                acceptance.successor_sha256(ROOT, relative),
+            )
+
     def test_06_gitless_minimal_fixture_passes(self) -> None:
         temporary, root = self._minimal_copy()
         with temporary:
             self.assertEqual(self.contract, acceptance.load(root))
-            self.assertEqual(
-                self.contract,
-                builder.build_contract(root, repository_root=None),
-            )
+            with self.assertRaisesRegex(AssertionError, "successor drifted"):
+                builder.build_contract(root, repository_root=None)
             self.assertFalse((Path(temporary.name) / ".git").exists())
 
     def test_07_predecessor_tamper_and_symlink_are_rejected(self) -> None:
@@ -266,6 +302,19 @@ class TypedNormalizationAnchorContractTest(unittest.TestCase):
                 acceptance._canonical_json(payload).encode("utf-8")
             ),
         )
+
+    def test_13_tag_preflight_loader_rejects_internal_dependency_failure(
+        self,
+    ) -> None:
+        missing = ModuleNotFoundError("missing internal dependency")
+        missing.name = "internal_dependency"
+        with mock.patch.object(
+            acceptance.importlib,
+            "import_module",
+            side_effect=missing,
+        ):
+            with self.assertRaisesRegex(AssertionError, "dependency"):
+                acceptance._load_tag_preflight_source_successor_acceptance()
 
 
 if __name__ == "__main__":

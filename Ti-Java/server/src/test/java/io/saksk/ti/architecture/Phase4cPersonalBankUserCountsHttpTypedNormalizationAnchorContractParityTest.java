@@ -24,9 +24,26 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
             "README.md",
             "5e3f2b7da26c3edf0f791e99110dcc4e53e1cb64dfdd78b46fe4e276406a1e59",
             "docs/refactor/05-progress.md",
-            "657ca0e5fec6d0a70fbcfd8b81da6815a46be395a2cd3230520fe036b584144b",
+            "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
             "docs/refactor/phase4c/README.md",
-            "dbf542c042b3ee96663cb39c049bc44deb1790cf4c6e0345f208ea6c27cc2d0c");
+            "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48");
+
+    private static final Map<String, String> TAG_PREFLIGHT_CURRENT_SUCCESSORS =
+            Map.of(
+                    "infra/phase2/README.md",
+                    "a0c467bfc8aa0f0b64b4d520f9cda60ff081a340f016647e1da934c73b7b99d5",
+                    "infra/phase2/verify-static.sh",
+                    "893ca920d0ed1bd62e16509893fa30bbfc72b88368d66d96c2ebc5c2fbae38dc",
+                    "tools/phase2_wormhole_successor_acceptance.py",
+                    "5c93b9aa00d3faec19ebc8d6472bd9e8ab1903a7116d487ff8a711fc60fd8d20",
+                    "tools/test_phase2_wormhole_successor_acceptance.py",
+                    "e61ed72335bba631cf34ebfe06fae8d391e7828622eba17d0240f59efed379a3",
+                    "tools/test_phase4c_personal_bank_user_counts_http_"
+                            + "target_execution_post_push_contract.py",
+                    "420a727733f4c3a72f1c78c933491ab89fff7bbba0ddb1f1c9f7a8867a73c3bf",
+                    "tools/test_phase4c_personal_bank_user_counts_http_"
+                            + "target_execution_post_push_anchor_contract.py",
+                    "49621a580785ddd0c1210bf564e563b41e04bebbc87c33752e95bc6cb9cb89fd");
 
     @Test
     void loadsTheCanonicalFixedAnchorAndKeepsRoutesPending() throws Exception {
@@ -140,6 +157,22 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
                             .path("overrides").path(relative)
                             .path("successor_sha256").asString());
         }
+        for (Map.Entry<String, String> entry
+                : TAG_PREFLIGHT_CURRENT_SUCCESSORS.entrySet()) {
+            String relative = entry.getKey();
+            assertThat(Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
+                    .successorHash(root(), relative)).as(relative)
+                    .isEqualTo(entry.getValue())
+                    .isEqualTo(
+                            Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                    .successorSha256(root(), relative));
+            assertThat(
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .acceptedSha256(relative)).as(relative)
+                    .isEqualTo(fixedAnchor.path("historical_source_successors")
+                            .path("overrides").path(relative)
+                            .path("successor_sha256").asString());
+        }
         for (String relative : Set.of(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                         .contractRelative(),
@@ -173,10 +206,15 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
         String relative =
                 "tools/test_phase4c_personal_bank_user_counts_http_"
                         + "target_execution_post_push_contract.py";
-        for (String source : Set.of(
+        Set<String> fixturePaths = new LinkedHashSet<>();
+        fixturePaths.add(
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                        .contractRelative());
+        fixturePaths.add(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
-                        .contractRelative(),
-                relative)) {
+                        .contractRelative());
+        fixturePaths.add(relative);
+        for (String source : fixturePaths) {
             Path target = temporary.resolve(source);
             Files.createDirectories(target.getParent());
             Files.copy(root().resolve(source), target);

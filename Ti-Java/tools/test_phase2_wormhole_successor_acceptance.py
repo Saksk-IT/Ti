@@ -32,6 +32,14 @@ try:
         PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH,
         PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
         PHASE4C_READ_ACCESS_REPORT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_BUILD_CONTEXT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
         POSTGRES_IMAGE,
         sha256,
         validate_evidence_chain,
@@ -52,6 +60,14 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH,
         PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
         PHASE4C_READ_ACCESS_REPORT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_BUILD_CONTEXT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
+        PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
         POSTGRES_IMAGE,
         sha256,
         validate_evidence_chain,
@@ -287,19 +303,71 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 current_build=fourth.build_context_sha256,
             )
 
-    def test_fixed_fifth_node_links_the_immutable_read_access_tip(self) -> None:
-        self.assertEqual(5, len(FIXED_EVIDENCE_CHAIN))
-        tip = FIXED_EVIDENCE_CHAIN[-1]
+    def test_fixed_seventh_node_appends_to_the_immutable_sixth_tip(self) -> None:
+        self.assertEqual(7, len(FIXED_EVIDENCE_CHAIN))
+        fifth = FIXED_EVIDENCE_CHAIN[-3]
         self.assertEqual(
-            "phase4c-personal-bank-user-counts-http-implementation", tip.label
+            "phase4c-personal-bank-user-counts-http-implementation", fifth.label
         )
-        self.assertEqual(PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH, tip.relative_path)
-        self.assertEqual(PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256, tip.sha256)
+        self.assertEqual(
+            PHASE4C_HTTP_IMPLEMENTATION_REPORT_PATH,
+            fifth.relative_path,
+        )
+        self.assertEqual(PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256, fifth.sha256)
         self.assertEqual(
             PHASE4C_HTTP_IMPLEMENTATION_BUILD_CONTEXT_SHA256,
+            fifth.build_context_sha256,
+        )
+        self.assertEqual(
+            PHASE4C_READ_ACCESS_REPORT_SHA256,
+            fifth.predecessor_sha256,
+        )
+
+        sixth = FIXED_EVIDENCE_CHAIN[-2]
+        self.assertEqual("phase4c-personal-bank-tag-global-preflight", sixth.label)
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
+            sixth.relative_path,
+        )
+        self.assertEqual(PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256, sixth.sha256)
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_BUILD_CONTEXT_SHA256,
+            sixth.build_context_sha256,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256,
+            sixth.dockerfile_sha256,
+        )
+        self.assertEqual(
+            PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256,
+            sixth.predecessor_sha256,
+        )
+
+        tip = FIXED_EVIDENCE_CHAIN[-1]
+        self.assertEqual(
+            "phase4c-personal-bank-tag-global-preflight-hardening",
+            tip.label,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH,
+            tip.relative_path,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
+            tip.sha256,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
             tip.build_context_sha256,
         )
-        self.assertEqual(PHASE4C_READ_ACCESS_REPORT_SHA256, tip.predecessor_sha256)
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256,
+            tip.dockerfile_sha256,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
+            tip.predecessor_sha256,
+        )
 
     def test_historical_bridge_uses_no_successor_when_bytes_are_unchanged(
         self,
@@ -532,6 +600,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -567,6 +637,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -606,6 +678,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -676,6 +750,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -750,6 +826,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: None),
             phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
@@ -829,6 +907,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=lambda root: None),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -888,6 +968,97 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                     self.successor_build,
                 )
 
+    def test_fixed_acceptance_requires_tag_global_preflight_successor(self) -> None:
+        modules = {
+            phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
+                load_read_successor_contract=lambda root: {"validated": True},
+            ),
+            phase2_acceptance.TARGET_EXECUTION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(
+                    load_http_target_execution_successor_contract=lambda root: {
+                        "validated": True,
+                    },
+                ),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: None),
+        }
+        with mock.patch.object(
+            phase2_acceptance.importlib,
+            "import_module",
+            side_effect=lambda name: modules[name],
+        ), mock.patch.object(
+            phase2_acceptance,
+            "validate_fixed_chain",
+        ) as validate_fixed_chain:
+            with self.assertRaisesRegex(
+                EvidenceValidationError,
+                "fixed tag global-preflight successor contract is required",
+            ):
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                )
+        validate_fixed_chain.assert_not_called()
+
+    def test_fixed_acceptance_calls_tag_successor_then_the_seven_node_chain(self) -> None:
+        load_tag_successor = mock.Mock(return_value={"validated": True})
+        modules = {
+            phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
+                load_read_successor_contract=lambda root: {"validated": True},
+            ),
+            phase2_acceptance.TARGET_EXECUTION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(
+                    load_http_target_execution_successor_contract=lambda root: {
+                        "validated": True,
+                    },
+                ),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TARGET_EXECUTION_POST_PUSH_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TYPED_NORMALIZATION_ANCHOR_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=lambda root: {"validated": True}),
+            phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=load_tag_successor),
+        }
+        with mock.patch.object(
+            phase2_acceptance.importlib,
+            "import_module",
+            side_effect=lambda name: modules[name],
+        ), mock.patch.object(
+            phase2_acceptance,
+            "validate_fixed_chain",
+            return_value=self.successor,
+        ) as validate_fixed_chain:
+            self.assertEqual(
+                self.successor,
+                phase2_acceptance.validate_fixed_acceptance(
+                    self.root,
+                    self.manifest_path,
+                    self.successor_dockerfile,
+                    self.successor_build,
+                ),
+            )
+        load_tag_successor.assert_called_once_with(self.root)
+        validate_fixed_chain.assert_called_once_with(
+            self.root,
+            self.manifest_path,
+            self.successor_dockerfile,
+            self.successor_build,
+        )
+
     def test_import_and_fixed_chain_do_not_import_successor_modules(self) -> None:
         script = r'''
 import importlib.abc
@@ -901,6 +1072,7 @@ blocked = {
     "tools.phase4c_http_target_execution_post_push_anchor_successor_acceptance",
     "tools.phase4c_http_typed_normalization_successor_acceptance",
     "tools.phase4c_http_typed_normalization_anchor_successor_acceptance",
+    "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
 }
 
 class Blocker(importlib.abc.MetaPathFinder):
@@ -1060,6 +1232,8 @@ if blocked.intersection(sys.modules):
                 "docs/refactor/phase4c/"
                 "personal-bank-user-counts-http-implementation-worm-evidence.json"
             ),
+            ROOT / PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
+            ROOT / PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH,
         ]
         before = {path: sha256(path) for path in immutable_paths}
         for path in immutable_paths:

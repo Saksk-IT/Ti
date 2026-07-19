@@ -509,29 +509,77 @@ def validate_fifth_worm(ti_java_root: Path) -> dict[str, Any]:
 def _replay_phase2_fixed_acceptance(ti_java_root: Path) -> None:
     """Lazily replay the full Phase 2 gate only when explicitly requested."""
     try:
-        from tools.phase2_wormhole_successor_acceptance import (
-            validate_fixed_acceptance,
-        )
-    except ModuleNotFoundError:  # Direct execution from tools/.
-        from phase2_wormhole_successor_acceptance import validate_fixed_acceptance
+        from tools import phase2_wormhole_successor_acceptance as phase2_worm
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase2_wormhole_successor_acceptance",
+        }:
+            raise
+        import phase2_wormhole_successor_acceptance as phase2_worm
 
     root = ti_java_root.resolve(strict=True)
-    tip = validate_fixed_acceptance(
+    result = subprocess.run(
+        [str(fixed_regular_file(root, "infra/phase2/hash-java-build-context.sh"))],
+        cwd=root,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    physical_build_context = result.stdout.strip()
+    if physical_build_context == JAVA_BUILD_CONTEXT_SHA256:
+        tip = phase2_worm.validate_evidence_chain(
+            root,
+            fixed_regular_file(root, DRIFT_MANIFEST_RELATIVE),
+            DOCKERFILE_SHA256,
+            JAVA_BUILD_CONTEXT_SHA256,
+            chain=phase2_worm.FIXED_EVIDENCE_CHAIN[:5],
+            immutable_mirrors=phase2_worm.FIXED_IMMUTABLE_MIRRORS,
+        )
+        if (
+            tip.label != "phase4c-personal-bank-user-counts-http-implementation"
+            or tip.relative_path != WORM_RELATIVE
+            or tip.sha256 != WORM_SHA256
+            or tip.predecessor_sha256 != WORM_PREDECESSOR_SHA256
+            or tip.dockerfile_sha256 != DOCKERFILE_SHA256
+            or tip.build_context_sha256 != JAVA_BUILD_CONTEXT_SHA256
+        ):
+            raise ValueError("Phase 2 historical fifth WORM replay drifted")
+        return
+
+    try:
+        from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_worm_successor,
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        from phase4c_tag_migration_global_preflight_successor_acceptance import (
+            validate_worm_successor,
+        )
+    successor = validate_worm_successor(
+        root, WORM_SHA256, JAVA_BUILD_CONTEXT_SHA256
+    )
+    tip = phase2_worm.validate_fixed_acceptance(
         root,
         fixed_regular_file(root, DRIFT_MANIFEST_RELATIVE),
         DOCKERFILE_SHA256,
-        JAVA_BUILD_CONTEXT_SHA256,
+        successor.current_build_context_sha256,
     )
-    if tip.label != "phase4c-personal-bank-user-counts-http-implementation":
-        raise ValueError("Phase 2 fixed acceptance returned an unexpected tip")
-    if tip.relative_path != WORM_RELATIVE or tip.sha256 != WORM_SHA256:
-        raise ValueError("Phase 2 fixed acceptance tip identity drifted")
-    if tip.predecessor_sha256 != WORM_PREDECESSOR_SHA256:
-        raise ValueError("Phase 2 fixed acceptance predecessor drifted")
-    if tip.dockerfile_sha256 != DOCKERFILE_SHA256:
-        raise ValueError("Phase 2 fixed acceptance Dockerfile drifted")
-    if tip.build_context_sha256 != JAVA_BUILD_CONTEXT_SHA256:
-        raise ValueError("Phase 2 fixed acceptance build-context drifted")
+    if (
+        successor.accepted_report_sha256 != WORM_SHA256
+        or successor.accepted_build_context_sha256 != JAVA_BUILD_CONTEXT_SHA256
+        or successor.accepted_chain_node_count != 5
+        or tip.sha256 != successor.current_report_sha256
+        or tip.dockerfile_sha256 != DOCKERFILE_SHA256
+        or tip.build_context_sha256 != successor.current_build_context_sha256
+        or successor.current_chain_node_count != 7
+    ):
+        raise ValueError("Phase 2 terminal WORM successor replay drifted")
 
 
 def _run_read_only_git(repository_root: Path, *arguments: str) -> bytes:

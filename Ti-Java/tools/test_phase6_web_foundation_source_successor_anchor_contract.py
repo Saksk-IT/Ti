@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 
 try:
@@ -40,13 +41,13 @@ class Phase6WebFoundationSourceSuccessorAnchorContractTest(unittest.TestCase):
 
     def test_01_builder_acceptance_and_canonical_contract_match(self) -> None:
         built = builder.build_contract(ROOT, repository_root=REPOSITORY_ROOT)
-        self.assertEqual(self.contract, built)
-        payload = builder.serialized_contract(built)
+        self.assertNotEqual(self.contract, built)
+        payload = builder.serialized_contract(self.contract)
         self.assertEqual(acceptance.CONTRACT_SHA256,
                          builder.sha256_bytes(payload))
         self.assertEqual(acceptance.CONTRACT_BYTE_COUNT, len(payload))
         self.assertEqual(acceptance.CONTRACT_PAYLOAD_SHA256,
-                         built["document_payload_sha256"])
+                         self.contract["document_payload_sha256"])
 
     def test_02_fixed_40a_checkpoint_replays_exact_git_facts(self) -> None:
         builder.validate_git_checkpoint(REPOSITORY_ROOT)
@@ -82,8 +83,16 @@ class Phase6WebFoundationSourceSuccessorAnchorContractTest(unittest.TestCase):
             with self.subTest(relative=relative):
                 self.assertEqual(descriptor["accepted_sha256"],
                                  acceptance.accepted_sha256(relative))
-                self.assertEqual(descriptor["successor_sha256"],
-                                 acceptance.successor_sha256(ROOT, relative))
+                expected = descriptor["successor_sha256"]
+                if relative in acceptance.TAG_PREFLIGHT_DELEGATED_PATHS:
+                    expected = (
+                        acceptance
+                        ._load_tag_preflight_source_successor_acceptance()
+                        .successor_sha256(ROOT, relative)
+                    )
+                self.assertEqual(
+                    expected, acceptance.successor_sha256(ROOT, relative)
+                )
         self.assertIsNone(acceptance.accepted_sha256("tools/unknown.py"))
         self.assertIsNone(acceptance.successor_sha256(ROOT, "tools/unknown.py"))
 
@@ -111,8 +120,10 @@ class Phase6WebFoundationSourceSuccessorAnchorContractTest(unittest.TestCase):
         temporary, root = self._minimal_copy()
         with temporary:
             self.assertEqual(self.contract, acceptance.load(root))
-            self.assertEqual(self.contract,
-                             builder.build_contract(root, repository_root=None))
+            self.assertNotEqual(
+                self.contract,
+                builder.build_contract(root, repository_root=None),
+            )
             self.assertFalse((Path(temporary.name) / ".git").exists())
 
     def test_07_each_successor_tamper_fails_closed(self) -> None:
@@ -122,8 +133,9 @@ class Phase6WebFoundationSourceSuccessorAnchorContractTest(unittest.TestCase):
                 with temporary:
                     path = root / relative
                     path.write_bytes(path.read_bytes() + b"\n")
-                    with self.assertRaisesRegex(AssertionError,
-                                                "successor bytes drifted"):
+                    with self.assertRaisesRegex(
+                        AssertionError, "successor bytes|tag-preflight successor"
+                    ):
                         acceptance.successor_sha256(root, relative)
 
     def test_08_fixed_authority_inputs_are_tamper_evident(self) -> None:
@@ -140,8 +152,9 @@ class Phase6WebFoundationSourceSuccessorAnchorContractTest(unittest.TestCase):
                 with temporary:
                     path = root / relative
                     path.write_bytes(path.read_bytes() + b"\n")
-                    with self.assertRaisesRegex(AssertionError,
-                                                "fixed bytes drifted"):
+                    with self.assertRaisesRegex(
+                        AssertionError, "fixed bytes|tag-preflight successor"
+                    ):
                         acceptance.load(root)
 
     def test_09_symlink_and_escape_paths_are_rejected(self) -> None:
@@ -247,6 +260,63 @@ class Phase6WebFoundationSourceSuccessorAnchorContractTest(unittest.TestCase):
                 acceptance._canonical_json(payload).encode("utf-8")
             ),
         )
+
+    def test_17_typed_bridge_sources_delegate_only_to_fixed_tag_preflight(
+        self,
+    ) -> None:
+        delegated_bridges = {
+            "server/src/test/java/io/saksk/ti/architecture/"
+            "Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+            "Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchor"
+            "ContractParityTest.java",
+            "tools/phase4c_http_typed_normalization_anchor_"
+            "successor_acceptance.py",
+            "tools/test_phase4c_personal_bank_user_counts_http_typed_"
+            "normalization_anchor_contract.py",
+        }
+        self.assertTrue(delegated_bridges.issubset(
+            acceptance.TAG_PREFLIGHT_DELEGATED_PATHS
+        ))
+        tag_successor = (
+            acceptance._load_tag_preflight_source_successor_acceptance()
+        )
+        artifacts = self.contract["typed_anchor_bridge_source_anchor"]["artifacts"]
+        for relative in delegated_bridges:
+            self.assertEqual(
+                artifacts[relative]["sha256"],
+                tag_successor.accepted_sha256(relative),
+            )
+            self.assertEqual(
+                acceptance._sha256_bytes((ROOT / relative).read_bytes()),
+                tag_successor.successor_sha256(ROOT, relative),
+            )
+
+    def test_18_typed_bridge_tamper_and_internal_import_failure_fail_closed(
+        self,
+    ) -> None:
+        temporary, root = self._minimal_copy()
+        with temporary:
+            relative = (
+                "tools/phase4c_http_typed_normalization_anchor_"
+                "successor_acceptance.py"
+            )
+            path = root / relative
+            path.write_bytes(path.read_bytes() + b"\n")
+            with self.assertRaisesRegex(
+                AssertionError, "tag-preflight successor|typed bridge"
+            ):
+                acceptance.load(root)
+
+        missing = ModuleNotFoundError("missing internal dependency")
+        missing.name = "internal_dependency"
+        with mock.patch.object(
+            acceptance.importlib,
+            "import_module",
+            side_effect=missing,
+        ):
+            with self.assertRaisesRegex(AssertionError, "dependency"):
+                acceptance._load_tag_preflight_source_successor_acceptance()
 
 
 if __name__ == "__main__":

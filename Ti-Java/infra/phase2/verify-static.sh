@@ -244,6 +244,27 @@ assert_file_contains "Fixed Phase 4C HTTP implementation WORM successor" \
 assert_file_contains "Fixed Phase 4C HTTP implementation WORM predecessor" \
     'predecessor_sha256=PHASE4C_READ_ACCESS_REPORT_SHA256' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight WORM successor" \
+    '283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight Java build-context" \
+    '2b2f2b9956a9188a81606b50405ac82ded0253bbe2539d6fb841575b4c21dcf9' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight WORM predecessor" \
+    'predecessor_sha256=PHASE4C_HTTP_IMPLEMENTATION_REPORT_SHA256' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight hardening WORM successor" \
+    '93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight hardening build-context" \
+    'a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight hardening Dockerfile" \
+    'dockerfile_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight hardening predecessor" \
+    'predecessor_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
 assert_file_contains "Fixed Phase 4C target-execution successor contract" \
     'load_http_target_execution_successor_contract(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
@@ -270,6 +291,12 @@ assert_file_contains "Fixed Phase 4C HTTP typed-normalization anchor successor m
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 assert_file_contains "Fixed Phase 4C HTTP typed-normalization anchor successor contract" \
     'load_http_typed_normalization_anchor_successor(ti_java_root)' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight successor module" \
+    'tools.phase4c_tag_migration_global_preflight_successor_acceptance' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag global-preflight successor contract" \
+    'load_tag_global_preflight_successor(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"

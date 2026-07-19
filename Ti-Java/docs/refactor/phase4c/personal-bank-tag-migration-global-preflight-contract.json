@@ -1,0 +1,1690 @@
+{
+  "append_only_predecessors": {
+    "approved_differences": {
+      "accepted_migration_ids": [
+        "P4C-LEARNING-001",
+        "P4C-LEARNING-002",
+        "P4C-LEARNING-003",
+        "P4C-LEARNING-004",
+        "P4C-LEARNING-005",
+        "P4C-LEARNING-006"
+      ],
+      "byte_count": 27510,
+      "current_physical_file_ids": [
+        "P4C-LEARNING-001",
+        "P4C-LEARNING-002",
+        "P4C-LEARNING-003",
+        "P4C-LEARNING-004",
+        "P4C-LEARNING-005",
+        "P4C-LEARNING-006",
+        "P4C-LEARNING-007",
+        "P4C-LEARNING-008",
+        "P4C-LEARNING-009",
+        "P4C-LEARNING-010",
+        "P4C-LEARNING-011",
+        "P4C-LEARNING-012"
+      ],
+      "immutable": true,
+      "sha256": "921d6626ab11d59a9667e1942953807b0aa1a81c06c01094cc109312f9d6b300",
+      "source": "docs/refactor/phase4c/approved-differences.md"
+    },
+    "current_route_promotion": {
+      "byte_count": 4365,
+      "document_payload_sha256": "1503c4dd5905abb70a77835e6602d8e51a7f042f5eed6b0a25a9a0de4b5f6e0f",
+      "immutable": true,
+      "sha256": "e5bc53bb8c011c5cf2f08447543aa3e5dd2a045b6226f064c6594a3639d7b5c9",
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-route-promotion-contract.json"
+    },
+    "effective_data_ownership": {
+      "byte_count": 1081,
+      "document_payload_sha256": "e3c7e2cde4853c241fccc5626da4ed9690d09c74f4bd8c3075d1b2fe5f2b75d9",
+      "immutable": true,
+      "sha256": "025a9f24edfb502b49e672c7c0a2e52b6bba022d6337dfe56159ebd498b69eb7",
+      "source": "docs/refactor/phase4c/effective-data-ownership-status.json"
+    },
+    "semantic_composition": {
+      "byte_count": 105146,
+      "document_payload_sha256": "b7cdfcfe3ec0ca29a397c608439c18810c3d55c42b64ad94368d1a0337771409",
+      "immutable": true,
+      "sha256": "ba900795d92046693617d92f4de7599d604e389e7b60e1cc145d08a737518f6b",
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
+    }
+  },
+  "apply_fail_closed": {
+    "all_dispositions_approved": false,
+    "backup_and_rollback_evidence_exists": false,
+    "bounded_40001_40P01_retry_implemented": false,
+    "durable_marker_absence_blocks_apply": true,
+    "durable_migration_ledger_or_tombstone_exists": false,
+    "membership_write_freeze_or_digest_recheck_evidenced": false,
+    "planner_apply_prerequisite_blockers": [
+      "PREFLIGHT_ONLY_NO_APPLY_OPERATOR",
+      "WRITE_FREEZE_OR_VERSION_RECHECK_NOT_PROVEN",
+      "DURABLE_MIGRATION_MARKER_NOT_IMPLEMENTED"
+    ],
+    "planner_cleanliness_eligibility_is_production_authorization": false,
+    "production_apply_authorized": false,
+    "production_data_cleanliness_or_scale_proven": false,
+    "real_apply_path_present": false,
+    "source_write_freeze_evidenced": false,
+    "target_write_freeze_or_common_version_protocol_evidenced": false
+  },
+  "authorization": {
+    "bootstrap_control_sources_external_git_anchor_complete": false,
+    "client_gateway_or_proxy_change": false,
+    "http_security_or_rate_limit_delta": false,
+    "migration_design_closed": false,
+    "migration_global_preflight_evidence_closed": true,
+    "newly_closed_gates": [
+      "migration_global_preflight_evidence_closed"
+    ],
+    "operator_migration_implementation": false,
+    "production_cutover": false,
+    "production_schema_or_index": false,
+    "real_data_migration_execution": false,
+    "route_or_openapi_delta": false,
+    "semantic_successor_external_git_anchor_complete": false,
+    "source_successor_external_git_anchor_complete": false
+  },
+  "build_context_authority": {
+    "apply_statement_or_operator_entrypoint_added": false,
+    "current_build_context_changed": true,
+    "historical_worm_chain_overwritten": false,
+    "initial_worm_successor": {
+      "byte_count": 1442,
+      "dockerfile_sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+      "fixed_chain_node_count": 6,
+      "immutable": true,
+      "java_build_context_sha256": "2b2f2b9956a9188a81606b50405ac82ded0253bbe2539d6fb841575b4c21dcf9",
+      "predecessor_sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+      "sha256": "283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72",
+      "source": "docs/refactor/phase4c/personal-bank-tag-global-preflight-worm-evidence.json"
+    },
+    "initial_worm_successor_appended": true,
+    "initial_worm_tip_reused_as_current": false,
+    "new_build_context_worm_closed": true,
+    "new_main_source_count": 3,
+    "new_main_sources": [
+      {
+        "byte_count": 18525,
+        "sha256": "c3311e28f33c8bc447fd72191af696ceca333162747e94eb91681dd75c0f5bf3",
+        "source": "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightParser.java"
+      },
+      {
+        "byte_count": 12567,
+        "sha256": "d7d988f5bfe7c86e30a5410e8eac0032a24ad5c85011b6c03de159c97d3ff750",
+        "source": "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightReport.java"
+      },
+      {
+        "byte_count": 35830,
+        "sha256": "cdb8fbe7e7a38307642c026b97cafbed040b732d687e30b52f950881f4ab5a76",
+        "source": "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagGlobalPreflight.java"
+      }
+    ],
+    "new_worm_successor": {
+      "byte_count": 1442,
+      "dockerfile_sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499",
+      "fixed_chain_node_count": 7,
+      "immutable": true,
+      "java_build_context_sha256": "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17",
+      "predecessor_sha256": "283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72",
+      "sha256": "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
+      "source": "docs/refactor/phase4c/personal-bank-tag-global-preflight-hardening-worm-evidence.json"
+    },
+    "new_worm_successor_appended": true,
+    "new_worm_successor_required": false,
+    "new_worm_successor_was_required": true,
+    "old_tip_reused_as_current": false,
+    "old_worm_predecessor": {
+      "byte_count": 1442,
+      "immutable": true,
+      "java_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+      "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json"
+    },
+    "spring_component_runner_scheduler_or_http_registration": false
+  },
+  "captured_at": "2026-07-19T05:52:21+08:00",
+  "contract_id": "ti.phase4c.personal-bank-tag-migration-global-preflight-contract",
+  "document_payload_sha256": "c7a94e88772a2453743f9821b165ae10f52650a41bf6dab78006d7058951159e",
+  "evidence": {
+    "bounded_payload_or_unicode_hardening_authorizes_apply": false,
+    "bounded_source_payload_and_sweep_limits_evidenced": true,
+    "classification": "test-only local fixture evidence; no production execution",
+    "dry_run_zero_mutation_fingerprints": true,
+    "historical_row_primitive_is_only_a_predecessor": true,
+    "historical_row_primitive_reclassified_as_global_preflight": false,
+    "integration_test_methods": [
+      "globalReadOnlyPreflightEvidenceHoldsOnPostgres16",
+      "globalReadOnlyPreflightEvidenceHoldsOnPostgres18"
+    ],
+    "mixed_fixture_candidate_count": 16,
+    "mixed_fixture_global_blocker_aggregation": true,
+    "mixed_fixture_reporting_group_counts": {
+      "CONFLICT": 5,
+      "ELIGIBLE": 4,
+      "GLOBAL_FAILURE": 0,
+      "INVALID": 4,
+      "UNRESOLVED": 3
+    },
+    "postgresql_versions": [
+      "16.14",
+      "18.4"
+    ],
+    "production_credentials_read": false,
+    "production_data_read_or_mutated": false,
+    "production_database_connected": false,
+    "production_operator_executed": false,
+    "session_lock_contention_and_release_after_connection_close": true,
+    "unicode_postgresql_text_losslessness_evidenced": true
+  },
+  "global_preflight_protocol": {
+    "aggregation": {
+      "aggregate_digest": true,
+      "all_rows_are_classified_without_first_blocker_short_circuit": true,
+      "dry_run_emits_migrated_or_transaction_failure_outcomes": false,
+      "global_all_or_block": true,
+      "historical_reporting_groups": {
+        "conflict": [
+          "TARGET_CONFLICT"
+        ],
+        "eligible": [
+          "MIGRATED",
+          "EMPTY_NOOP",
+          "TARGET_ALREADY_PRESENT"
+        ],
+        "invalid": [
+          "INVALID_KEY",
+          "INVALID_DATA"
+        ],
+        "transaction_failed": [
+          "FAILED_ROLLED_BACK",
+          "ROLLBACK_FAILED",
+          "COMMIT_OUTCOME_UNKNOWN"
+        ],
+        "unresolved": [
+          "BANK_MISSING",
+          "ORPHAN_QUESTION",
+          "SOURCE_DISAPPEARED"
+        ]
+      },
+      "historical_row_outcomes": [
+        "MIGRATED",
+        "EMPTY_NOOP",
+        "TARGET_ALREADY_PRESENT",
+        "TARGET_CONFLICT",
+        "INVALID_KEY",
+        "INVALID_DATA",
+        "BANK_MISSING",
+        "ORPHAN_QUESTION",
+        "SOURCE_DISAPPEARED",
+        "FAILED_ROLLED_BACK",
+        "ROLLBACK_FAILED",
+        "COMMIT_OUTCOME_UNKNOWN"
+      ],
+      "historical_vocabulary_is_apply_predecessor_only": true,
+      "per_item_disposition_approval_audit_required": true,
+      "preflight_dispositions": [
+        "MIGRATABLE",
+        "EMPTY_NOOP",
+        "TARGET_ALREADY_PRESENT",
+        "TARGET_CONFLICT",
+        "NORMALIZED_BANK_COLLISION",
+        "TARGET_INVALID",
+        "INVALID_KEY",
+        "INVALID_DATA",
+        "BANK_MISSING",
+        "ORPHAN_QUESTION",
+        "MEMBERSHIP_UNAVAILABLE"
+      ],
+      "preflight_reporting_groups": {
+        "CONFLICT": [
+          "TARGET_CONFLICT",
+          "NORMALIZED_BANK_COLLISION",
+          "TARGET_INVALID"
+        ],
+        "ELIGIBLE": [
+          "MIGRATABLE",
+          "EMPTY_NOOP",
+          "TARGET_ALREADY_PRESENT"
+        ],
+        "GLOBAL_FAILURE": [],
+        "INVALID": [
+          "INVALID_KEY",
+          "INVALID_DATA"
+        ],
+        "UNRESOLVED": [
+          "BANK_MISSING",
+          "ORPHAN_QUESTION",
+          "MEMBERSHIP_UNAVAILABLE"
+        ]
+      },
+      "preflight_statuses": [
+        "COMPLETED",
+        "LOCK_BUSY",
+        "FAILED"
+      ],
+      "raw_tag_or_credential_material_in_report": false
+    },
+    "connection": {
+      "acquire_setup_and_close_failures_are_global_blockers": true,
+      "dedicated_connection": true,
+      "deferrable": true,
+      "global_failure_codes": [
+        "CONNECTION_ACQUISITION_FAILED",
+        "CONNECTION_SETUP_FAILED",
+        "ADVISORY_LOCK_ACQUISITION_FAILED",
+        "CONNECTION_METADATA_READ_FAILED",
+        "TRANSACTION_SETUP_FAILED",
+        "SOURCE_SCAN_FAILED",
+        "CLASSIFICATION_READ_FAILED",
+        "READ_ONLY_COMMIT_FAILED",
+        "READ_ONLY_ROLLBACK_FAILED",
+        "ADVISORY_UNLOCK_REJECTED",
+        "ADVISORY_UNLOCK_FAILED",
+        "CONNECTION_CLOSE_FAILED"
+      ],
+      "isolation": "SERIALIZABLE",
+      "read_only": true,
+      "session_level_postgresql_advisory_lock_across_complete_sweep": true
+    },
+    "membership": {
+      "bank_must_exist": true,
+      "membership_digest_is_canonical_and_reported": true,
+      "positive_question_must_belong_to_bank": true,
+      "provider": "personalbank::api#inspectQuestionMembership",
+      "unresolved_or_orphan_blocks_apply": true
+    },
+    "mutation_safety": {
+      "mode": "DRY_RUN",
+      "mutation_statement_count": 0,
+      "schema_or_index_ddl": 0,
+      "source_dml": 0,
+      "source_target_schema_and_index_fingerprints_unchanged": true,
+      "target_dml": 0
+    },
+    "selection_and_parsing": {
+      "invalid_key_or_data_is_reported_not_dropped": true,
+      "legacy_list_json_array_string_and_csv_forms_supported": true,
+      "nul_and_unpaired_surrogates_rejected": true,
+      "oversized_payload_rejected_before_json_parsing": true,
+      "per_payload_utf8_byte_limit": 1048576,
+      "positive_canonical_question_ids_required": true,
+      "postgresql_text_lossless_required": true,
+      "python_compatible_unicode_whitespace_normalization": true,
+      "strict_json_duplicate_keys_and_trailing_tokens_rejected": true,
+      "strict_namespace_and_round_trip": true,
+      "twenty_unicode_code_point_cleaning_and_collision_detection": true,
+      "unicode_case_and_normalization_forms_preserved": true,
+      "valid_surrogate_pairs_preserved": true
+    },
+    "source_sweep_bounds": {
+      "bounds_are_production_scale_evidence": false,
+      "maximum_reserved_source_rows": 100000,
+      "maximum_reserved_source_utf8_bytes": 268435456,
+      "oversized_payload_classification": "INVALID_DATA/PAYLOAD_LIMIT_EXCEEDED",
+      "oversized_payload_materialized": false,
+      "oversized_payload_target_or_membership_read": false,
+      "source_fetch_size": 16,
+      "sql_octet_length_checked_before_payload_materialization": true
+    },
+    "target_precedence": {
+      "automatic_merge": false,
+      "conflict_blocks_apply": true,
+      "positive_target_questions_must_belong_to_bank": true,
+      "source_plan_must_be_subset_of_target": true,
+      "target_tags_must_be_canonical": true,
+      "valid_source_plan_required": true
+    }
+  },
+  "historical_semantic_successors": {
+    "historical_contract_fields_rewritten": false,
+    "historical_contracts_unchanged": true,
+    "java_build_context_and_worm_chain": {
+      "accepted_build_context_sha256": "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3",
+      "accepted_chain_node_count": 5,
+      "accepted_worm": {
+        "byte_count": 1442,
+        "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json"
+      },
+      "appended_node_count": 2,
+      "current_tip_is_terminal_successor": true,
+      "first_successor_build_context_sha256": "2b2f2b9956a9188a81606b50405ac82ded0253bbe2539d6fb841575b4c21dcf9",
+      "first_successor_chain_node_count": 6,
+      "first_successor_worm": {
+        "byte_count": 1442,
+        "sha256": "283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72",
+        "source": "docs/refactor/phase4c/personal-bank-tag-global-preflight-worm-evidence.json"
+      },
+      "historical_nodes_rewritten": false,
+      "terminal_successor_build_context_sha256": "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17",
+      "terminal_successor_chain_node_count": 7,
+      "terminal_successor_worm": {
+        "byte_count": 1442,
+        "sha256": "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
+        "source": "docs/refactor/phase4c/personal-bank-tag-global-preflight-hardening-worm-evidence.json"
+      },
+      "unknown_build_context": "reject"
+    },
+    "production_runtime_manifest": {
+      "accepted_authority": {
+        "byte_count": 74597,
+        "document_payload_sha256": "331c82ad941f4eeb3e07d1701271310f2b1dea91132794e4e5d1eb1b466fc458",
+        "sha256": "9f6c37c4217da83199403da8207ed4f89a3999fafd149f069afb520dee4d2460",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json"
+      },
+      "accepted_file_count": 297,
+      "accepted_manifest_sha256": "d327a5ef85fa47abc6417527d7bfd99a01f29de6ea3c2f08205cbf30a6e38f79",
+      "added_files": {
+        "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagGlobalPreflight.java": "cdb8fbe7e7a38307642c026b97cafbed040b732d687e30b52f950881f4ab5a76",
+        "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightParser.java": "c3311e28f33c8bc447fd72191af696ceca333162747e94eb91681dd75c0f5bf3",
+        "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightReport.java": "d7d988f5bfe7c86e30a5410e8eac0032a24ad5c85011b6c03de159c97d3ff750"
+      },
+      "changed_files": {},
+      "deleted_files": [],
+      "exact_additions_only": true,
+      "learning_personalbank_main": {
+        "accepted_file_count": 40,
+        "accepted_manifest_sha256": "d20c124c587dff562781dd6b9f7978300b292ff07d5f8fb4463d5a0448b197a1",
+        "added_files": {
+          "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagGlobalPreflight.java": "cdb8fbe7e7a38307642c026b97cafbed040b732d687e30b52f950881f4ab5a76",
+          "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightParser.java": "c3311e28f33c8bc447fd72191af696ceca333162747e94eb91681dd75c0f5bf3",
+          "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightReport.java": "d7d988f5bfe7c86e30a5410e8eac0032a24ad5c85011b6c03de159c97d3ff750"
+        },
+        "changed_files": {},
+        "deleted_files": [],
+        "exact_additions_only": true,
+        "successor_file_count": 43,
+        "successor_manifest_sha256": "2cc855057a4b3b6b5693ad717404ea6b9828de3aa73ef9be8a9a1a62b177f751",
+        "unchanged_file_count": 40
+      },
+      "successor_file_count": 300,
+      "successor_manifest_sha256": "8d28a382447c8756b2ec4cfc4107bc55fd744587d81a8835b71eee1f1942fbb3",
+      "symlink_or_root_escape": "reject",
+      "unchanged_file_count": 297,
+      "unknown_or_extra_files": "reject"
+    },
+    "semantic_successor_external_git_anchor_complete": false
+  },
+  "next_gate": {
+    "production_execution_requires_explicit_user_authorization": true,
+    "required_next": "design and separately authorize the durable ledger, freeze/recheck, bounded retry, backup/rollback and operator apply protocol",
+    "worm_successor_gate": "closed by the fixed seventh hardening WORM node"
+  },
+  "route_state": {
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-learning-owned-personal-bank-tag-global-preflight",
+  "semantic_authority": {
+    "automatic_target_merge": false,
+    "default_mode": "DRY_RUN",
+    "execution": "operator-only one-shot; startup and HTTP invocation forbidden",
+    "owner": "learning",
+    "runtime_get_ddl": false,
+    "runtime_get_dml": false,
+    "source_key_round_trip_required": true,
+    "source_mutation_or_deletion": false,
+    "source_namespace_regex": "^bank_[1-9][0-9]*_tags$",
+    "target_delete_or_update": false,
+    "target_table": "user_question_tag_items"
+  },
+  "source_authority": {
+    "control_source_count": 11,
+    "control_sources": [
+      "docs/refactor/phase4c/personal-bank-tag-migration-global-preflight-contract.json",
+      "docs/refactor/phase4c/personal-bank-tag-migration-global-preflight.md",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightContractParityTest.java",
+      "tools/build_phase4c_tag_migration_global_preflight_contract.py",
+      "tools/phase4c_tag_migration_global_preflight_successor_acceptance.py",
+      "tools/test_phase4c_tag_migration_global_preflight_contract.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorAnchorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorAnchorContractParityTest.java",
+      "tools/phase6_web_foundation_source_successor_anchor_acceptance.py",
+      "tools/test_phase6_web_foundation_source_successor_anchor_contract.py"
+    ],
+    "control_sources_excluded_from_self_authority": true,
+    "control_sources_external_git_anchor_complete": false,
+    "dynamic_source_discovery": false,
+    "fixed_source_count": 72,
+    "fixed_sources": {
+      "approved_differences": {
+        "byte_count": 27510,
+        "sha256": "921d6626ab11d59a9667e1942953807b0aa1a81c06c01094cc109312f9d6b300",
+        "source": "docs/refactor/phase4c/approved-differences.md"
+      },
+      "current_route_promotion": {
+        "byte_count": 4365,
+        "document_payload_sha256": "1503c4dd5905abb70a77835e6602d8e51a7f042f5eed6b0a25a9a0de4b5f6e0f",
+        "sha256": "e5bc53bb8c011c5cf2f08447543aa3e5dd2a045b6226f064c6594a3639d7b5c9",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-route-promotion-contract.json"
+      },
+      "data_ownership_delta": {
+        "byte_count": 388,
+        "sha256": "b7ce8ba5a8ed221bd89c8b2287cb7fdc77caa424614097e62f141d923cc66b40",
+        "source": "docs/refactor/phase4c/data-ownership-delta.csv"
+      },
+      "effective_data_ownership": {
+        "byte_count": 1081,
+        "document_payload_sha256": "e3c7e2cde4853c241fccc5626da4ed9690d09c74f4bd8c3075d1b2fe5f2b75d9",
+        "sha256": "025a9f24edfb502b49e672c7c0a2e52b6bba022d6337dfe56159ebd498b69eb7",
+        "source": "docs/refactor/phase4c/effective-data-ownership-status.json"
+      },
+      "global_preflight": {
+        "byte_count": 35830,
+        "sha256": "cdb8fbe7e7a38307642c026b97cafbed040b732d687e30b52f950881f4ab5a76",
+        "source": "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagGlobalPreflight.java"
+      },
+      "global_preflight_pg_it": {
+        "byte_count": 28063,
+        "sha256": "6cd525dd7153efb1641a8e629e21ba874b0582a11666a4b89877baa359f4717d",
+        "source": "server/src/test/java/io/saksk/ti/integration/Phase4cLegacyPersonalBankTagGlobalPreflightIT.java"
+      },
+      "global_preflight_schema": {
+        "byte_count": 1254,
+        "sha256": "aee1ec236cf119f5f5801f9cdb4856a5011373a81c8ac703b029365758bc9af6",
+        "source": "server/src/test/resources/db/phase4c/071-legacy-personal-bank-tag-global-preflight-schema.sql"
+      },
+      "global_preflight_seed": {
+        "byte_count": 8940,
+        "sha256": "a70f125c4359b99568f8aa0db19879af0a2d5a0c7dfc064c077e48c3a8ea27a9",
+        "source": "server/src/test/resources/db/phase4c/072-legacy-personal-bank-tag-global-preflight-seed.sql"
+      },
+      "global_preflight_unit": {
+        "byte_count": 34570,
+        "sha256": "8fc30419dee8be99b8081f873d38921fdedb2beea42a7c1b4c8e2241e844ce3f",
+        "source": "server/src/test/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagGlobalPreflightTest.java"
+      },
+      "historical_http_implementation_contract": {
+        "byte_count": 94142,
+        "document_payload_sha256": "f6eff86bea6a1d04bc43bfe8a532ff952f295c6aa2d1d89f6b40f6fe02dc91f9",
+        "sha256": "c6a977f260bdd0ab4af6dace1b4c7d48803b5e8f9bc5299723b662226e45cfbd",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json"
+      },
+      "historical_read_contract": {
+        "byte_count": 82766,
+        "document_payload_sha256": "216cf664c4d74e67169f4f5c8091f80296964938d31911e3a32aeb3630a3d7a5",
+        "sha256": "458ba5aafe10a451ab05d05f1edf2ac1d5e20a93e01c20fc1b8fe1d2eb750f73",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json"
+      },
+      "historical_row_primitive": {
+        "byte_count": 34650,
+        "sha256": "978437b09667155250d7ef14f59ad841eeb7637bf9324953b41256ce8512cc96",
+        "source": "server/src/test/java/io/saksk/ti/learning/infrastructure/persistence/LegacyPersonalBankTagMigrationEvidence.java"
+      },
+      "historical_row_primitive_pg_it": {
+        "byte_count": 16705,
+        "sha256": "0f76421bcb6d609897359c03d8e2abd650076fe4db3bead6f402914175e2e70f",
+        "source": "server/src/test/java/io/saksk/ti/integration/Phase4cLegacyPersonalBankTagMigrationEvidenceIT.java"
+      },
+      "historical_row_primitive_schema": {
+        "byte_count": 370,
+        "sha256": "c873c1660963fff337346d0252f9a6bc5dd40d78f8cf41d3478dbaedfaecb0cb",
+        "source": "server/src/test/resources/db/phase4c/069-legacy-personal-bank-tag-migration-schema.sql"
+      },
+      "historical_row_primitive_seed": {
+        "byte_count": 4668,
+        "sha256": "c079c66fe31d5a9594341e8d296fbc1fc3bde8790eb7d09952e68f17ae424323",
+        "source": "server/src/test/resources/db/phase4c/070-legacy-personal-bank-tag-migration-seed.sql"
+      },
+      "historical_row_primitive_unit": {
+        "byte_count": 26764,
+        "sha256": "ccfacca97b2c249f830f28046b4f465d26d47dc6bb00d6f804d18565f70e5ce4",
+        "source": "server/src/test/java/io/saksk/ti/learning/infrastructure/persistence/LegacyPersonalBankTagMigrationEvidenceTest.java"
+      },
+      "historical_target_execution_contract": {
+        "byte_count": 74597,
+        "document_payload_sha256": "331c82ad941f4eeb3e07d1701271310f2b1dea91132794e4e5d1eb1b466fc458",
+        "sha256": "9f6c37c4217da83199403da8207ed4f89a3999fafd149f069afb520dee4d2460",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json"
+      },
+      "historical_target_execution_post_push_anchor_contract": {
+        "byte_count": 32763,
+        "document_payload_sha256": "b38abd80403536c7e6db2ec9b8a8920dc06e9f740ed9c065941e483a0b5a30e2",
+        "sha256": "1aa86e7cd8fe4f6c6c808eee166ff0ed30f7e228e707941efde87323b9ae057a",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json"
+      },
+      "historical_target_execution_post_push_contract": {
+        "byte_count": 17974,
+        "document_payload_sha256": "c2382550719d97e74f93db97bf74e70e246cca1e35ac6cc9c6c9e8d13b964dba",
+        "sha256": "3d7208eb2f70b9eb2b559e15acb4cc7882dacecf8cad941f2978678f93b12628",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json"
+      },
+      "membership_api": {
+        "byte_count": 641,
+        "sha256": "afd5b38759ae2d38cc4ef59ef0bcd25ac68df43b265f13ebb35b4b9a3482d99d",
+        "source": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionFactsApi.java"
+      },
+      "membership_view": {
+        "byte_count": 3202,
+        "sha256": "4a7a7086bde507d6f3390ec718bca9f17c838984be056ffa4323f743e8429423",
+        "source": "server/src/main/java/io/saksk/ti/personalbank/api/PersonalBankQuestionMembershipView.java"
+      },
+      "old_worm_predecessor": {
+        "byte_count": 1442,
+        "sha256": "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-worm-evidence.json"
+      },
+      "phase2_acceptance_successor": {
+        "byte_count": 28590,
+        "sha256": "5c93b9aa00d3faec19ebc8d6472bd9e8ab1903a7116d487ff8a711fc60fd8d20",
+        "source": "tools/phase2_wormhole_successor_acceptance.py"
+      },
+      "phase2_acceptance_test_successor": {
+        "byte_count": 52825,
+        "sha256": "e61ed72335bba631cf34ebfe06fae8d391e7828622eba17d0240f59efed379a3",
+        "source": "tools/test_phase2_wormhole_successor_acceptance.py"
+      },
+      "phase2_readme_successor": {
+        "byte_count": 7474,
+        "sha256": "a0c467bfc8aa0f0b64b4d520f9cda60ff081a340f016647e1da934c73b7b99d5",
+        "source": "infra/phase2/README.md"
+      },
+      "phase2_verify_static_successor": {
+        "byte_count": 16417,
+        "sha256": "893ca920d0ed1bd62e16509893fa30bbfc72b88368d66d96c2ebc5c2fbae38dc",
+        "source": "infra/phase2/verify-static.sh"
+      },
+      "phase4c_progress_successor": {
+        "byte_count": 107912,
+        "sha256": "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
+        "source": "docs/refactor/05-progress.md"
+      },
+      "phase4c_readme_successor": {
+        "byte_count": 26858,
+        "sha256": "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48",
+        "source": "docs/refactor/phase4c/README.md"
+      },
+      "phase6_bootstrap_java_parity_successor": {
+        "byte_count": 11762,
+        "sha256": "e61b445cbedddd5b71efe7dda22811128414b58089bf1525aaa4017485f6675d",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java"
+      },
+      "phase6_bootstrap_python_test_successor": {
+        "byte_count": 9295,
+        "sha256": "3bc6342e7dad775f7c92acfc0f8cb23cd94aabd6d395f4f0fae420faea14ee6b",
+        "source": "tools/test_phase6_web_foundation_source_successor_contract.py"
+      },
+      "phase6_source_successor_anchor_contract": {
+        "byte_count": 29658,
+        "document_payload_sha256": "87d952b1ba4ca4336c067d8d68ffbe86101ea0263c854541674ac3dbd7feb4af",
+        "sha256": "c91b924c027af0099dfec9d8ff36945635b128ba5822c8faca1f6fcfb2167da2",
+        "source": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json"
+      },
+      "post_push_java_bridge_successor": {
+        "byte_count": 46017,
+        "sha256": "a39a7b768979208e5bdcbdcbcbfa7d327521fb69e65d271b5d2f2da47f7ad348",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java"
+      },
+      "post_push_python_bridge_successor": {
+        "byte_count": 32538,
+        "sha256": "b19db64d6ddb71b0cac1d4ae296c02e65e82d476b37b9db5ec5fbfcfd7f4a8df",
+        "source": "tools/phase4c_http_target_execution_post_push_successor_acceptance.py"
+      },
+      "preflight_parser": {
+        "byte_count": 18525,
+        "sha256": "c3311e28f33c8bc447fd72191af696ceca333162747e94eb91681dd75c0f5bf3",
+        "source": "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightParser.java"
+      },
+      "preflight_parser_unit": {
+        "byte_count": 10279,
+        "sha256": "d811cf59f1a778760fc54ebc3a01f5e93be496e8bb9439e92020af576c9e0f8f",
+        "source": "server/src/test/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightParserTest.java"
+      },
+      "preflight_report": {
+        "byte_count": 12567,
+        "sha256": "d7d988f5bfe7c86e30a5410e8eac0032a24ad5c85011b6c03de159c97d3ff750",
+        "source": "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/LegacyPersonalBankTagPreflightReport.java"
+      },
+      "semantic_all_shares_entry_python_test_successor": {
+        "byte_count": 24249,
+        "sha256": "31dec8b10fad1f044ecbca4a76da0d4f1f97ffbbe32e075895e050372ff8ba4a",
+        "source": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py"
+      },
+      "semantic_all_shares_read_python_test_successor": {
+        "byte_count": 19451,
+        "sha256": "7afd91f0e0048cba029d38965c900da670d5f327b8b9541b0962533b1b1f09eb",
+        "source": "tools/test_phase4b_personal_bank_all_shares_read_contract.py"
+      },
+      "semantic_composition": {
+        "byte_count": 105146,
+        "document_payload_sha256": "b7cdfcfe3ec0ca29a397c608439c18810c3d55c42b64ad94368d1a0337771409",
+        "sha256": "ba900795d92046693617d92f4de7599d604e389e7b60e1cc145d08a737518f6b",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-composition-contract.json"
+      },
+      "semantic_composition_python_test_successor": {
+        "byte_count": 60156,
+        "sha256": "51ab42d0a220f3e91ac07a9b3ab1f6a2ca6c366b994de200effae31a074a766b",
+        "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py"
+      },
+      "semantic_http_entry_python_test_successor": {
+        "byte_count": 32398,
+        "sha256": "fcc4eee103b33604addfd17e453793dd41c498de62fe0538e873520dbd285b26",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py"
+      },
+      "semantic_http_implementation_builder_successor": {
+        "byte_count": 57899,
+        "sha256": "1f1c31977c356d93bfabe6714692efa27c5b3c34178e6df6b3517a3362f610e3",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py"
+      },
+      "semantic_http_implementation_java_successor": {
+        "byte_count": 80984,
+        "sha256": "fff0820405e76a4b7c58b094e21619ea050664a3b3ebfbc59abc29a83755465d",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java"
+      },
+      "semantic_http_implementation_python_successor": {
+        "byte_count": 61439,
+        "sha256": "f0eba1dbbe3f0cfdbd384c0aea8ba9b768d16edc414ed7c1b1cf5fa8fd31641d",
+        "source": "tools/phase4c_http_implementation_successor_acceptance.py"
+      },
+      "semantic_http_implementation_python_test_successor": {
+        "byte_count": 10308,
+        "sha256": "a6b70a441470d079b5bc2dc392887d49af72d6dc75a4feba3226a772b5b4c9d5",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py"
+      },
+      "semantic_java_read_successor_bridge_successor": {
+        "byte_count": 19159,
+        "sha256": "4699c29cb6e5f790b448752896cc42c413e9f0b3c4844551c4a0b2931517d1a0",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java"
+      },
+      "semantic_module_contract_java_successor": {
+        "byte_count": 182577,
+        "sha256": "984863bff3762adc8e375f0073559bb1e0e1d0ed16c368147087fdc3ca4efcd1",
+        "source": "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java"
+      },
+      "semantic_post_push_anchor_python_test_successor": {
+        "byte_count": 19769,
+        "sha256": "49621a580785ddd0c1210bf564e563b41e04bebbc87c33752e95bc6cb9cb89fd",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py"
+      },
+      "semantic_post_push_builder_successor": {
+        "byte_count": 33559,
+        "sha256": "bbafe62ee77ab0e5c25ed0daf96dc8207cc033d4f39f6cdb3d9cfa8f18365285",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py"
+      },
+      "semantic_post_push_python_test_successor": {
+        "byte_count": 12482,
+        "sha256": "420a727733f4c3a72f1c78c933491ab89fff7bbba0ddb1f1c9f7a8867a73c3bf",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py"
+      },
+      "semantic_read_python_test_successor": {
+        "byte_count": 24536,
+        "sha256": "6c302395dca0d7d319233e6463ed65b26aa3ea103c90511752ae4cac710dbaad",
+        "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py"
+      },
+      "semantic_read_successor_bridge_successor": {
+        "byte_count": 15161,
+        "sha256": "25792f3a1371b8a492d674d70228ce81872e0ce48c2aab8051805c8c0b41de8a",
+        "source": "tools/phase4c_read_successor_acceptance.py"
+      },
+      "semantic_share_list_entry_python_test_successor": {
+        "byte_count": 33265,
+        "sha256": "32b4d8e625f452ba20852fe64805086a6d878f3f8518298e7340122ff6120943",
+        "source": "tools/test_phase4b_personal_bank_share_list_entry_contract.py"
+      },
+      "semantic_share_list_read_python_test_successor": {
+        "byte_count": 45547,
+        "sha256": "047563af77f5786b0af24eeb20f8d287163df44778aad1ee56d1805a05207ec4",
+        "source": "tools/test_phase4b_personal_bank_share_list_read_contract.py"
+      },
+      "semantic_target_execution_anchor_builder_successor": {
+        "byte_count": 36240,
+        "sha256": "624d741b383866ce1bb8ec49c24445164665096cdf5b9ab679b2561c61ab7e9a",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py"
+      },
+      "semantic_target_execution_anchor_python_successor": {
+        "byte_count": 36566,
+        "sha256": "e91c56e91cdeff3bf069407d8e43d7d1b76fb131c875cf536e561976fe395141",
+        "source": "tools/phase4c_http_target_execution_anchor_successor_acceptance.py"
+      },
+      "semantic_target_execution_builder_successor": {
+        "byte_count": 65798,
+        "sha256": "3064c164d300499d958947068d3acd50c8823c741d9a0144860b5f3b1b532f7d",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py"
+      },
+      "semantic_target_execution_java_successor": {
+        "byte_count": 91381,
+        "sha256": "10d19deb68495db02f9113dd58bdf7bbf7dfa67a8885c49f7dd88685f574ff78",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java"
+      },
+      "semantic_target_execution_python_successor": {
+        "byte_count": 84585,
+        "sha256": "daca285575123c6b3d690c52977bbf8797fa46d5db75862b774805acb586a230",
+        "source": "tools/phase4c_http_target_execution_successor_acceptance.py"
+      },
+      "semantic_target_execution_python_test_successor": {
+        "byte_count": 34398,
+        "sha256": "469c46bde8e339ef28a461f3fd2a34ee7e02bfa12cb75eec4f881454049e7957",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py"
+      },
+      "semantic_usage_stats_entry_python_test_successor": {
+        "byte_count": 25598,
+        "sha256": "4f3c9ab19370eabd6dbe6dbea047d1e176c3a4e8ed947035a54dc210b75e2057",
+        "source": "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py"
+      },
+      "semantic_usage_stats_read_python_test_successor": {
+        "byte_count": 34463,
+        "sha256": "0a980e05a5fd4204e5db630447c7b018d54e2e89b64e7f069eb1329f85a5d372",
+        "source": "tools/test_phase4b_personal_bank_usage_stats_read_contract.py"
+      },
+      "semantic_user_counts_entry_python_test_successor": {
+        "byte_count": 37033,
+        "sha256": "162e057e07d6d0d0f73b6ee8bf9210fd98c492369222ce649a4f5bd5418b16b4",
+        "source": "tools/test_phase4b_personal_bank_user_counts_entry_contract.py"
+      },
+      "tag_global_preflight_hardening_worm_successor": {
+        "byte_count": 1442,
+        "sha256": "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
+        "source": "docs/refactor/phase4c/personal-bank-tag-global-preflight-hardening-worm-evidence.json"
+      },
+      "tag_global_preflight_worm_successor": {
+        "byte_count": 1442,
+        "sha256": "283d63d5b38b20dfdae01ff237e407d593ce711e9f9af35f7c666210312edd72",
+        "source": "docs/refactor/phase4c/personal-bank-tag-global-preflight-worm-evidence.json"
+      },
+      "typed_anchor_contract": {
+        "byte_count": 43737,
+        "document_payload_sha256": "430ef24103006265001ecd1f2f6aa5e4b24a886e82fcc1391cc516eba5dbde7c",
+        "sha256": "c713aa04a82f340ea04fdd5ae870bd5cfae82f099101431c664f047c2d5218ca",
+        "source": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json"
+      },
+      "typed_anchor_java_bridge_successor": {
+        "byte_count": 45695,
+        "sha256": "57be8ccb44124d315c21e21e9041861cdcb4568a814af56dbe1725635a479374",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java"
+      },
+      "typed_anchor_java_parity_successor": {
+        "byte_count": 17295,
+        "sha256": "faff2f55f48cdaa8bab92530347cda47a0f3ba4dc4227c86242afb94d78aebc0",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java"
+      },
+      "typed_anchor_python_bridge_successor": {
+        "byte_count": 45142,
+        "sha256": "c54843d2c759882e4d5e7553e9b76598a1ecd31038ace27ac265275887a414d2",
+        "source": "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py"
+      },
+      "typed_anchor_python_test_successor": {
+        "byte_count": 13443,
+        "sha256": "cdc78a5f771d09eb1822f3dbcd10030e812e4a5ab6b7792ce2b0a9d8366e90ba",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py"
+      },
+      "typed_normalization_java_bridge_successor": {
+        "byte_count": 79735,
+        "sha256": "ec7c98b04a26f25940fd5b9ec4120ebd478aa41798d4040f1cce97336898d6d2",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java"
+      },
+      "typed_normalization_python_bridge_successor": {
+        "byte_count": 57882,
+        "sha256": "a852f20ffccd8d2f1597a1bd2adb525ca66e83fed707ef6d44ff9a8d35c240c8",
+        "source": "tools/phase4c_http_typed_normalization_successor_acceptance.py"
+      }
+    },
+    "historical_contracts_or_evidence_overwritten": false,
+    "source_successor_path_count": 42,
+    "source_successor_paths": [
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md",
+      "infra/phase2/README.md",
+      "infra/phase2/verify-static.sh",
+      "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "tools/phase2_wormhole_successor_acceptance.py",
+      "tools/phase4c_http_implementation_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_successor_acceptance.py",
+      "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py",
+      "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+      "tools/phase4c_read_successor_acceptance.py",
+      "tools/test_phase2_wormhole_successor_acceptance.py",
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+      "tools/test_phase6_web_foundation_source_successor_contract.py"
+    ],
+    "symlink_or_root_escape": "reject",
+    "unknown_sources": "reject"
+  },
+  "source_successor_bridges": {
+    "dynamic_source_discovery": false,
+    "historical_phase6_source_successor_anchor_contract": {
+      "byte_count": 29658,
+      "document_payload_sha256": "87d952b1ba4ca4336c067d8d68ffbe86101ea0263c854541674ac3dbd7feb4af",
+      "sha256": "c91b924c027af0099dfec9d8ff36945635b128ba5822c8faca1f6fcfb2167da2",
+      "source": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json"
+    },
+    "historical_typed_anchor_contract": {
+      "byte_count": 43737,
+      "document_payload_sha256": "430ef24103006265001ecd1f2f6aa5e4b24a886e82fcc1391cc516eba5dbde7c",
+      "sha256": "c713aa04a82f340ea04fdd5ae870bd5cfae82f099101431c664f047c2d5218ca",
+      "source": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json"
+    },
+    "live_git_head_authority": false,
+    "overrides": {
+      "docs/refactor/05-progress.md": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 105423,
+        "accepted_sha256": "657ca0e5fec6d0a70fbcfd8b81da6815a46be395a2cd3230520fe036b584144b",
+        "source": "docs/refactor/05-progress.md",
+        "successor_authority": {
+          "byte_count": 107912,
+          "sha256": "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
+          "source": "docs/refactor/05-progress.md"
+        },
+        "successor_byte_count": 107912,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
+        "transition_fixed_by_this_contract": true
+      },
+      "docs/refactor/phase4c/README.md": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 23309,
+        "accepted_sha256": "dbf542c042b3ee96663cb39c049bc44deb1790cf4c6e0345f208ea6c27cc2d0c",
+        "source": "docs/refactor/phase4c/README.md",
+        "successor_authority": {
+          "byte_count": 26858,
+          "sha256": "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48",
+          "source": "docs/refactor/phase4c/README.md"
+        },
+        "successor_byte_count": 26858,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48",
+        "transition_fixed_by_this_contract": true
+      },
+      "infra/phase2/README.md": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 6959,
+        "accepted_sha256": "414901d53174c7875ea000c323652a1ddf046a2e97018bbbd1dc4c9a4b3bf988",
+        "source": "infra/phase2/README.md",
+        "successor_authority": {
+          "byte_count": 7474,
+          "sha256": "a0c467bfc8aa0f0b64b4d520f9cda60ff081a340f016647e1da934c73b7b99d5",
+          "source": "infra/phase2/README.md"
+        },
+        "successor_byte_count": 7474,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "a0c467bfc8aa0f0b64b4d520f9cda60ff081a340f016647e1da934c73b7b99d5",
+        "transition_fixed_by_this_contract": true
+      },
+      "infra/phase2/verify-static.sh": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 14719,
+        "accepted_sha256": "410108998f03e4d857d230c75687e854bd3bad99ba85d18c2fb090978ffa46d7",
+        "source": "infra/phase2/verify-static.sh",
+        "successor_authority": {
+          "byte_count": 16417,
+          "sha256": "893ca920d0ed1bd62e16509893fa30bbfc72b88368d66d96c2ebc5c2fbae38dc",
+          "source": "infra/phase2/verify-static.sh"
+        },
+        "successor_byte_count": 16417,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "893ca920d0ed1bd62e16509893fa30bbfc72b88368d66d96c2ebc5c2fbae38dc",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 181374,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "02a4b9bfabe2f9e3789e94826b1f337e8a0986e5d36f42ac243cbe79060a82d2",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json#/historical_successor_acceptance/java_sources/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1ModuleContractParityTest.java/successor_sha256",
+        "source": "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java",
+        "successor_authority": {
+          "byte_count": 182577,
+          "sha256": "984863bff3762adc8e375f0073559bb1e0e1d0ed16c368147087fdc3ca4efcd1",
+          "source": "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java"
+        },
+        "successor_byte_count": 182577,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "984863bff3762adc8e375f0073559bb1e0e1d0ed16c368147087fdc3ca4efcd1",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 79412,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "1d2c193fb7a63173850bfee7ce382e7b4bc417c5b3879f3ef4bb43187f980275",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_java_implementation_successor_bridge/sha256",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+        "successor_authority": {
+          "byte_count": 80984,
+          "sha256": "fff0820405e76a4b7c58b094e21619ea050664a3b3ebfbc59abc29a83755465d",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java"
+        },
+        "successor_byte_count": 80984,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "fff0820405e76a4b7c58b094e21619ea050664a3b3ebfbc59abc29a83755465d",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "accepted_byte_count": 45004,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/historical_source_successors/overrides/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java/successor_byte_count",
+        "accepted_sha256": "46f68412ea0cf42687133ba87a2184b86fe1b0c29625b1ee3f6e8f7301399efa",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/historical_source_successors/overrides/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java/successor_sha256",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+        "successor_authority": {
+          "byte_count": 46017,
+          "sha256": "a39a7b768979208e5bdcbdcbcbfa7d327521fb69e65d271b5d2f2da47f7ad348",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java"
+        },
+        "successor_byte_count": 46017,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "a39a7b768979208e5bdcbdcbcbfa7d327521fb69e65d271b5d2f2da47f7ad348",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "accepted_byte_count": 89014,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/git_checkpoint/artifacts/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1Phase4cHttpTargetExecutionSuccessorAcceptance.java/byte_count",
+        "accepted_sha256": "945ddfd83ed4f8e0be4db02b1bd58abf74450eaf8996a92a12554ab8b81da578",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/git_checkpoint/artifacts/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1Phase4cHttpTargetExecutionSuccessorAcceptance.java/sha256",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+        "successor_authority": {
+          "byte_count": 91381,
+          "sha256": "10d19deb68495db02f9113dd58bdf7bbf7dfa67a8885c49f7dd88685f574ff78",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java"
+        },
+        "successor_byte_count": 91381,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "10d19deb68495db02f9113dd58bdf7bbf7dfa67a8885c49f7dd88685f574ff78",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 43848,
+        "accepted_sha256": "b762441b9d0537240e231effbe5477b89713e7abc861ff9d5a614fc80008848c",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java",
+        "successor_authority": {
+          "byte_count": 45695,
+          "sha256": "57be8ccb44124d315c21e21e9041861cdcb4568a814af56dbe1725635a479374",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java"
+        },
+        "successor_byte_count": 45695,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "57be8ccb44124d315c21e21e9041861cdcb4568a814af56dbe1725635a479374",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 76703,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1Phase4cHttpTypedNormalizationSuccessorAcceptance.java/successor_byte_count",
+        "accepted_sha256": "f78882b20e38857c420b750677e4e8dd52922a1f0c04c249db9ed0d4f3db4fd5",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/server~1src~1test~1java~1io~1saksk~1ti~1architecture~1Phase4cHttpTypedNormalizationSuccessorAcceptance.java/successor_sha256",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+        "successor_authority": {
+          "byte_count": 79735,
+          "sha256": "ec7c98b04a26f25940fd5b9ec4120ebd478aa41798d4040f1cce97336898d6d2",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java"
+        },
+        "successor_byte_count": 79735,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "ec7c98b04a26f25940fd5b9ec4120ebd478aa41798d4040f1cce97336898d6d2",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 14962,
+        "accepted_sha256": "f0f57fbd1c24e8f26878209eba298645c63bd962381d26d2505fb76ee495cda8",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+        "successor_authority": {
+          "byte_count": 17295,
+          "sha256": "faff2f55f48cdaa8bab92530347cda47a0f3ba4dc4227c86242afb94d78aebc0",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java"
+        },
+        "successor_byte_count": 17295,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "faff2f55f48cdaa8bab92530347cda47a0f3ba4dc4227c86242afb94d78aebc0",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 18364,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "5047c8b0a36450a72ba74a460db115ab33a58861b64216fa2cc67a7ddb0a026d",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_java_read_successor_bridge/sha256",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+        "successor_authority": {
+          "byte_count": 19159,
+          "sha256": "4699c29cb6e5f790b448752896cc42c413e9f0b3c4844551c4a0b2931517d1a0",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java"
+        },
+        "successor_byte_count": 19159,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "4699c29cb6e5f790b448752896cc42c413e9f0b3c4844551c4a0b2931517d1a0",
+        "transition_fixed_by_this_contract": true
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 11770,
+        "accepted_sha256": "34d6b638cf40667a2c0b1ce1214cc04b8e149321f3137ea8d5d09ee44290d694",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java",
+        "successor_authority": {
+          "byte_count": 11762,
+          "sha256": "e61b445cbedddd5b71efe7dda22811128414b58089bf1525aaa4017485f6675d",
+          "source": "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java"
+        },
+        "successor_byte_count": 11762,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "e61b445cbedddd5b71efe7dda22811128414b58089bf1525aaa4017485f6675d",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json",
+        "accepted_byte_count": 54261,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "d020cf859dcba608d9b67d122ebfaca0d1bfd3161a12fc7c386d090e65938ef0",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json#/source_contracts/contract_builder/sha256",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+        "successor_authority": {
+          "byte_count": 57899,
+          "sha256": "1f1c31977c356d93bfabe6714692efa27c5b3c34178e6df6b3517a3362f610e3",
+          "source": "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py"
+        },
+        "successor_byte_count": 57899,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "1f1c31977c356d93bfabe6714692efa27c5b3c34178e6df6b3517a3362f610e3",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json",
+        "accepted_byte_count": 34518,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json#/git_checkpoint/artifacts/anchor_builder/byte_count",
+        "accepted_sha256": "b87133b5c187561970c322a92eb22f84cb7a768a9168870cc7517dd973616667",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json#/git_checkpoint/artifacts/anchor_builder/sha256",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py",
+        "successor_authority": {
+          "byte_count": 36240,
+          "sha256": "624d741b383866ce1bb8ec49c24445164665096cdf5b9ab679b2561c61ab7e9a",
+          "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py"
+        },
+        "successor_byte_count": 36240,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "624d741b383866ce1bb8ec49c24445164665096cdf5b9ab679b2561c61ab7e9a",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "accepted_byte_count": 61952,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/git_checkpoint/artifacts/tools~1build_phase4c_personal_bank_user_counts_http_target_execution_contract.py/byte_count",
+        "accepted_sha256": "8f729d39a528cf0c5acb93802e9f6d830d8fc79bc80421c2a80d37a6ead58209",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/git_checkpoint/artifacts/tools~1build_phase4c_personal_bank_user_counts_http_target_execution_contract.py/sha256",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+        "successor_authority": {
+          "byte_count": 65798,
+          "sha256": "3064c164d300499d958947068d3acd50c8823c741d9a0144860b5f3b1b532f7d",
+          "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py"
+        },
+        "successor_byte_count": 65798,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "3064c164d300499d958947068d3acd50c8823c741d9a0144860b5f3b1b532f7d",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "accepted_byte_count": 31546,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/historical_source_successors/overrides/tools~1build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py/successor_byte_count",
+        "accepted_sha256": "a215e6b65624630de990dcae7e8d718e8a38a1fadae3e00ee0f3ccb81788959f",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/historical_source_successors/overrides/tools~1build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py/successor_sha256",
+        "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+        "successor_authority": {
+          "byte_count": 33559,
+          "sha256": "bbafe62ee77ab0e5c25ed0daf96dc8207cc033d4f39f6cdb3d9cfa8f18365285",
+          "source": "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py"
+        },
+        "successor_byte_count": 33559,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "bbafe62ee77ab0e5c25ed0daf96dc8207cc033d4f39f6cdb3d9cfa8f18365285",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase2_wormhole_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 25791,
+        "accepted_sha256": "1164b6c584f4905a8011c5320eac62591e039ad0526b5a0657908f7b82688480",
+        "source": "tools/phase2_wormhole_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 28590,
+          "sha256": "5c93b9aa00d3faec19ebc8d6472bd9e8ab1903a7116d487ff8a711fc60fd8d20",
+          "source": "tools/phase2_wormhole_successor_acceptance.py"
+        },
+        "successor_byte_count": 28590,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "5c93b9aa00d3faec19ebc8d6472bd9e8ab1903a7116d487ff8a711fc60fd8d20",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_http_implementation_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 59107,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "54438d9ee44d391b813a1c3503444dd65d627e3b5932971e49ef549650fbbff4",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_python_implementation_successor_bridge/sha256",
+        "source": "tools/phase4c_http_implementation_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 61439,
+          "sha256": "f0eba1dbbe3f0cfdbd384c0aea8ba9b768d16edc414ed7c1b1cf5fa8fd31641d",
+          "source": "tools/phase4c_http_implementation_successor_acceptance.py"
+        },
+        "successor_byte_count": 61439,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "f0eba1dbbe3f0cfdbd384c0aea8ba9b768d16edc414ed7c1b1cf5fa8fd31641d",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_http_target_execution_anchor_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json",
+        "accepted_byte_count": 34568,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json#/git_checkpoint/artifacts/python_anchor_acceptance/byte_count",
+        "accepted_sha256": "03b411be87bd9f8d4dbb94ddcfb9495ec7523fb5c9482f3c1fb4098d1ab7e455",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-contract.json#/git_checkpoint/artifacts/python_anchor_acceptance/sha256",
+        "source": "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 36566,
+          "sha256": "e91c56e91cdeff3bf069407d8e43d7d1b76fb131c875cf536e561976fe395141",
+          "source": "tools/phase4c_http_target_execution_anchor_successor_acceptance.py"
+        },
+        "successor_byte_count": 36566,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "e91c56e91cdeff3bf069407d8e43d7d1b76fb131c875cf536e561976fe395141",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_http_target_execution_post_push_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "accepted_byte_count": 30640,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/historical_source_successors/overrides/tools~1phase4c_http_target_execution_post_push_successor_acceptance.py/successor_byte_count",
+        "accepted_sha256": "944c925704e1b237a7d8e16c76591a0e8b7965d388bedd9e2a52492e0511c90c",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/historical_source_successors/overrides/tools~1phase4c_http_target_execution_post_push_successor_acceptance.py/successor_sha256",
+        "source": "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 32538,
+          "sha256": "b19db64d6ddb71b0cac1d4ae296c02e65e82d476b37b9db5ec5fbfcfd7f4a8df",
+          "source": "tools/phase4c_http_target_execution_post_push_successor_acceptance.py"
+        },
+        "successor_byte_count": 32538,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "b19db64d6ddb71b0cac1d4ae296c02e65e82d476b37b9db5ec5fbfcfd7f4a8df",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_http_target_execution_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json",
+        "accepted_byte_count": 81902,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/git_checkpoint/artifacts/tools~1phase4c_http_target_execution_successor_acceptance.py/byte_count",
+        "accepted_sha256": "95e00e9d136e212cbcb5501d2abae46b9679bb2412d07ba6fcf79cbb9dd4de1a",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-post-push-anchor-contract.json#/git_checkpoint/artifacts/tools~1phase4c_http_target_execution_successor_acceptance.py/sha256",
+        "source": "tools/phase4c_http_target_execution_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 84585,
+          "sha256": "daca285575123c6b3d690c52977bbf8797fa46d5db75862b774805acb586a230",
+          "source": "tools/phase4c_http_target_execution_successor_acceptance.py"
+        },
+        "successor_byte_count": 84585,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "daca285575123c6b3d690c52977bbf8797fa46d5db75862b774805acb586a230",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 41725,
+        "accepted_sha256": "cf434c2dc8e33c0b60d09646292fc358bc2df678bfe2f83d04edae79c7bd4aee",
+        "source": "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 45142,
+          "sha256": "c54843d2c759882e4d5e7553e9b76598a1ecd31038ace27ac265275887a414d2",
+          "source": "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py"
+        },
+        "successor_byte_count": 45142,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "c54843d2c759882e4d5e7553e9b76598a1ecd31038ace27ac265275887a414d2",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_http_typed_normalization_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 54168,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/tools~1phase4c_http_typed_normalization_successor_acceptance.py/successor_byte_count",
+        "accepted_sha256": "e71a5eec0e71ff824750f6eb20c4b310fdb0d8273fe89d83a23aee422ba282c5",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/tools~1phase4c_http_typed_normalization_successor_acceptance.py/successor_sha256",
+        "source": "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 57882,
+          "sha256": "a852f20ffccd8d2f1597a1bd2adb525ca66e83fed707ef6d44ff9a8d35c240c8",
+          "source": "tools/phase4c_http_typed_normalization_successor_acceptance.py"
+        },
+        "successor_byte_count": 57882,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "a852f20ffccd8d2f1597a1bd2adb525ca66e83fed707ef6d44ff9a8d35c240c8",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/phase4c_read_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 13218,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "1e494bce628e87bc2db3d01742fb929752fedaefd7563defccad7b972c951980",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_python_read_successor_bridge/sha256",
+        "source": "tools/phase4c_read_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 15161,
+          "sha256": "25792f3a1371b8a492d674d70228ce81872e0ce48c2aab8051805c8c0b41de8a",
+          "source": "tools/phase4c_read_successor_acceptance.py"
+        },
+        "successor_byte_count": 15161,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "25792f3a1371b8a492d674d70228ce81872e0ce48c2aab8051805c8c0b41de8a",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase2_wormhole_successor_acceptance.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 44809,
+        "accepted_sha256": "ff3250a88eb6e16102fc91930beec627f79ed57720140a32e7ad4410d7856e9f",
+        "source": "tools/test_phase2_wormhole_successor_acceptance.py",
+        "successor_authority": {
+          "byte_count": 52825,
+          "sha256": "e61ed72335bba631cf34ebfe06fae8d391e7828622eba17d0240f59efed379a3",
+          "source": "tools/test_phase2_wormhole_successor_acceptance.py"
+        },
+        "successor_byte_count": 52825,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "e61ed72335bba631cf34ebfe06fae8d391e7828622eba17d0240f59efed379a3",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 23701,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "e37b0418e8018d58135c5b1c55149d9679dfedb21f8b67fca3425b874ea23efc",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_all_shares_entry_contract_test/sha256",
+        "source": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+        "successor_authority": {
+          "byte_count": 24249,
+          "sha256": "31dec8b10fad1f044ecbca4a76da0d4f1f97ffbbe32e075895e050372ff8ba4a",
+          "source": "tools/test_phase4b_personal_bank_all_shares_entry_contract.py"
+        },
+        "successor_byte_count": 24249,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "31dec8b10fad1f044ecbca4a76da0d4f1f97ffbbe32e075895e050372ff8ba4a",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_all_shares_read_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 18911,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "f236ed8080a4e73d294d0eb96f1b19f8b3116ef0a51ba1be6d5d8e695dc558e0",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json#/historical_successor_acceptance/python_sources/tools~1test_phase4b_personal_bank_all_shares_read_contract.py/successor_sha256",
+        "source": "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+        "successor_authority": {
+          "byte_count": 19451,
+          "sha256": "7afd91f0e0048cba029d38965c900da670d5f327b8b9541b0962533b1b1f09eb",
+          "source": "tools/test_phase4b_personal_bank_all_shares_read_contract.py"
+        },
+        "successor_byte_count": 19451,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "7afd91f0e0048cba029d38965c900da670d5f327b8b9541b0962533b1b1f09eb",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_share_list_entry_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 32717,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "c60e4d9abb01c70001e703cf8c4c5eed77bd65445c506e99a9e3dd38dadab2ee",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json#/historical_successor_acceptance/python_sources/tools~1test_phase4b_personal_bank_share_list_entry_contract.py/successor_sha256",
+        "source": "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+        "successor_authority": {
+          "byte_count": 33265,
+          "sha256": "32b4d8e625f452ba20852fe64805086a6d878f3f8518298e7340122ff6120943",
+          "source": "tools/test_phase4b_personal_bank_share_list_entry_contract.py"
+        },
+        "successor_byte_count": 33265,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "32b4d8e625f452ba20852fe64805086a6d878f3f8518298e7340122ff6120943",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 45007,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "ffde7c337edf81ba8cf1a457800e89e3150df10b44ea7da50e99436534caa671",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_share_list_read_contract_test/sha256",
+        "source": "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+        "successor_authority": {
+          "byte_count": 45547,
+          "sha256": "047563af77f5786b0af24eeb20f8d287163df44778aad1ee56d1805a05207ec4",
+          "source": "tools/test_phase4b_personal_bank_share_list_read_contract.py"
+        },
+        "successor_byte_count": 45547,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "047563af77f5786b0af24eeb20f8d287163df44778aad1ee56d1805a05207ec4",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 25059,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "de1415897a0cef4e98266aaca699b162dd469caf17628dd2fde19bed691ef32c",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json#/historical_successor_acceptance/python_sources/tools~1test_phase4b_personal_bank_usage_stats_entry_contract.py/successor_sha256",
+        "source": "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+        "successor_authority": {
+          "byte_count": 25598,
+          "sha256": "4f3c9ab19370eabd6dbe6dbea047d1e176c3a4e8ed947035a54dc210b75e2057",
+          "source": "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py"
+        },
+        "successor_byte_count": 25598,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "4f3c9ab19370eabd6dbe6dbea047d1e176c3a4e8ed947035a54dc210b75e2057",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_usage_stats_read_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 33924,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "90c77b28c1c08822d900f150e5c4c69fe4a7463b5dfc7a4ce021fc599c71a15a",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-read-contract.json#/historical_successor_acceptance/python_sources/tools~1test_phase4b_personal_bank_usage_stats_read_contract.py/successor_sha256",
+        "source": "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+        "successor_authority": {
+          "byte_count": 34463,
+          "sha256": "0a980e05a5fd4204e5db630447c7b018d54e2e89b64e7f069eb1329f85a5d372",
+          "source": "tools/test_phase4b_personal_bank_usage_stats_read_contract.py"
+        },
+        "successor_byte_count": 34463,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "0a980e05a5fd4204e5db630447c7b018d54e2e89b64e7f069eb1329f85a5d372",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json",
+        "accepted_byte_count": 36086,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "84f7ee524b57e9417267380b73ebc68439382b578f2b7674c50cdbf2a6021e0e",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json#/source_contracts/historical_phase4b_entry_contract_test/sha256",
+        "source": "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+        "successor_authority": {
+          "byte_count": 37033,
+          "sha256": "162e057e07d6d0d0f73b6ee8bf9210fd98c492369222ce649a4f5bd5418b16b4",
+          "source": "tools/test_phase4b_personal_bank_user_counts_entry_contract.py"
+        },
+        "successor_byte_count": 37033,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "162e057e07d6d0d0f73b6ee8bf9210fd98c492369222ce649a4f5bd5418b16b4",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 55453,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "b81c8fb13f2ce4dd0d917a0876b88a20804bd1d272a7c261563dad9513d42f17",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_composition_contract_test/sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+        "successor_authority": {
+          "byte_count": 60156,
+          "sha256": "51ab42d0a220f3e91ac07a9b3ab1f6a2ca6c366b994de200effae31a074a766b",
+          "source": "tools/test_phase4c_personal_bank_user_counts_composition_contract.py"
+        },
+        "successor_byte_count": 60156,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "51ab42d0a220f3e91ac07a9b3ab1f6a2ca6c366b994de200effae31a074a766b",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json",
+        "accepted_byte_count": 31074,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "c87d528ad6ee912863da16a49e0a398cffe3c9479d1f58461e32035b76fafd26",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-implementation-contract.json#/historical_successor_acceptance/http_entry_source_overrides/tools~1test_phase4c_personal_bank_user_counts_http_entry_contract.py/successor_sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+        "successor_authority": {
+          "byte_count": 32398,
+          "sha256": "fcc4eee103b33604addfd17e453793dd41c498de62fe0538e873520dbd285b26",
+          "source": "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py"
+        },
+        "successor_byte_count": 32398,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "fcc4eee103b33604addfd17e453793dd41c498de62fe0538e873520dbd285b26",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 10281,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "9c61d6cefdd980457197fb850f690c6adc1a84fdb3d21905a2a5cfdb1bc258c2",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_implementation_contract_test/sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+        "successor_authority": {
+          "byte_count": 10308,
+          "sha256": "a6b70a441470d079b5bc2dc392887d49af72d6dc75a4feba3226a772b5b4c9d5",
+          "source": "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py"
+        },
+        "successor_byte_count": 10308,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "a6b70a441470d079b5bc2dc392887d49af72d6dc75a4feba3226a772b5b4c9d5",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 32651,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "a8ce7fc93fe022d16a10e4bdd0fa9bff55788b076eb78601efba373c29c54a4b",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/contract_test/sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+        "successor_authority": {
+          "byte_count": 34398,
+          "sha256": "469c46bde8e339ef28a461f3fd2a34ee7e02bfa12cb75eec4f881454049e7957",
+          "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py"
+        },
+        "successor_byte_count": 34398,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "469c46bde8e339ef28a461f3fd2a34ee7e02bfa12cb75eec4f881454049e7957",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 19311,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/tools~1test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py/successor_byte_count",
+        "accepted_sha256": "3ded87895b33befb0f80905a1490d5f9207ae4e9ee26e939e5c00ebbd30a7874",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/tools~1test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py/successor_sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+        "successor_authority": {
+          "byte_count": 19769,
+          "sha256": "49621a580785ddd0c1210bf564e563b41e04bebbc87c33752e95bc6cb9cb89fd",
+          "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py"
+        },
+        "successor_byte_count": 19769,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "49621a580785ddd0c1210bf564e563b41e04bebbc87c33752e95bc6cb9cb89fd",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json",
+        "accepted_byte_count": 12208,
+        "accepted_byte_count_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/tools~1test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py/successor_byte_count",
+        "accepted_sha256": "87078f6d01957dcbbb37b488048a6702bc2212850ee9b2b75aa9b68aba352057",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-typed-normalization-anchor-contract.json#/historical_source_successors/overrides/tools~1test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py/successor_sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+        "successor_authority": {
+          "byte_count": 12482,
+          "sha256": "420a727733f4c3a72f1c78c933491ab89fff7bbba0ddb1f1c9f7a8867a73c3bf",
+          "source": "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py"
+        },
+        "successor_byte_count": 12482,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "420a727733f4c3a72f1c78c933491ab89fff7bbba0ddb1f1c9f7a8867a73c3bf",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 11128,
+        "accepted_sha256": "a96c4431b258b15d367250b668602fcb0ca04cab9555f13a4abfaa8914b0edec",
+        "source": "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py",
+        "successor_authority": {
+          "byte_count": 13443,
+          "sha256": "cdc78a5f771d09eb1822f3dbcd10030e812e4a5ab6b7792ce2b0a9d8366e90ba",
+          "source": "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py"
+        },
+        "successor_byte_count": 13443,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "cdc78a5f771d09eb1822f3dbcd10030e812e4a5ab6b7792ce2b0a9d8366e90ba",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py": {
+        "accepted_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json",
+        "accepted_byte_count": 21392,
+        "accepted_byte_count_authority": "code_fixed_pending_bootstrap_external_git_anchor",
+        "accepted_sha256": "641c90d33de50daeb3a1a1c9a3ae5027562273f780f88e6a26cf00ad3bd462ac",
+        "accepted_sha256_authority": "docs/refactor/phase4c/personal-bank-user-counts-http-target-execution-contract.json#/source_contracts/historical_read_contract_test/sha256",
+        "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+        "successor_authority": {
+          "byte_count": 24536,
+          "sha256": "6c302395dca0d7d319233e6463ed65b26aa3ea103c90511752ae4cac710dbaad",
+          "source": "tools/test_phase4c_personal_bank_user_counts_read_contract.py"
+        },
+        "successor_byte_count": 24536,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "6c302395dca0d7d319233e6463ed65b26aa3ea103c90511752ae4cac710dbaad",
+        "transition_fixed_by_this_contract": true
+      },
+      "tools/test_phase6_web_foundation_source_successor_contract.py": {
+        "accepted_authority": "docs/refactor/phase6/web-foundation-source-successor-anchor-contract.json",
+        "accepted_byte_count": 9139,
+        "accepted_sha256": "fb553e8d15c8b748dc62eb6517f775614132657a60b13716449ad1a72606685d",
+        "source": "tools/test_phase6_web_foundation_source_successor_contract.py",
+        "successor_authority": {
+          "byte_count": 9295,
+          "sha256": "3bc6342e7dad775f7c92acfc0f8cb23cd94aabd6d395f4f0fae420faea14ee6b",
+          "source": "tools/test_phase6_web_foundation_source_successor_contract.py"
+        },
+        "successor_byte_count": 9295,
+        "successor_external_git_anchor_complete": false,
+        "successor_sha256": "3bc6342e7dad775f7c92acfc0f8cb23cd94aabd6d395f4f0fae420faea14ee6b",
+        "transition_fixed_by_this_contract": true
+      }
+    },
+    "path_allowlist_exact": true,
+    "path_count": 42,
+    "paths": [
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md",
+      "infra/phase2/README.md",
+      "infra/phase2/verify-static.sh",
+      "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "tools/phase2_wormhole_successor_acceptance.py",
+      "tools/phase4c_http_implementation_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_successor_acceptance.py",
+      "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py",
+      "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+      "tools/phase4c_read_successor_acceptance.py",
+      "tools/test_phase2_wormhole_successor_acceptance.py",
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+      "tools/test_phase6_web_foundation_source_successor_contract.py"
+    ],
+    "phase6_bootstrap_paths": [
+      "server/src/test/java/io/saksk/ti/architecture/Phase6WebFoundationSourceSuccessorContractParityTest.java",
+      "tools/test_phase6_web_foundation_source_successor_contract.py"
+    ],
+    "phase6_document_paths": [
+      "docs/refactor/05-progress.md",
+      "docs/refactor/phase4c/README.md"
+    ],
+    "phase6_typed_bridge_paths": [
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+      "tools/phase4c_http_typed_normalization_anchor_successor_acceptance.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_typed_normalization_anchor_contract.py"
+    ],
+    "post_push_bridge_paths": [
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionPostPushSuccessorAcceptance.java",
+      "tools/phase4c_http_target_execution_post_push_successor_acceptance.py"
+    ],
+    "semantic_consumer_paths": [
+      "server/src/test/java/io/saksk/ti/architecture/ModuleContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpImplementationSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cReadSuccessorAcceptance.java",
+      "tools/build_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "tools/phase4c_http_implementation_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_successor_acceptance.py",
+      "tools/phase4c_read_successor_acceptance.py",
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_implementation_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_anchor_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_post_push_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py"
+    ],
+    "source_successor_external_git_anchor_complete": false,
+    "symlink_or_root_escape": "reject",
+    "typed_normalization_bridge_paths": [
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+      "tools/phase4c_http_typed_normalization_successor_acceptance.py"
+    ],
+    "typed_phase2_paths": [
+      "infra/phase2/README.md",
+      "infra/phase2/verify-static.sh",
+      "tools/phase2_wormhole_successor_acceptance.py",
+      "tools/test_phase2_wormhole_successor_acceptance.py"
+    ],
+    "unknown_paths": "reject"
+  },
+  "status": "global_preflight_bounded_payload_and_unicode_lossless_evidence_closed_migration_design_operator_apply_and_cutover_unauthorized"
+}

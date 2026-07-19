@@ -18,10 +18,38 @@ try:
         accepted_sha256 as _target_execution_accepted_sha256,
         successor_sha256 as _target_execution_successor_sha256,
     )
-except ModuleNotFoundError:  # Direct execution from tools/.
+except ModuleNotFoundError as error:  # Direct execution from tools/.
+    if error.name not in {
+        "tools",
+        "tools.phase4c_http_target_execution_successor_acceptance",
+    }:
+        raise
     from phase4c_http_target_execution_successor_acceptance import (
         accepted_sha256 as _target_execution_accepted_sha256,
         successor_sha256 as _target_execution_successor_sha256,
+    )
+
+
+def _tag_preflight_successor():
+    try:
+        from tools import (
+            phase4c_tag_migration_global_preflight_successor_acceptance
+            as successor,
+        )
+    except ModuleNotFoundError as error:  # Direct execution from tools/.
+        if error.name not in {
+            "tools",
+            "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+        }:
+            raise
+        import phase4c_tag_migration_global_preflight_successor_acceptance \
+            as successor
+    return successor
+
+
+def _validate_runtime_successor(*args, **kwargs):
+    return _tag_preflight_successor().validate_production_runtime_successor(
+        *args, **kwargs
     )
 
 
@@ -428,29 +456,46 @@ def _validated_current_sha256(
         *,
         label: str,
 ) -> str:
-    """Resolve historical bytes through the exact target successor allowlist.
+    """Resolve historical bytes through one exact downstream owner.
 
     Every code-fixed historical path must retain its anchored digest even when
     its physical bytes happen to equal a rewritten contract reference. Any
-    physical drift must then be authorized by the bootstrap-validated
-    target-execution bridge. The historical contract is never used to authorize
-    its own changed bridge bytes.
+    target-allowlisted drift is owned exclusively by the target-execution
+    bridge.  Only a non-target path may use NodeA, which must bind the exact
+    declaration and current bytes. The historical contract is never used to
+    authorize its own changed bridge bytes.
     """
     if not _is_sha256(fixed_sha256):
         raise AssertionError(f"invalid fixed SHA-256 for {label}: {relative}")
     physical = _sha256(_fixed_regular_file(root, relative))
     if relative in TARGET_EXECUTION_SUCCESSOR_ALLOWLIST:
-        if _target_execution_accepted_sha256(relative) != fixed_sha256:
+        target_accepted = _target_execution_accepted_sha256(relative)
+        if target_accepted != fixed_sha256:
             raise AssertionError(
                 f"target successor accepted hash drift for {label}: {relative}"
             )
-    elif physical != fixed_sha256:
-        raise AssertionError(f"unauthorized target successor path for {label}: {relative}")
+        if physical == fixed_sha256:
+            return physical
+        successor = _target_execution_successor_sha256(root, relative)
+        if successor != physical:
+            raise AssertionError(f"target successor hash drift for {label}: {relative}")
+        return physical
+
     if physical == fixed_sha256:
         return physical
-    successor = _target_execution_successor_sha256(root, relative)
-    if successor != physical:
-        raise AssertionError(f"target successor hash drift for {label}: {relative}")
+    nodea = _tag_preflight_successor()
+    nodea_accepted = getattr(nodea, "accepted_sha256", None)
+    nodea_successor = getattr(nodea, "successor_sha256", None)
+    if not callable(nodea_accepted) or not callable(nodea_successor):
+        raise AssertionError("tag-preflight successor API is incomplete")
+    if nodea_accepted(relative) != fixed_sha256:
+        raise AssertionError(
+            f"tag-preflight successor does not accept {label}: {relative}"
+        )
+    if nodea_successor(root, relative) != physical:
+        raise AssertionError(
+            f"tag-preflight successor does not bind current {label}: {relative}"
+        )
     return physical
 
 
@@ -802,9 +847,26 @@ def validate_http_implementation_successor_contract(
     physical_runtime = _production_runtime_manifest(root)
     if current.get("file_count") != 297:
         raise AssertionError("unexpected HTTP implementation runtime file count")
-    if current.get("files") != physical_runtime:
-        raise AssertionError("HTTP implementation runtime manifest differs from worktree")
-    if current.get("manifest_sha256") != _sha256_json(physical_runtime):
+    accepted_runtime = current.get("files")
+    if not isinstance(accepted_runtime, dict) or len(accepted_runtime) != 297:
+        raise AssertionError("HTTP implementation runtime manifest is incomplete")
+    if accepted_runtime != physical_runtime:
+        successor = _validate_runtime_successor(
+            root,
+            accepted_runtime,
+            physical_runtime,
+            view="full_runtime",
+        )
+        if (
+            successor.accepted_file_count != 297
+            or successor.accepted_manifest_sha256 != _sha256_json(accepted_runtime)
+            or successor.current_file_count != len(physical_runtime)
+            or successor.current_manifest_sha256 != _sha256_json(physical_runtime)
+            or successor.changed_files
+            or successor.deleted_files
+        ):
+            raise AssertionError("tag preflight runtime successor descriptor drifted")
+    if current.get("manifest_sha256") != _sha256_json(accepted_runtime):
         raise AssertionError("invalid HTTP implementation runtime manifest hash")
 
     delta = transition.get("exact_delta", {})
@@ -826,18 +888,18 @@ def validate_http_implementation_successor_contract(
         if delta.get(field) != expected:
             raise AssertionError(f"HTTP implementation delta count drift: {field}")
     computed_added = {
-        relative: physical_runtime[relative]
-        for relative in sorted(set(physical_runtime) - set(baseline_files))
+        relative: accepted_runtime[relative]
+        for relative in sorted(set(accepted_runtime) - set(baseline_files))
     }
     computed_changed = {
         relative: {
             "predecessor_sha256": baseline_files[relative],
-            "successor_sha256": physical_runtime[relative],
+            "successor_sha256": accepted_runtime[relative],
         }
-        for relative in sorted(set(physical_runtime) & set(baseline_files))
-        if physical_runtime[relative] != baseline_files[relative]
+        for relative in sorted(set(accepted_runtime) & set(baseline_files))
+        if accepted_runtime[relative] != baseline_files[relative]
     }
-    computed_deleted = sorted(set(baseline_files) - set(physical_runtime))
+    computed_deleted = sorted(set(baseline_files) - set(accepted_runtime))
     if delta.get("added_files") != computed_added:
         raise AssertionError("HTTP implementation added delta was not independently derived")
     if delta.get("changed_files") != computed_changed:

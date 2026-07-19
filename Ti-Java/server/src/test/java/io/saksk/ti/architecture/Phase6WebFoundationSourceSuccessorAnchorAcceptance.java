@@ -138,6 +138,19 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
             "tools/phase6_web_foundation_source_successor_anchor_acceptance.py",
             "tools/test_phase6_web_foundation_source_successor_anchor_contract.py");
 
+    private static final Set<String> TAG_PREFLIGHT_DELEGATED_PATHS = Set.of(
+            "docs/refactor/05-progress.md",
+            "docs/refactor/phase4c/README.md",
+            TYPED_JAVA_ACCEPTANCE,
+            TYPED_JAVA_PARITY,
+            "tools/phase4c_http_typed_normalization_anchor_"
+                    + "successor_acceptance.py",
+            "tools/test_phase4c_personal_bank_user_counts_http_typed_"
+                    + "normalization_anchor_contract.py",
+            "tools/test_phase6_web_foundation_source_successor_contract.py",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase6WebFoundationSourceSuccessorContractParityTest.java");
+
     private static final List<String> SOURCE_PATHS = List.of(
             "README.md",
             "docs/refactor/05-progress.md",
@@ -334,10 +347,15 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
         }
         Path root = tiJavaRoot.toRealPath();
         Path path = fixedRegularFile(root, relative);
-        require(Files.size(path) == successor.successorBytes()
-                        && successor.successorSha256().equals(sha256(path)),
+        String physicalSha256 = sha256(path);
+        if (Files.size(path) == successor.successorBytes()
+                && successor.successorSha256().equals(physicalSha256)) {
+            return physicalSha256;
+        }
+        require(TAG_PREFLIGHT_DELEGATED_PATHS.contains(relative),
                 "Phase6 source-successor anchor bytes drifted: " + relative);
-        return successor.successorSha256();
+        return tagPreflightSuccessorSha256(
+                root, relative, successor.successorSha256(), physicalSha256);
     }
 
     static String acceptedHash(String relative) {
@@ -358,6 +376,10 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
         paths.add(DOCKERFILE_RELATIVE);
         paths.add(WORM_RELATIVE);
         paths.addAll(SOURCE_PATHS);
+        paths.addAll(TYPED_ANCHOR_BRIDGE_SOURCES);
+        paths.add(
+                Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                        .contractRelative());
         return Set.copyOf(paths);
     }
 
@@ -400,6 +422,8 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
                 contract.path("typed_anchor_bridge_source_anchor"),
                 TYPED_ANCHOR_BRIDGE_SOURCES,
                 "typed_anchor_bridge_sources_external_git_anchor_complete");
+        validateCurrentTypedBridgeSources(
+                contract.path("typed_anchor_bridge_source_anchor"), root);
         validateSuccessors(contract.path("source_successors"), root);
         validateJavaBoundary(contract.path("java_build_context_boundary"), root);
         validateAuthority(contract.path("effective_authority"), root);
@@ -566,6 +590,56 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
                         + relative);
     }
 
+    private static void validateCurrentTypedBridgeSources(
+            JsonNode sourceAnchor,
+            Path root
+    ) throws IOException {
+        for (String relative : TYPED_ANCHOR_BRIDGE_SOURCES) {
+            CheckpointArtifact accepted = CHECKPOINT_ARTIFACTS.get(relative);
+            Path path = fixedRegularFile(root, relative);
+            String physicalSha256 = sha256(path);
+            if (accepted.sha256().equals(physicalSha256)
+                    && accepted.byteCount() == Files.size(path)) {
+                continue;
+            }
+            require(TAG_PREFLIGHT_DELEGATED_PATHS.contains(relative),
+                    "Phase6 source-successor typed bridge bytes drifted: "
+                            + relative);
+            require(physicalSha256.equals(tagPreflightSuccessorSha256(
+                            root, relative, accepted.sha256(), physicalSha256)),
+                    "Phase6 source-successor typed bridge was not fixed: "
+                            + relative);
+        }
+    }
+
+    private static String tagPreflightSuccessorSha256(
+            Path root,
+            String relative,
+            String acceptedSha256,
+            String physicalSha256
+    ) throws IOException {
+        require(acceptedSha256.equals(
+                        Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                                .acceptedSha256(relative)),
+                "tag-preflight successor rejected Phase6 accepted bytes: "
+                        + relative);
+        String terminal;
+        try {
+            terminal =
+                    Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
+                            .successorSha256(root, relative);
+        } catch (AssertionError error) {
+            throw new AssertionError(
+                    "tag-preflight successor rejected Phase6 current bytes: "
+                            + relative,
+                    error);
+        }
+        require(physicalSha256.equals(terminal),
+                "tag-preflight successor did not bind Phase6 current bytes: "
+                        + relative);
+        return physicalSha256;
+    }
+
     private static void validateSuccessors(JsonNode successors, Path root)
             throws IOException {
         require(propertyNames(successors).equals(Set.of(
@@ -614,8 +688,8 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
                     "Phase6 source-successor anchor descriptor drifted: "
                             + relative);
             Path path = fixedRegularFile(root, relative);
-            require(Files.size(path) == expected.successorBytes()
-                            && expected.successorSha256().equals(sha256(path)),
+            String physicalSha256 = sha256(path);
+            require(physicalSha256.equals(successorSha256(root, relative)),
                     "Phase6 source-successor anchor physical bytes drifted: "
                             + relative);
         }
