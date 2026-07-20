@@ -1371,7 +1371,7 @@ def _validate_worm_and_routes(root: Path, contract: dict, predecessor: dict) -> 
         if (
             successor.accepted_chain_node_count != 5
             or successor.current_build_context_sha256 != physical_build_context
-            or successor.current_chain_node_count != 7
+            or successor.current_chain_node_count != 8
         ):
             raise AssertionError("tag preflight WORM successor descriptor drifted")
     read_role = worm.get("readRole", {})

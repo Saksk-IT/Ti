@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib
 import json
 from pathlib import Path
 import subprocess
@@ -26,6 +27,12 @@ CONTRACT_RELATIVE = builder.OUTPUT_RELATIVE
 CONTRACT_SHA256 = "65803c1aacc50592eb04404e1b16d4d139a844022e37198df23453ad61dc598e"
 CONTRACT_PAYLOAD_SHA256 = "c7a94e88772a2453743f9821b165ae10f52650a41bf6dab78006d7058951159e"
 CONTRACT_BYTE_COUNT = 102_931
+NODE_C_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_operator_core_successor_acceptance"
+)
+NODE_C_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_tag_migration_operator_core_successor_acceptance"
+)
 
 
 @dataclass(frozen=True)
@@ -51,6 +58,20 @@ class WormSuccessor:
     current_report_sha256: str
     current_build_context_sha256: str
     current_chain_node_count: int
+
+
+def _load_node_c_successor() -> object:
+    try:
+        return importlib.import_module(NODE_C_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", NODE_C_SUCCESSOR_MODULE}:
+            raise
+    try:
+        return importlib.import_module(NODE_C_SUCCESSOR_DIRECT_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name != NODE_C_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError("tag preflight Node C successor is required") from error
 
 
 def _validate_exact_authorization(document: dict[str, Any]) -> None:
@@ -458,9 +479,20 @@ def successor_sha256(root: Path, relative: str) -> str | None:
         physical != transition["successor_sha256"]
         or len(payload) != transition["successor_byte_count"]
     ):
-        raise AssertionError(
-            f"tag preflight source-successor bytes drifted: {relative}"
-        )
+        source_transition = getattr(
+            _load_node_c_successor(), "source_transition", None)
+        if not callable(source_transition) or source_transition(
+            resolved_root, relative
+        ) != {
+            "source": relative,
+            "accepted_sha256": transition["successor_sha256"],
+            "accepted_byte_count": transition["successor_byte_count"],
+            "successor_sha256": physical,
+            "successor_byte_count": len(payload),
+        }:
+            raise AssertionError(
+                f"tag preflight source-successor bytes drifted: {relative}"
+            )
     return physical
 
 
@@ -510,15 +542,52 @@ def validate_production_runtime_successor(
     expected_successor = dict(normalized_accepted)
     expected_successor.update(semantic["added_files"])
     expected_successor = dict(sorted(expected_successor.items()))
-    if (
-        normalized_current != expected_successor
-        or len(normalized_current) != semantic["successor_file_count"]
-        or builder.sha256_bytes(
+    current_matches_node_a = (
+        normalized_current == expected_successor
+        and len(normalized_current) == semantic["successor_file_count"]
+        and builder.sha256_bytes(
             builder.canonical_json(normalized_current).encode("utf-8")
         )
-        != semantic["successor_manifest_sha256"]
-    ):
-        raise AssertionError("tag preflight rejected current production manifest")
+        == semantic["successor_manifest_sha256"]
+    )
+    if not current_matches_node_a:
+        validate_node_c = getattr(
+            _load_node_c_successor(),
+            "validate_production_runtime_successor",
+            None,
+        )
+        if not callable(validate_node_c):
+            raise AssertionError("tag preflight Node C runtime bridge is absent")
+        node_c = validate_node_c(
+            resolved_root,
+            expected_successor,
+            normalized_current,
+            view=view,
+        )
+        if (
+            node_c.accepted_file_count != semantic["successor_file_count"]
+            or node_c.accepted_manifest_sha256
+            != semantic["successor_manifest_sha256"]
+        ):
+            raise AssertionError("tag preflight Node C runtime bridge drifted")
+        composed_added_files = dict(semantic["added_files"])
+        composed_added_files.update(dict(node_c.added_files))
+        composed_changed_files = dict(semantic["changed_files"])
+        for relative, digest in node_c.changed_files:
+            if relative in composed_added_files and relative not in normalized_accepted:
+                composed_added_files[relative] = digest
+            else:
+                composed_changed_files[relative] = digest
+        return ProductionRuntimeSuccessor(
+            view=view,
+            accepted_file_count=int(semantic["accepted_file_count"]),
+            accepted_manifest_sha256=str(semantic["accepted_manifest_sha256"]),
+            current_file_count=int(node_c.current_file_count),
+            current_manifest_sha256=str(node_c.current_manifest_sha256),
+            added_files=tuple(sorted(composed_added_files.items())),
+            changed_files=tuple(sorted(composed_changed_files.items())),
+            deleted_files=tuple(node_c.deleted_files),
+        )
     return ProductionRuntimeSuccessor(
         view=view,
         accepted_file_count=int(semantic["accepted_file_count"]),
@@ -564,12 +633,44 @@ def validate_worm_successor(
         text=True,
     )
     physical_build_context_sha256 = result.stdout.strip()
-    if (
-        result.returncode != 0
-        or physical_build_context_sha256
-        != semantic["terminal_successor_build_context_sha256"]
-    ):
+    if result.returncode != 0:
         raise AssertionError("tag preflight physical build-context successor drifted")
+    if physical_build_context_sha256 != semantic[
+        "terminal_successor_build_context_sha256"
+    ]:
+        validate_node_c = getattr(
+            _load_node_c_successor(), "validate_worm_successor", None)
+        if not callable(validate_node_c):
+            raise AssertionError("tag preflight Node C WORM bridge is absent")
+        node_c = validate_node_c(
+            resolved_root,
+            semantic["terminal_successor_worm"]["sha256"],
+            semantic["terminal_successor_build_context_sha256"],
+        )
+        if (
+            node_c.accepted_chain_node_count != 7
+            or node_c.current_chain_node_count != 8
+            or node_c.current_build_context_sha256
+            != physical_build_context_sha256
+        ):
+            raise AssertionError("tag preflight Node C WORM bridge drifted")
+        return WormSuccessor(
+            accepted_report_sha256=accepted_report_sha256,
+            accepted_build_context_sha256=accepted_build_context_sha256,
+            accepted_chain_node_count=int(semantic["accepted_chain_node_count"]),
+            first_successor_report_sha256=str(
+                semantic["first_successor_worm"]["sha256"]
+            ),
+            first_successor_build_context_sha256=str(
+                semantic["first_successor_build_context_sha256"]
+            ),
+            first_successor_chain_node_count=int(
+                semantic["first_successor_chain_node_count"]
+            ),
+            current_report_sha256=str(node_c.current_report_sha256),
+            current_build_context_sha256=physical_build_context_sha256,
+            current_chain_node_count=int(node_c.current_chain_node_count),
+        )
     return WormSuccessor(
         accepted_report_sha256=accepted_report_sha256,
         accepted_build_context_sha256=accepted_build_context_sha256,
@@ -590,10 +691,13 @@ def validate_worm_successor(
 
 
 def minimal_fixture_paths() -> tuple[str, ...]:
+    node_c_paths = getattr(
+        _load_node_c_successor(), "minimal_fixture_paths", lambda: ())()
     return tuple(dict.fromkeys((
         CONTRACT_RELATIVE,
         *(descriptor["source"] for descriptor in builder.SOURCES.values()),
         *builder.PHASE2_FIXED_CHAIN_FIXTURE_PATHS,
+        *node_c_paths,
     )))
 
 

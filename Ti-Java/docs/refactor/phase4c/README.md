@@ -193,3 +193,41 @@ false。路由权威不变：**13 migrated、598 pending、0 production cutover*
 与 freeze protocol 的设计/test-only PG16/18 证据；真实迁移必须在旧 Web/Worker/Scheduler 和
 既有连接全部停止、冻结备份已恢复到新目标库、Phase 8 Flyway baseline 获准之后执行，且一旦
 apply 开始就不得恢复旧 Flask。
+
+## Personal-bank legacy tag 耐久账本/冻结协议 Node B（已外锚 predecessor）
+
+Node B 已用 test-only PostgreSQL 16.14/18.4 fixture 固定
+`PLANNED -> FROZEN -> APPLYING -> APPLIED/BLOCKED` 状态机、全事实 CAS、append-only
+per-source receipt、receipt-first recovery、目标事实重算、全停机冻结顺序、角色 ACL 与提交
+ACK discard 模拟。其功能 checkpoint 与后继 Git 外锚均已闭合，普通验收不依赖 live `HEAD`
+或动态 source discovery。
+
+该 predecessor 只关闭 durable ledger/freeze **设计证据**；074/075 仍是 test-only fixture，
+没有生产 schema/Flyway、Operator、真实冻结、真实备份恢复、真实 apply、旧运行时永久禁用或
+production cutover。路由保持 **13 migrated、598 pending、0 production cutover**。
+
+## Personal-bank legacy tag Operator Core Node C（当前恢复点）
+
+Node C 已物化显式调用、默认不可达的 `LegacyPersonalBankTagMigrationOperatorCore`、JDBC store、
+schema verifier 与 `BoundedSqlRetry`。它提供 `prepare/freeze/apply/recover`，但没有 Spring、
+Runner、Scheduler、HTTP、环境变量、文件或 Redis 接线；076/077 schema/seed 只由测试容器装载，
+生产 Flyway/DDL 仍为 0。`EvidenceVerifier` 由调用方显式注入；Node C 只定义验证接口，当前
+fixed/rejecting verifier 仅存在于 IT，没有生产签名验证、证据发现或运行时接线。
+
+每个事务使用全新 connection/PID/txid，并设置 `SET LOCAL` 的 30s statement、5s lock 和 60s
+idle-in-transaction 上限。PG16.14/18.4 已覆盖真实 `40001`/`40P01` 的成功重试与耗尽、deferred
+`23503` 非重试、严格前缀 receipts、receipt-first 恢复、commit 后 ACK discard、ACL/column/role/
+function closure、hostile search path、schema fingerprint，以及 1 MiB、100001 source、84-byte
+tag、200001 target 越界与 raw sensitive canary 不泄漏。当前定向结果为 **83 unit、3 operator
+IT、2 retry IT**，全部绿色。freeze、apply 与 recovery 分别绑定 source、target、membership
+三个 writer-stop receipt 字段，禁止折叠为单一字段；底层签名、签发者和域隔离的生产验证仍未
+实现。固定合同及验收桥已生成，合同链专项 Python 66/66、Node A/Node C Java 16/16、历史传播
+矩阵 Java 64/64 全绿；最终完整 source discovery 771/771、Phase 1 23/23、Phase 2 static、
+Phase 3 29/29、topology 60/60、小程序 36/36、Phase 6 acceptance 10/10，以及 UTC
+`clean verify` 860 Surefire + 176 Failsafe 均为 0 failure/error/skip。
+
+本节点的授权上限只包括 Operator Core 证据、有界重试实现与 Operator Core 实现，不授权生产
+schema/index/Flyway、真实迁移、旧运行时永久禁用、gateway/cutover，也不自授权 Node C 控制源
+外锚。下一顺序是 **Node C 功能提交并推送 → 独立 Git 外锚 → Node D 整体执行协议**；
+有效路由继续是 **13 migrated、598 pending、0 production cutover**。详细边界见
+`personal-bank-tag-migration-operator-core.md`。

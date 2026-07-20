@@ -30,7 +30,7 @@ EVIDENCE_PATH = ROOT / builder.TARGET_EVIDENCE_RELATIVE
 GOLDEN_PATH = ROOT / builder.GOLDEN_RELATIVE
 MAPPING_PATH = ROOT / builder.PARTIAL_MAPPING_RELATIVE
 TAG_PREFLIGHT_CURRENT_WORM_SHA256 = (
-    "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344"
+    "db1ffe2eaed03138fb75fd1007d032448960c502416ada92bec3d0846f4eaf0f"
 )
 
 REMOVED_UNUSED_SEED_SOURCE_KEYS = {
@@ -318,7 +318,7 @@ class Phase4cTargetExecutionFixedRootsTest(unittest.TestCase):
                 physical_build_context,
                 successor.current_build_context_sha256,
             )
-            self.assertEqual(7, successor.current_chain_node_count)
+            self.assertEqual(8, successor.current_chain_node_count)
         fixed_chain = predecessor["worm_evidence"]["fixed_phase2_chain"]
         self.assertEqual(5, fixed_chain["node_count"])
         self.assertEqual(builder.WORM_SHA256, fixed_chain["tip_sha256"])

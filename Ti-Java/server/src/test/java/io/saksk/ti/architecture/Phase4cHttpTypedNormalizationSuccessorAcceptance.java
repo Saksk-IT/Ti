@@ -549,6 +549,9 @@ final class Phase4cHttpTypedNormalizationSuccessorAcceptance {
         paths.add(
                 Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                         .contractRelative());
+        paths.add(
+                Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                        .contractRelative());
         return Set.copyOf(paths);
     }
 

@@ -40,6 +40,10 @@ try:
         PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
         PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
         PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
+        PHASE4C_TAG_OPERATOR_CORE_BUILD_CONTEXT_SHA256,
+        PHASE4C_TAG_OPERATOR_CORE_DOCKERFILE_SHA256,
+        PHASE4C_TAG_OPERATOR_CORE_REPORT_PATH,
+        PHASE4C_TAG_OPERATOR_CORE_REPORT_SHA256,
         POSTGRES_IMAGE,
         sha256,
         validate_evidence_chain,
@@ -68,6 +72,10 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
         PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
         PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
+        PHASE4C_TAG_OPERATOR_CORE_BUILD_CONTEXT_SHA256,
+        PHASE4C_TAG_OPERATOR_CORE_DOCKERFILE_SHA256,
+        PHASE4C_TAG_OPERATOR_CORE_REPORT_PATH,
+        PHASE4C_TAG_OPERATOR_CORE_REPORT_SHA256,
         POSTGRES_IMAGE,
         sha256,
         validate_evidence_chain,
@@ -303,9 +311,9 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 current_build=fourth.build_context_sha256,
             )
 
-    def test_fixed_seventh_node_appends_to_the_immutable_sixth_tip(self) -> None:
-        self.assertEqual(7, len(FIXED_EVIDENCE_CHAIN))
-        fifth = FIXED_EVIDENCE_CHAIN[-3]
+    def test_fixed_eighth_node_appends_to_the_immutable_seventh_tip(self) -> None:
+        self.assertEqual(8, len(FIXED_EVIDENCE_CHAIN))
+        fifth = FIXED_EVIDENCE_CHAIN[-4]
         self.assertEqual(
             "phase4c-personal-bank-user-counts-http-implementation", fifth.label
         )
@@ -323,7 +331,7 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             fifth.predecessor_sha256,
         )
 
-        sixth = FIXED_EVIDENCE_CHAIN[-2]
+        sixth = FIXED_EVIDENCE_CHAIN[-3]
         self.assertEqual("phase4c-personal-bank-tag-global-preflight", sixth.label)
         self.assertEqual(
             PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_PATH,
@@ -343,29 +351,49 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
             sixth.predecessor_sha256,
         )
 
-        tip = FIXED_EVIDENCE_CHAIN[-1]
+        seventh = FIXED_EVIDENCE_CHAIN[-2]
         self.assertEqual(
             "phase4c-personal-bank-tag-global-preflight-hardening",
-            tip.label,
+            seventh.label,
         )
         self.assertEqual(
             PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_PATH,
-            tip.relative_path,
+            seventh.relative_path,
         )
         self.assertEqual(
             PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
-            tip.sha256,
+            seventh.sha256,
         )
         self.assertEqual(
             PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
-            tip.build_context_sha256,
+            seventh.build_context_sha256,
         )
         self.assertEqual(
             PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_DOCKERFILE_SHA256,
-            tip.dockerfile_sha256,
+            seventh.dockerfile_sha256,
         )
         self.assertEqual(
             PHASE4C_TAG_GLOBAL_PREFLIGHT_REPORT_SHA256,
+            seventh.predecessor_sha256,
+        )
+
+        tip = FIXED_EVIDENCE_CHAIN[-1]
+        self.assertEqual(
+            "phase4c-personal-bank-tag-migration-operator-core",
+            tip.label,
+        )
+        self.assertEqual(PHASE4C_TAG_OPERATOR_CORE_REPORT_PATH, tip.relative_path)
+        self.assertEqual(PHASE4C_TAG_OPERATOR_CORE_REPORT_SHA256, tip.sha256)
+        self.assertEqual(
+            PHASE4C_TAG_OPERATOR_CORE_BUILD_CONTEXT_SHA256,
+            tip.build_context_sha256,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_OPERATOR_CORE_DOCKERFILE_SHA256,
+            tip.dockerfile_sha256,
+        )
+        self.assertEqual(
+            PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
             tip.predecessor_sha256,
         )
 
@@ -1010,8 +1038,9 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 )
         validate_fixed_chain.assert_not_called()
 
-    def test_fixed_acceptance_calls_tag_successor_then_the_seven_node_chain(self) -> None:
+    def test_fixed_acceptance_calls_tag_successors_then_the_eight_node_chain(self) -> None:
         load_tag_successor = mock.Mock(return_value={"validated": True})
+        load_operator_successor = mock.Mock(return_value={"validated": True})
         modules = {
             phase2_acceptance.READ_SUCCESSOR_MODULE: types.SimpleNamespace(
                 load_read_successor_contract=lambda root: {"validated": True},
@@ -1032,6 +1061,8 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 types.SimpleNamespace(load=lambda root: {"validated": True}),
             phase2_acceptance.TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE:
                 types.SimpleNamespace(load=load_tag_successor),
+            phase2_acceptance.TAG_OPERATOR_CORE_SUCCESSOR_MODULE:
+                types.SimpleNamespace(load=load_operator_successor),
         }
         with mock.patch.object(
             phase2_acceptance.importlib,
@@ -1052,6 +1083,7 @@ class Phase2WormholeSuccessorAcceptanceTest(unittest.TestCase):
                 ),
             )
         load_tag_successor.assert_called_once_with(self.root)
+        load_operator_successor.assert_called_once_with(self.root)
         validate_fixed_chain.assert_called_once_with(
             self.root,
             self.manifest_path,
@@ -1073,6 +1105,7 @@ blocked = {
     "tools.phase4c_http_typed_normalization_successor_acceptance",
     "tools.phase4c_http_typed_normalization_anchor_successor_acceptance",
     "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
+    "tools.phase4c_tag_migration_operator_core_successor_acceptance",
 }
 
 class Blocker(importlib.abc.MetaPathFinder):

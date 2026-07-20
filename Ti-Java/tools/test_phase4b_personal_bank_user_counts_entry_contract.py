@@ -406,8 +406,8 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, runtime.accepted_file_count)
-            self.assertEqual(43, runtime.current_file_count)
-            self.assertEqual(3, len(runtime.added_files))
+            self.assertEqual(50, runtime.current_file_count)
+            self.assertEqual(10, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
             self.assertEqual(
@@ -478,8 +478,8 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 view="full_runtime",
             )
             self.assertEqual(297, full_runtime.accepted_file_count)
-            self.assertEqual(300, full_runtime.current_file_count)
-            self.assertEqual(3, len(full_runtime.added_files))
+            self.assertEqual(307, full_runtime.current_file_count)
+            self.assertEqual(10, len(full_runtime.added_files))
             self.assertEqual((), full_runtime.changed_files)
             self.assertEqual((), full_runtime.deleted_files)
             self.assertEqual(9, transition["exact_delta"]["added_file_count"])

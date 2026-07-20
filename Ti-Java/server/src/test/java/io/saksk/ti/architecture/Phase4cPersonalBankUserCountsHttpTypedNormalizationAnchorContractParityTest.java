@@ -24,20 +24,20 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
             "README.md",
             "5e3f2b7da26c3edf0f791e99110dcc4e53e1cb64dfdd78b46fe4e276406a1e59",
             "docs/refactor/05-progress.md",
-            "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
+            "71fc8bf98bc4fb50645df473ee79b2bc33856ca928f49da7aecc96a7d1040f9d",
             "docs/refactor/phase4c/README.md",
-            "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48");
+            "f061ac5e2b240e3b8c367f9db817c84346a309e9872cfbdeeafe8d3ff8689230");
 
     private static final Map<String, String> TAG_PREFLIGHT_CURRENT_SUCCESSORS =
             Map.of(
                     "infra/phase2/README.md",
-                    "a0c467bfc8aa0f0b64b4d520f9cda60ff081a340f016647e1da934c73b7b99d5",
+                    "d5c8647397016f93c8ea2b5e83b41818ea00498fd7e699cc1119930f1995e21b",
                     "infra/phase2/verify-static.sh",
-                    "893ca920d0ed1bd62e16509893fa30bbfc72b88368d66d96c2ebc5c2fbae38dc",
+                    "2a1a5a5453a1090f6132971081d4ac2448803023acb50d474ced491bafe8efc3",
                     "tools/phase2_wormhole_successor_acceptance.py",
-                    "5c93b9aa00d3faec19ebc8d6472bd9e8ab1903a7116d487ff8a711fc60fd8d20",
+                    "afd967894036289ad3587fc740c97931d1ca5492a9208829536bf6745a840ebc",
                     "tools/test_phase2_wormhole_successor_acceptance.py",
-                    "e61ed72335bba631cf34ebfe06fae8d391e7828622eba17d0240f59efed379a3",
+                    "2c4881c5083c8e4ca2cf294ece486895e26d932d1f59d067f8da32ef544c63bc",
                     "tools/test_phase4c_personal_bank_user_counts_http_"
                             + "target_execution_post_push_contract.py",
                     "420a727733f4c3a72f1c78c933491ab89fff7bbba0ddb1f1c9f7a8867a73c3bf",
@@ -211,6 +211,9 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
                 Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                         .contractRelative());
         fixturePaths.add(
+                Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                        .contractRelative());
+        fixturePaths.add(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                         .contractRelative());
         fixturePaths.add(relative);
@@ -229,9 +232,9 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
                 temporary.resolve(relative), " ", StandardOpenOption.APPEND);
         assertThatThrownBy(() ->
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
-                        .successorHash(temporary, relative))
+                .successorHash(temporary, relative))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("successor bytes");
+                .hasMessageContaining("Node C source bridge drifted");
 
         Files.copy(
                 root().resolve(relative),

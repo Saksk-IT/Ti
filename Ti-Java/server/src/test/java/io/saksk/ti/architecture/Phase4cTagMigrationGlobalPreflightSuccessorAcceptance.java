@@ -160,6 +160,63 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
             "server/src/test/java/io/saksk/ti/architecture/"
                     + "Phase4cHttpTypedNormalizationSuccessorAcceptance.java");
 
+    /**
+     * The only historical Node A inputs that Node C is allowed to replace.
+     * Node A's six control-source transitions are intentionally absent here:
+     * they are fixed directly by Node C and were never self-authority inputs
+     * of this contract.
+     */
+    private static final Set<String> NODE_C_SOURCE_SUCCESSOR_PATHS = Set.of(
+            "docs/refactor/05-progress.md",
+            "docs/refactor/phase4c/README.md",
+            "infra/phase2/README.md",
+            "infra/phase2/verify-static.sh",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/LegacyPersonalBankTagGlobalPreflight.java",
+            "server/src/test/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/LegacyPersonalBankTagGlobalPreflightTest.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "ModuleContractParityTest.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+            "server/src/test/java/io/saksk/ti/architecture/"
+                    + "Phase6WebFoundationSourceSuccessorContractParityTest.java",
+            "tools/test_phase4c_personal_bank_user_counts_"
+                    + "composition_contract.py",
+            "tools/test_phase4b_personal_bank_all_shares_"
+                    + "entry_contract.py",
+            "tools/test_phase4b_personal_bank_all_shares_"
+                    + "read_contract.py",
+            "tools/test_phase4b_personal_bank_share_list_"
+                    + "entry_contract.py",
+            "tools/test_phase4b_personal_bank_share_list_"
+                    + "read_contract.py",
+            "tools/test_phase4b_personal_bank_user_counts_"
+                    + "entry_contract.py",
+            "tools/test_phase4b_personal_bank_usage_stats_"
+                    + "entry_contract.py",
+            "tools/test_phase4b_personal_bank_usage_stats_"
+                    + "read_contract.py",
+            "tools/test_phase4c_personal_bank_user_counts_"
+                    + "read_contract.py",
+            "tools/test_phase4c_personal_bank_user_counts_"
+                    + "http_entry_contract.py",
+            "tools/build_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_contract.py",
+            "tools/phase4c_http_target_execution_successor_acceptance.py",
+            "tools/test_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_contract.py",
+            "tools/build_phase4c_personal_bank_user_counts_http_"
+                    + "target_execution_anchor_contract.py",
+            "tools/phase4c_http_target_execution_anchor_"
+                    + "successor_acceptance.py",
+            "tools/phase2_wormhole_successor_acceptance.py",
+            "tools/test_phase2_wormhole_successor_acceptance.py");
+
     private static final Set<String> CONTROL_SOURCE_PATHS = Set.of(
             CONTRACT_RELATIVE,
             "docs/refactor/phase4c/"
@@ -835,10 +892,17 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                         == actual.path("successor_byte_count").asLong(),
                 "tag preflight source-successor contract drifted: " + relative);
         Path path = fixedRegularFile(root, relative);
-        require(Files.size(path) == transition.successorBytes()
-                        && transition.successorSha256().equals(sha256(path)),
-                "tag preflight source-successor bytes drifted: " + relative);
-        return transition.successorSha256();
+        long physicalBytes = Files.size(path);
+        String physicalSha256 = sha256(path);
+        if (physicalBytes == transition.successorBytes()
+                && transition.successorSha256().equals(physicalSha256)) {
+            return physicalSha256;
+        }
+        validateNodeCSourceTransition(
+                root, relative,
+                transition.successorSha256(), transition.successorBytes(),
+                physicalSha256, physicalBytes);
+        return physicalSha256;
     }
 
     static ProductionRuntimeSuccessor validateProductionRuntimeSuccessor(
@@ -886,12 +950,44 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                 "tag preflight rejected historical production manifest");
         TreeMap<String, String> expectedCurrent = new TreeMap<>(normalizedAccepted);
         expectedCurrent.putAll(textMap(semantic.path("added_files")));
-        require(normalizedCurrent.equals(expectedCurrent)
-                        && normalizedCurrent.size()
-                        == semantic.path("successor_file_count").asInt()
-                        && semantic.path("successor_manifest_sha256").asString()
-                        .equals(canonicalSha256(JSON.valueToTree(normalizedCurrent))),
-                "tag preflight rejected current production manifest");
+        boolean currentMatchesNodeA = normalizedCurrent.equals(expectedCurrent)
+                && normalizedCurrent.size()
+                == semantic.path("successor_file_count").asInt()
+                && semantic.path("successor_manifest_sha256").asString()
+                .equals(canonicalSha256(JSON.valueToTree(normalizedCurrent)));
+        if (!currentMatchesNodeA) {
+            var nodeC = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                    .validateProductionRuntimeSuccessor(
+                            root, expectedCurrent, normalizedCurrent, view);
+            require(nodeC.acceptedFileCount()
+                            == semantic.path("successor_file_count").asInt()
+                            && nodeC.acceptedManifestSha256().equals(
+                            semantic.path("successor_manifest_sha256")
+                                    .asString()),
+                    "tag preflight Node C runtime bridge drifted");
+            TreeMap<String, String> composedAdditions = new TreeMap<>();
+            TreeMap<String, String> composedChanges = new TreeMap<>();
+            normalizedCurrent.forEach((relative, digest) -> {
+                String acceptedDigest = normalizedAccepted.get(relative);
+                if (acceptedDigest == null) {
+                    composedAdditions.put(relative, digest);
+                } else if (!acceptedDigest.equals(digest)) {
+                    composedChanges.put(relative, digest);
+                }
+            });
+            Set<String> composedDeletions = new LinkedHashSet<>(
+                    normalizedAccepted.keySet());
+            composedDeletions.removeAll(normalizedCurrent.keySet());
+            return new ProductionRuntimeSuccessor(
+                    view,
+                    semantic.path("accepted_file_count").asInt(),
+                    semantic.path("accepted_manifest_sha256").asString(),
+                    nodeC.currentFileCount(),
+                    nodeC.currentManifestSha256(),
+                    Map.copyOf(composedAdditions),
+                    Map.copyOf(composedChanges),
+                    Set.copyOf(composedDeletions));
+        }
         return new ProductionRuntimeSuccessor(
                 view,
                 semantic.path("accepted_file_count").asInt(),
@@ -924,10 +1020,33 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                         && !semantic.path("historical_nodes_rewritten").asBoolean(),
                 "tag preflight rejected build-context/WORM successor");
         String physicalBuildContext = javaBuildContextSha256(root);
-        require(physicalBuildContext.equals(
-                        semantic.path("terminal_successor_build_context_sha256")
-                                .asString()),
-                "tag preflight physical build-context successor drifted");
+        String nodeABuildContext = semantic.path(
+                "terminal_successor_build_context_sha256").asString();
+        if (!physicalBuildContext.equals(nodeABuildContext)) {
+            var nodeC = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                    .validateWormSuccessor(
+                            root,
+                            semantic.path("terminal_successor_worm")
+                                    .path("sha256").asString(),
+                            nodeABuildContext);
+            require(nodeC.acceptedChainNodeCount() == 7
+                            && nodeC.currentChainNodeCount() == 8
+                            && nodeC.currentBuildContextSha256().equals(
+                            physicalBuildContext),
+                    "tag preflight Node C WORM bridge drifted");
+            return new WormSuccessor(
+                    acceptedReportSha256,
+                    acceptedBuildContextSha256,
+                    semantic.path("accepted_chain_node_count").asInt(),
+                    semantic.path("first_successor_worm")
+                            .path("sha256").asString(),
+                    semantic.path("first_successor_build_context_sha256")
+                            .asString(),
+                    semantic.path("first_successor_chain_node_count").asInt(),
+                    nodeC.currentReportSha256(),
+                    physicalBuildContext,
+                    nodeC.currentChainNodeCount());
+        }
         return new WormSuccessor(
                 acceptedReportSha256,
                 acceptedBuildContextSha256,
@@ -948,6 +1067,8 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
         paths.addAll(TRANSITIONS.keySet());
         paths.addAll(FIXED_SOURCE_PATHS);
         WORM_NODES.forEach(node -> paths.add(node.relative()));
+        paths.addAll(Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                .minimalFixturePaths());
         return Set.copyOf(paths);
     }
 
@@ -1122,10 +1243,15 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                     "tag preflight source-successor descriptor drifted: "
                             + relative);
             Path path = fixedRegularFile(root, relative);
-            require(Files.size(path) == expected.successorBytes()
-                            && expected.successorSha256().equals(sha256(path)),
-                    "tag preflight source-successor physical bytes drifted: "
-                            + relative);
+            long physicalBytes = Files.size(path);
+            String physicalSha256 = sha256(path);
+            if (physicalBytes != expected.successorBytes()
+                    || !expected.successorSha256().equals(physicalSha256)) {
+                validateNodeCSourceTransition(
+                        root, relative,
+                        expected.successorSha256(), expected.successorBytes(),
+                        physicalSha256, physicalBytes);
+            }
         }
     }
 
@@ -1438,11 +1564,19 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                             && byPath.put(relative, descriptor) == null,
                     "tag preflight fixed source allowlist drifted: " + relative);
             Path path = fixedRegularFile(root, relative);
-            require(Files.size(path) == descriptor.path("byte_count").asLong()
-                            && descriptor.path("sha256").asString()
-                            .equals(sha256(path)),
-                    "tag preflight fixed source physical bytes drifted: "
-                            + relative);
+            long physicalBytes = Files.size(path);
+            String physicalSha256 = sha256(path);
+            long acceptedBytes = descriptor.path("byte_count").asLong();
+            String acceptedSha256 = descriptor.path("sha256").asString();
+            if (physicalBytes != acceptedBytes
+                    || !acceptedSha256.equals(physicalSha256)) {
+                require(NODE_C_SOURCE_SUCCESSOR_PATHS.contains(relative),
+                        "tag preflight fixed source physical bytes drifted: "
+                                + relative);
+                validateNodeCSourceTransition(
+                        root, relative, acceptedSha256, acceptedBytes,
+                        physicalSha256, physicalBytes);
+            }
             if (descriptor.has("document_payload_sha256")) {
                 JsonNode document = JSON.readTree(Files.readAllBytes(path));
                 String expectedPayload = descriptor.path(
@@ -1456,6 +1590,26 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
         require(byPath.keySet().equals(FIXED_SOURCE_PATHS),
                 "tag preflight fixed source path set drifted");
         return Map.copyOf(byPath);
+    }
+
+    private static void validateNodeCSourceTransition(
+            Path root,
+            String relative,
+            String expectedAcceptedSha256,
+            long expectedAcceptedBytes,
+            String physicalSha256,
+            long physicalBytes
+    ) throws IOException {
+        var transition = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                .sourceTransition(root, relative);
+        require(transition != null
+                        && relative.equals(transition.source())
+                        && expectedAcceptedSha256.equals(
+                        transition.acceptedSha256())
+                        && expectedAcceptedBytes == transition.acceptedByteCount()
+                        && physicalSha256.equals(transition.successorSha256())
+                        && physicalBytes == transition.successorByteCount(),
+                "tag preflight Node C source bridge drifted: " + relative);
     }
 
     private static Path fixedRegularFile(Path root, String relative)

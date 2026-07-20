@@ -31,9 +31,9 @@ class Phase6WebFoundationSourceSuccessorContractParityTest {
             "README.md",
             "5e3f2b7da26c3edf0f791e99110dcc4e53e1cb64dfdd78b46fe4e276406a1e59",
             "docs/refactor/05-progress.md",
-            "8478e44622fc666fdb9a377b15ced624e34d104d1fcbb9b36a4913cfb3ddedf0",
+            "71fc8bf98bc4fb50645df473ee79b2bc33856ca928f49da7aecc96a7d1040f9d",
             "docs/refactor/phase4c/README.md",
-            "4d75ba666d7d45d620a4fba4574e4c2640b754c5a6beadbdbfdee5498aa3cc48");
+            "f061ac5e2b240e3b8c367f9db817c84346a309e9872cfbdeeafe8d3ff8689230");
 
     @Test
     void loadsTheCanonicalFixedBootstrapWithoutPromotingPhase6() throws Exception {

@@ -793,7 +793,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     view="learning_personalbank_main",
                 )
                 self.assertEqual(40, main_successor.accepted_file_count)
-                self.assertEqual(43, main_successor.current_file_count)
+                self.assertEqual(50, main_successor.current_file_count)
                 self.assertEqual([], list(main_successor.changed_files))
                 self.assertEqual([], list(main_successor.deleted_files))
             read_runtime = implementation["production_runtime_surface"]
@@ -822,7 +822,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     view="full_runtime",
                 )
                 self.assertEqual(297, runtime_successor.accepted_file_count)
-                self.assertEqual(300, runtime_successor.current_file_count)
+                self.assertEqual(307, runtime_successor.current_file_count)
                 self.assertEqual([], list(runtime_successor.changed_files))
                 self.assertEqual([], list(runtime_successor.deleted_files))
             requirements = self.contract["successor_handoff"][
@@ -881,7 +881,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     accepted_build_context,
                     successor.accepted_build_context_sha256,
                 )
-                self.assertEqual(7, successor.current_chain_node_count)
+                self.assertEqual(8, successor.current_chain_node_count)
                 self.assertEqual(
                     build_context,
                     successor.current_build_context_sha256,

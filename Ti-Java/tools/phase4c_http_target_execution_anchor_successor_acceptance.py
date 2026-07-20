@@ -561,7 +561,7 @@ def _replay_phase2_fixed_acceptance(ti_java_root: Path) -> None:
         or tip.sha256 != successor.current_report_sha256
         or tip.dockerfile_sha256 != DOCKERFILE_SHA256
         or tip.build_context_sha256 != successor.current_build_context_sha256
-        or successor.current_chain_node_count != 7
+        or successor.current_chain_node_count != 8
     ):
         raise AssertionError("Phase 2 terminal WORM successor replay drifted")
 

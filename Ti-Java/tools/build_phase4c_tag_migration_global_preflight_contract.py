@@ -1679,6 +1679,52 @@ ROUTE_STATE = {
 
 NEWLY_CLOSED_GATES = ("migration_global_preflight_evidence_closed",)
 NEW_MAIN_SOURCE_NAMES = ("preflight_parser", "preflight_report", "global_preflight")
+NODE_C_SOURCE_SUCCESSOR_PATHS = frozenset({
+    "docs/refactor/05-progress.md",
+    "docs/refactor/phase4c/README.md",
+    "infra/phase2/README.md",
+    "infra/phase2/verify-static.sh",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cHttpTargetExecutionSuccessorAcceptance.java",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "ModuleContractParityTest.java",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cHttpTypedNormalizationSuccessorAcceptance.java",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTest.java",
+    "server/src/test/java/io/saksk/ti/architecture/"
+    "Phase6WebFoundationSourceSuccessorContractParityTest.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "LegacyPersonalBankTagGlobalPreflight.java",
+    "server/src/test/java/io/saksk/ti/learning/infrastructure/migration/"
+    "LegacyPersonalBankTagGlobalPreflightTest.java",
+    "tools/phase2_wormhole_successor_acceptance.py",
+    "tools/build_phase4c_personal_bank_user_counts_http_target_execution_"
+    "anchor_contract.py",
+    "tools/build_phase4c_personal_bank_user_counts_http_target_execution_"
+    "contract.py",
+    "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+    "tools/phase4c_http_target_execution_successor_acceptance.py",
+    "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+    "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+    "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+    "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+    "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+    "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+    "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+    "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+    "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+    "tools/test_phase4c_personal_bank_user_counts_http_target_execution_"
+    "contract.py",
+    "tools/test_phase2_wormhole_successor_acceptance.py",
+})
+NODE_C_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_operator_core_successor_acceptance"
+)
+NODE_C_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_tag_migration_operator_core_successor_acceptance"
+)
 
 
 def canonical_json(value: Any) -> str:
@@ -1737,12 +1783,43 @@ def validated_source(root: Path, source_name: str) -> bytes:
         or descriptor["byte_count"] < 0
     ):
         raise AssertionError(f"tag preflight source descriptor is not settled: {relative}")
+    physical_sha256 = sha256_bytes(payload)
     if (
-        sha256_bytes(payload) != descriptor["sha256"]
+        physical_sha256 != descriptor["sha256"]
         or len(payload) != descriptor["byte_count"]
     ):
-        raise AssertionError(f"tag preflight fixed bytes drifted: {relative}")
+        if relative not in NODE_C_SOURCE_SUCCESSOR_PATHS:
+            raise AssertionError(f"tag preflight fixed bytes drifted: {relative}")
+        successor = _load_node_c_successor_acceptance()
+        source_transition = getattr(successor, "source_transition", None)
+        if not callable(source_transition):
+            raise AssertionError("tag preflight Node C source bridge is absent")
+        transition = source_transition(root, relative)
+        if transition != {
+            "source": relative,
+            "accepted_sha256": descriptor["sha256"],
+            "accepted_byte_count": descriptor["byte_count"],
+            "successor_sha256": physical_sha256,
+            "successor_byte_count": len(payload),
+        }:
+            raise AssertionError(
+                f"tag preflight Node C source bridge drifted: {relative}"
+            )
     return payload
+
+
+def _load_node_c_successor_acceptance() -> Any:
+    try:
+        return importlib.import_module(NODE_C_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", NODE_C_SUCCESSOR_MODULE}:
+            raise
+    try:
+        return importlib.import_module(NODE_C_SUCCESSOR_DIRECT_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name != NODE_C_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError("tag preflight Node C successor is required") from error
 
 
 def _validated_json(root: Path, source_name: str) -> dict[str, Any]:
@@ -1774,12 +1851,16 @@ def _load_phase2_worm_validator() -> Any:
 
 def _validate_fixed_worm_chain(root: Path) -> None:
     phase2_worm = _load_phase2_worm_validator()
-    validate_fixed_chain = getattr(phase2_worm, "validate_fixed_chain", None)
+    validate_evidence_chain = getattr(
+        phase2_worm, "validate_evidence_chain", None)
     fixed_chain = getattr(phase2_worm, "FIXED_EVIDENCE_CHAIN", ())
-    if not callable(validate_fixed_chain) or len(fixed_chain) != 7:
+    immutable_mirrors = getattr(
+        phase2_worm, "FIXED_IMMUTABLE_MIRRORS", ())
+    if not callable(validate_evidence_chain) or len(fixed_chain) != 8:
         raise AssertionError("tag preflight fixed WORM chain validator drifted")
+    historical_chain = fixed_chain[:7]
 
-    initial = fixed_chain[-2]
+    initial = historical_chain[-2]
     expected_initial = (
         TAG_GLOBAL_PREFLIGHT_WORM_LABEL,
         SOURCES["tag_global_preflight_worm_successor"]["source"],
@@ -1799,11 +1880,13 @@ def _validate_fixed_worm_chain(root: Path) -> None:
     if actual_initial != expected_initial:
         raise AssertionError("tag preflight initial WORM chain node drifted")
 
-    tip = validate_fixed_chain(
+    tip = validate_evidence_chain(
         root,
         fixed_regular_file(root, PHASE2_DRIFT_MANIFEST_RELATIVE),
         TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256,
         TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
+        chain=historical_chain,
+        immutable_mirrors=immutable_mirrors,
     )
     expected_tip = (
         TAG_GLOBAL_PREFLIGHT_HARDENING_WORM_LABEL,
@@ -2547,10 +2630,37 @@ def _historical_semantic_successor_authority(root: Path) -> dict[str, Any]:
                 f"tag preflight production addition already existed: {relative}"
             )
         payload = fixed_regular_file(root, relative).read_bytes()
-        if sha256_bytes(payload) != expected_sha256:
-            raise AssertionError(
-                f"tag preflight production addition bytes drifted: {relative}"
+        physical_sha256 = sha256_bytes(payload)
+        if physical_sha256 != expected_sha256:
+            source_name = (
+                "global_preflight"
+                if relative
+                == (
+                    "server/src/main/java/io/saksk/ti/learning/"
+                    "infrastructure/migration/"
+                    "LegacyPersonalBankTagGlobalPreflight.java"
+                )
+                else SOURCE_SUCCESSOR_SOURCE_NAMES.get(relative)
             )
+            descriptor = None if source_name is None else SOURCES[source_name]
+            source_transition = getattr(
+                _load_node_c_successor_acceptance(), "source_transition", None
+            )
+            if (
+                relative not in NODE_C_SOURCE_SUCCESSOR_PATHS
+                or descriptor is None
+                or not callable(source_transition)
+                or source_transition(root, relative) != {
+                    "source": relative,
+                    "accepted_sha256": expected_sha256,
+                    "accepted_byte_count": descriptor["byte_count"],
+                    "successor_sha256": physical_sha256,
+                    "successor_byte_count": len(payload),
+                }
+            ):
+                raise AssertionError(
+                    f"tag preflight production addition bytes drifted: {relative}"
+                )
     successor_files = {
         **accepted_files,
         **PRODUCTION_MANIFEST_ADDITIONS,

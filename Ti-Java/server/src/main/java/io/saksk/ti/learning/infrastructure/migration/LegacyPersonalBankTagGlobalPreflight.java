@@ -61,19 +61,21 @@ public final class LegacyPersonalBankTagGlobalPreflight {
     static final long MAX_RESERVED_SOURCE_UTF8_BYTES = 256L * 1024L * 1024L;
 
     static final String TRY_LOCK_SQL =
-            "SELECT pg_backend_pid(), pg_try_advisory_lock(?)";
-    static final String UNLOCK_SQL = "SELECT pg_advisory_unlock(?)";
+            "SELECT pg_catalog.pg_backend_pid(), "
+                    + "pg_catalog.pg_try_advisory_lock(?)";
+    static final String UNLOCK_SQL =
+            "SELECT pg_catalog.pg_advisory_unlock(?)";
     static final String CONNECTION_METADATA_SQL = """
-            SELECT current_database()::text,
+            SELECT pg_catalog.current_database()::text,
                    current_user::text,
-                   current_setting('server_version')::text
+                   pg_catalog.current_setting('server_version')::text
             """;
     static final String SET_TRANSACTION_SQL =
             "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE READ ONLY DEFERRABLE";
     static final String TRANSACTION_FACTS_SQL = """
-            SELECT current_setting('transaction_isolation')::text,
-                   current_setting('transaction_read_only')::text,
-                   current_setting('transaction_deferrable')::text
+            SELECT pg_catalog.current_setting('transaction_isolation')::text,
+                   pg_catalog.current_setting('transaction_read_only')::text,
+                   pg_catalog.current_setting('transaction_deferrable')::text
             """;
     static final String DISCOVER_RESERVED_SOURCE_SQL = """
             SELECT id,
@@ -81,18 +83,20 @@ public final class LegacyPersonalBankTagGlobalPreflight {
                    p_key,
                    CASE
                        WHEN data IS NULL
-                            OR octet_length(convert_to(data, 'UTF8')) <= ?
+                            OR pg_catalog.octet_length(
+                                pg_catalog.convert_to(data, 'UTF8')) <= ?
                        THEN data
                        ELSE NULL
                    END AS bounded_data,
-                   octet_length(convert_to(data, 'UTF8')) AS data_utf8_bytes
-            FROM user_progress
+                   pg_catalog.octet_length(
+                       pg_catalog.convert_to(data, 'UTF8')) AS data_utf8_bytes
+            FROM public.user_progress
             WHERE p_key LIKE 'bank_%_tags'
             ORDER BY id
             """;
     static final String TARGET_ROWS_SQL = """
             SELECT question_id, tag
-            FROM user_question_tag_items
+            FROM public.user_question_tag_items
             WHERE user_id = ?
               AND scope = 'user_bank'
               AND scope_id = ?

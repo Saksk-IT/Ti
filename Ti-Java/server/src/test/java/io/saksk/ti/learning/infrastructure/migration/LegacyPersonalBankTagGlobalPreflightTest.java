@@ -61,7 +61,8 @@ class LegacyPersonalBankTagGlobalPreflightTest {
                 .contains("p_key LIKE 'bank_%_tags'")
                 .contains("AS bounded_data")
                 .contains("AS data_utf8_bytes")
-                .contains("octet_length(convert_to(data, 'UTF8')) <= ?")
+                .contains("pg_catalog.octet_length(")
+                .contains("pg_catalog.convert_to(data, 'UTF8')) <= ?")
                 .doesNotContain("FOR UPDATE");
         assertThat(LegacyPersonalBankTagGlobalPreflight.MAX_RESERVED_SOURCE_ROWS)
                 .isEqualTo(100_000);

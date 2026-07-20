@@ -380,6 +380,9 @@ final class Phase6WebFoundationSourceSuccessorAnchorAcceptance {
         paths.add(
                 Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                         .contractRelative());
+        paths.add(
+                Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                        .contractRelative());
         return Set.copyOf(paths);
     }
 

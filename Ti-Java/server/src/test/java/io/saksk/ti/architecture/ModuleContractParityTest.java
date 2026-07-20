@@ -2893,21 +2893,27 @@ class ModuleContractParityTest {
             }
         }
         JsonNode addedFiles = successor.path("added_files");
-        assertThat(actual).hasSize(successor.path("successor_file_count").asInt());
-        Set<String> expectedCurrent = new LinkedHashSet<>(manifest.propertyNames());
-        expectedCurrent.addAll(addedFiles.propertyNames());
-        assertThat(actual.keySet())
-                .containsExactlyInAnyOrderElementsOf(expectedCurrent);
+        Map<String, String> nodeAPredecessor = new TreeMap<>();
         for (String relative : manifest.propertyNames()) {
-            assertThat(actual.get(relative))
-                    .as("unchanged current main source %s", relative)
-                    .isEqualTo(manifest.path(relative).asString());
+            assertThat(nodeAPredecessor.put(
+                    relative, manifest.path(relative).asString()))
+                    .as("duplicate Node A predecessor source %s", relative)
+                    .isNull();
         }
         for (String relative : addedFiles.propertyNames()) {
-            assertThat(actual.get(relative))
-                    .as("Node A added current main source %s", relative)
-                    .isEqualTo(addedFiles.path(relative).asString());
+            assertThat(nodeAPredecessor.put(
+                    relative, addedFiles.path(relative).asString()))
+                    .as("duplicate Node A successor source %s", relative)
+                    .isNull();
         }
+        assertThat(nodeAPredecessor)
+                .hasSize(successor.path("successor_file_count").asInt());
+        Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                .validateProductionRuntimeSuccessor(
+                        tiJavaRoot,
+                        nodeAPredecessor,
+                        actual,
+                        "learning_personalbank_main");
     }
 
     private static void assertExactMethodShapes(Class<?> apiType, JsonNode methods) throws Exception {

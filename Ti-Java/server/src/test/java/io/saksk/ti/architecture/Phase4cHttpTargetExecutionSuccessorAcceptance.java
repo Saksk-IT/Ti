@@ -1152,7 +1152,7 @@ final class Phase4cHttpTargetExecutionSuccessorAcceptance {
             require(successor.acceptedChainNodeCount() == 5
                             && successor.currentBuildContextSha256().equals(
                             physicalBuildContext)
-                            && successor.currentChainNodeCount() == 7,
+                            && successor.currentChainNodeCount() == 8,
                     "tag preflight WORM successor descriptor drifted");
         }
     }

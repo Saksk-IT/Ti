@@ -13,15 +13,18 @@ from unittest import mock
 
 try:
     from tools import build_phase4c_tag_migration_global_preflight_contract as builder
+    from tools import build_phase4c_tag_migration_operator_core_contract as operator_builder
     from tools import phase4c_tag_migration_global_preflight_successor_acceptance as acceptance
 except ModuleNotFoundError as error:
     if error.name not in {
         "tools",
         "tools.build_phase4c_tag_migration_global_preflight_contract",
+        "tools.build_phase4c_tag_migration_operator_core_contract",
         "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
     }:
         raise
     import build_phase4c_tag_migration_global_preflight_contract as builder
+    import build_phase4c_tag_migration_operator_core_contract as operator_builder
     import phase4c_tag_migration_global_preflight_successor_acceptance as acceptance
 
 
@@ -308,10 +311,17 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 builder.TAG_GLOBAL_PREFLIGHT_HARDENING_WORM_PREDECESSOR_SHA256
             ),
         )
-        validate_fixed_chain = mock.Mock(return_value=exact_tip)
+        validate_evidence_chain = mock.Mock(return_value=exact_tip)
+        immutable_mirrors = (object(),)
         phase2_worm = types.SimpleNamespace(
-            FIXED_EVIDENCE_CHAIN=(*((object(),) * 5), initial, exact_tip),
-            validate_fixed_chain=validate_fixed_chain,
+            FIXED_EVIDENCE_CHAIN=(
+                *((object(),) * 5),
+                initial,
+                exact_tip,
+                object(),
+            ),
+            FIXED_IMMUTABLE_MIRRORS=immutable_mirrors,
+            validate_evidence_chain=validate_evidence_chain,
         )
         with mock.patch.object(
             builder,
@@ -319,11 +329,13 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             return_value=phase2_worm,
         ):
             self.assertEqual(self.contract, builder.build_contract(ROOT))
-        validate_fixed_chain.assert_called_once_with(
+        validate_evidence_chain.assert_called_once_with(
             ROOT,
             builder.fixed_regular_file(ROOT, builder.PHASE2_DRIFT_MANIFEST_RELATIVE),
             builder.TAG_GLOBAL_PREFLIGHT_DOCKERFILE_SHA256,
             builder.TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
+            chain=phase2_worm.FIXED_EVIDENCE_CHAIN[:7],
+            immutable_mirrors=immutable_mirrors,
         )
 
         wrong_tip = types.SimpleNamespace(
@@ -332,7 +344,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 "predecessor_sha256": "0" * 64,
             }
         )
-        phase2_worm.validate_fixed_chain = mock.Mock(return_value=wrong_tip)
+        phase2_worm.validate_evidence_chain = mock.Mock(return_value=wrong_tip)
         with mock.patch.object(
             builder,
             "_load_phase2_worm_validator",
@@ -510,14 +522,24 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
     def test_15_source_successor_api_rejects_unknown_tamper_and_symlink(self) -> None:
         for relative, transition in builder.SOURCE_SUCCESSORS.items():
             with self.subTest(relative=relative):
+                node_c = operator_builder.SOURCE_TRANSITIONS.get(relative)
                 self.assertEqual(
                     transition["accepted_sha256"],
                     acceptance.accepted_sha256(relative),
                 )
                 self.assertEqual(
-                    transition["successor_sha256"],
+                    (
+                        transition["successor_sha256"]
+                        if node_c is None
+                        else node_c["successor_sha256"]
+                    ),
                     acceptance.successor_sha256(ROOT, relative),
                 )
+                if node_c is not None:
+                    self.assertEqual(
+                        transition["successor_sha256"],
+                        node_c["accepted_sha256"],
+                    )
         self.assertIsNone(acceptance.accepted_sha256("tools/unknown.py"))
         self.assertIsNone(acceptance.successor_sha256(ROOT, "tools/unknown.py"))
 
@@ -527,7 +549,8 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             path = root / relative
             path.write_bytes(path.read_bytes() + b"\n")
             with self.assertRaisesRegex(
-                AssertionError, "fixed bytes|source-successor bytes"
+                AssertionError,
+                "fixed source bytes|fixed bytes|source-successor bytes",
             ):
                 acceptance.successor_sha256(root, relative)
 
@@ -552,7 +575,8 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             path = root / relative
             path.write_bytes(path.read_bytes() + b"\n")
             with self.assertRaisesRegex(
-                AssertionError, "fixed bytes|source-successor bytes"
+                AssertionError,
+                "fixed source bytes|fixed bytes|source-successor bytes",
             ):
                 acceptance.successor_sha256(root, relative)
 
@@ -607,7 +631,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         source = (
             ROOT / "tools/build_phase4c_tag_migration_global_preflight_contract.py"
         ).read_text(encoding="utf-8")
-        self.assertIn("validate_fixed_chain", source)
+        self.assertIn("validate_evidence_chain", source)
         self.assertNotIn("validate_fixed_acceptance", source)
         self.assertNotIn(
             "from tools import "
@@ -648,6 +672,22 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         self.assertEqual((), runtime.changed_files)
         self.assertEqual((), runtime.deleted_files)
 
+        node_c_current = dict(current)
+        node_c_current.update(operator_builder.PRODUCTION_RUNTIME_ADDITIONS)
+        node_c_current.update(operator_builder.PRODUCTION_RUNTIME_CHANGES)
+        composed = acceptance.validate_production_runtime_successor(
+            ROOT, historical, node_c_current
+        )
+        self.assertEqual(297, composed.accepted_file_count)
+        self.assertEqual(307, composed.current_file_count)
+        self.assertEqual(
+            operator_builder.CURRENT_PRODUCTION_MANIFEST_SHA256,
+            composed.current_manifest_sha256,
+        )
+        self.assertEqual(10, len(composed.added_files))
+        self.assertEqual((), composed.changed_files)
+        self.assertEqual((), composed.deleted_files)
+
         prefixes = (
             "server/src/main/java/io/saksk/ti/learning/",
             "server/src/main/java/io/saksk/ti/personalbank/",
@@ -674,6 +714,23 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             builder.SUCCESSOR_LEARNING_PERSONALBANK_MAIN_MANIFEST_SHA256,
             main.current_manifest_sha256,
         )
+        node_c_current_main = {
+            relative: digest
+            for relative, digest in node_c_current.items()
+            if relative.startswith(prefixes)
+        }
+        composed_main = acceptance.validate_production_runtime_successor(
+            ROOT,
+            historical_main,
+            node_c_current_main,
+            view="learning_personalbank_main",
+        )
+        self.assertEqual(40, composed_main.accepted_file_count)
+        self.assertEqual(50, composed_main.current_file_count)
+        self.assertEqual(
+            operator_builder.CURRENT_LEARNING_PERSONALBANK_MAIN_MANIFEST_SHA256,
+            composed_main.current_manifest_sha256,
+        )
 
         worm = acceptance.validate_worm_successor(
             ROOT,
@@ -682,10 +739,14 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         )
         self.assertEqual(5, worm.accepted_chain_node_count)
         self.assertEqual(6, worm.first_successor_chain_node_count)
-        self.assertEqual(7, worm.current_chain_node_count)
+        self.assertEqual(8, worm.current_chain_node_count)
         self.assertEqual(
-            builder.TAG_GLOBAL_PREFLIGHT_HARDENING_BUILD_CONTEXT_SHA256,
+            operator_builder.CURRENT_BUILD_CONTEXT_SHA256,
             worm.current_build_context_sha256,
+        )
+        self.assertEqual(
+            operator_builder.WORM_SHA256,
+            worm.current_report_sha256,
         )
         semantic_fixtures = set(acceptance.semantic_fixture_paths(ROOT))
         self.assertIn(
@@ -725,10 +786,12 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             )["production_surface"]["files"]
             current = dict(historical)
             current.update(builder.PRODUCTION_MANIFEST_ADDITIONS)
+            current.update(operator_builder.PRODUCTION_RUNTIME_ADDITIONS)
+            current.update(operator_builder.PRODUCTION_RUNTIME_CHANGES)
             runtime = acceptance.validate_production_runtime_successor(
                 root, historical, current
             )
-            self.assertEqual((297, 300), (
+            self.assertEqual((297, 307), (
                 runtime.accepted_file_count,
                 runtime.current_file_count,
             ))
@@ -753,7 +816,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 current_main,
                 view="learning_personalbank_main",
             )
-            self.assertEqual((40, 43), (
+            self.assertEqual((40, 50), (
                 main.accepted_file_count,
                 main.current_file_count,
             ))
@@ -762,7 +825,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 builder.SOURCES["old_worm_predecessor"]["sha256"],
                 builder.HISTORICAL_BUILD_CONTEXT_SHA256,
             )
-            self.assertEqual((5, 6, 7), (
+            self.assertEqual((5, 6, 8), (
                 worm.accepted_chain_node_count,
                 worm.first_successor_chain_node_count,
                 worm.current_chain_node_count,
@@ -805,7 +868,11 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             tampered = root / next(candidates)
             tampered.write_bytes(tampered.read_bytes() + b"\n")
             with self.assertRaisesRegex(
-                AssertionError, "physical build-context successor drifted"
+                AssertionError,
+                (
+                    "operator-core fixed source bytes drifted|"
+                    "physical build-context successor drifted"
+                ),
             ):
                 acceptance.validate_worm_successor(
                     root,

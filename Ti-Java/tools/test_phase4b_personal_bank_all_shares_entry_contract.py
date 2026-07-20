@@ -527,8 +527,8 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, runtime.accepted_file_count)
-            self.assertEqual(43, runtime.current_file_count)
-            self.assertEqual(3, len(runtime.added_files))
+            self.assertEqual(50, runtime.current_file_count)
+            self.assertEqual(10, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
         application_api = (
