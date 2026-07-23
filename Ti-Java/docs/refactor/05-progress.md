@@ -4,6 +4,7 @@
 
 ## 当前阶段
 
+- **阶段 4C：九个事务写 HTTP operation 的业务/事务实现正在逐组闭合，路由尚未晋级。** 通用 learning/catalog 幂等回执与 Flyway additive migration 已由 `bdc2d84130993796bbdcde7851d9be57a526cd5d` 固定；收藏/取消收藏应用与双 PostgreSQL 事务证据已由 `1706c88c52865d146d3bb46502d816cd1d27fc37` 固定；答题结果两 alias 的 HTTP-neutral 应用、operations-owned 配额读取、错题/最新答案/配额/回执原子事务及 PostgreSQL 16.14/18.4 并发证据已由 `29818f5c5c7e75dc55871972aa26bcc6a2ceb938` 固定。三组均未创建 route delta，必须等九个 operation 的 HTTP、三类凭据、CSRF、Redis、真实网络与完整实现 successor 一并闭合后，才允许把事务写路由从 pending 晋级；权威状态继续保持 **13/598/0**。
 - **阶段 4C：personal-bank legacy tag Operator Core（Node C）三段已外锚，Node D 整体执行协议正在实现。** Node C 功能 checkpoint `a70c365959e123950d30bff05adb4fabbb72d640`、独立验收 checkpoint `4ec9966f836378a33058b574fd1812d4d19cac10` 与 post-push anchor `4c47d1ea220ae9e310338bbf23b74d87d477e20f` 已依次固定；Node C 历史合同及验收 bridge 的字节不得回写，后续物理源码漂移只能由 Node D fixed transition 显式接受。Node D 当前组合已外锚的 Node A/B/C：canonical candidate、Ed25519 四 purpose 证据验证、逐次 `prepare/freeze/apply/recover` 协议与 test-only 078/079 本地备份恢复演练正在收口；没有 Spring/Runner/Scheduler/HTTP/CLI/env/file/Redis/KMS/网络密钥发现或一键执行入口。本批完成时只允许关闭 `migration_execution_protocol_implemented`、`cryptographic_evidence_verifier_implemented`、`local_test_backup_restore_execution_rehearsal_closed` 三项本地/协议 gate；受控生产 runtime 合同目标为 **311** 个文件，`learning/personalbank` main 合同目标为 **54** 个文件。固定 WORM 链已追加第九节点 `5c3fe0f9d7cba79fca6c2351d811924346182cf61e06b730a0eeb0bcef50081c`，绑定 build-context `36978a808a327abfb3c7b3dfe138f5622000213a25bad762b59128c78894d7c7`。生产 schema/index/Flyway、真实 writer freeze/connection drain、生产 trust root、真实备份恢复/apply、legacy 永久下线、gateway/cutover 等安全 gate 全部保持关闭，路由保持 **13/598/0**。
 - **Phase 6 Web foundation 已完成固定 SHA 集成，但 Phase 6 整体未完成。** INT 以 `cherry-pick -n` 审查并集成 Worker `c7fd40dad2340c320c31281e29608f33d0ee26fe`；其唯一父提交为 BASE `765e4470f1ddb60f0ce6f23227d6303961f47fcf`，102 个新增文件全部位于 `Ti-Java/web/**`，handoff `528ccb759d269fb1a2655e9c14838dc1b621c863` 没有合入 main。公共题库列表/只读名片只调用五个已迁移 Phase 4A GET；OpenAPI/生成漂移、lint、strict typecheck、unit 7/7、Vite 160 modules、Playwright 3/3 与 high-level npm audit 全绿。加入、练习、个人题库、user-counts、写操作、跨域搜索和科目页仍未迁移；四条 Phase 6 旧页面 operation 保持 pending，未创建 route delta，13/598/0 与生产 owner 均不变。
 - **阶段 4C：user-counts 完整 target parity、bootstrap Git 外锚与追加式 route promotion 已闭合。** typed-normalization 的 58 HTTP + 1 typed rejection 账本保持不变；INT 从 BASE `765e4470f1ddb60f0ce6f23227d6303961f47fcf` 审查并以 fixed implementation SHA 集成 PG `0f584743dbdc187b6bc6fc67899a2d6718cb13c8`、TOMCAT `cd7eba9bbee4edcb6a0e14fec5fdfdf613d2ea70` 与 REDIS `ad4d90b30cc5d244983fe759199f77ddeacdfc52`。双 PostgreSQL 终止 identity/SQL/九表指纹、真实 Tomcat GET/HEAD 全响应头矩阵、同一服务 Redis outage/recovery 均闭合；定向 Failsafe 13/13 与完整 `clean verify` 709 Surefire + 167 Failsafe 全部 0 failure/error/skip。提交 `848af89cb99ae0330ec1f0955cf23749a044d40e` 的完整 15 路径差集和 bootstrap 六源现已固定，四个 parity 前提与 `route_migration_eligible` 均为 `true`；新 successor delta 只晋级 route ID `6858f6fa506f` 与 `006913d0d956` 两条 GET。有效资源 160/160，路由现为 **13 migrated、598 pending、0 cutover**；派生 HEAD/OPTIONS 不计 operation，operator、schema/index、真实迁移与生产切流继续禁止。
@@ -17,8 +18,18 @@
 - 阶段 0、阶段 1、阶段 2 与阶段 3 均已通过各自结构化门禁、负向测试和独立审计；Phase 4A 的 catalog 有界范围、WORM、独立副本与 closure gate 均已完成，但整个长期重构目标仍未完成。
 - 旧项目目录只读；当前实施范围仅为 `Ti-Java/`，未连接生产环境、未读取真实密钥、未切换部署或 DNS。
 
+### 2026-07-23 事务写恢复点
+
+- **最近通过的实现提交：** `29818f5c5c7e75dc55871972aa26bcc6a2ceb938`（`feat(java): implement phase4c answer transactions`）；前一绿色收藏提交为 `1706c88c52865d146d3bb46502d816cd1d27fc37`，通用回执提交为 `bdc2d84130993796bbdcde7851d9be57a526cd5d`。
+- **本轮完成：** `POST /api/record_result` 与 `POST /api/quiz/record_result` 共用的 HTTP-neutral record-result 用例已实现。catalog/identity 前置读取不进入 learning 事务；operations 通过公开窄 API 持有 `system_config` 的配额配置读取；learning 在 actor advisory transaction lock 下原子更新 `mistakes`、替换每题最新 `user_answers`、可选递增 `user_quiz_stats` 并完成 HMAC 幂等回执。
+- **验证命令与结果：** record-result/operations 定向 Surefire 31/31 通过；`Phase4cRecordResultWriteTransactionIT` 在 PostgreSQL 16.14 与 18.4 为 2/2 通过，覆盖错题三种转换、重复无 header 的逐次逻辑尝试、同键 replay/conflict、回滚重试、同键并发一次提交及无 header 并发配额不超发；`ModulithArchitectureTest` 1/1、Phase 4C 固定合同定向 13/13 通过。
+- **已知历史红项：** `ModuleContractParityTest` 在载入旧 HTTP/tag-preflight source chain 时仍因 `server/src/main/resources/application-prod.yml` 的既有字节断点报错；该断点早于本实现且必须由追加式 fixed implementation successor 接受，禁止回写历史合同或动态放宽扫描。
+- **尚未迁移：** 两条 favorite 和两条 record-result HTTP operation 仍为 pending；当前业务实现没有授权 route delta，也没有生产 schema execution/cutover。
+- **下一项具体动作：** 实现 `study-learn-record`、`study-review-record`、`study-review-master` 三个恢复型事务用例，再实现 checkin 与 catalog-owned question edit；随后统一闭合九个写 operation 的 HTTP/认证/CSRF/Redis/OpenAPI/真实网络和 successor 链。
+
 ## 本轮已完成
 
+- 完成 record-result 两 alias 的类型化命令/结果、稳定语义指纹、配额拒绝响应、错题与最新答案持久化、用户级并发锁、幂等回执和 operations-owned 配额配置读取；真实双 PostgreSQL 证明业务行、配额行和回执同事务提交或回滚。
 - 建立独立 `Ti-Java/` 边界、补充工程规则和 README。
 - 从根仓库固定提交创建受控小程序副本，排除嵌套 `.git`、依赖目录、缓存、日志和本地配置，并保存 SHA-256 来源清单。
 - 生成旧系统事实盘点：动态 URL map 592 条规则、展开后 611 个 `path + method` 组合；小程序 116 次请求表达式、113 个唯一接口均可映射到旧 URL map，其中 102 条注册规则具有小程序调用证据。
