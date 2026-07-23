@@ -1,6 +1,8 @@
 package io.saksk.ti.learning;
 
 import io.saksk.ti.architecture.AbstractPhase2ModuleContextTest;
+import io.saksk.ti.catalog.api.QuestionMetadataApplicationApi;
+import io.saksk.ti.identity.api.SubjectAccessPolicyApi;
 import io.saksk.ti.personalbank.api.PersonalBankQuestionFactsApi;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -38,6 +40,16 @@ class LearningModuleContextTest extends AbstractPhase2ModuleContextTest {
         @Bean
         PersonalBankQuestionFactsApi personalBankQuestionFactsApi() {
             return org.mockito.Mockito.mock(PersonalBankQuestionFactsApi.class);
+        }
+
+        @Bean
+        QuestionMetadataApplicationApi questionMetadataApplicationApi() {
+            return org.mockito.Mockito.mock(QuestionMetadataApplicationApi.class);
+        }
+
+        @Bean
+        SubjectAccessPolicyApi subjectAccessPolicyApi() {
+            return org.mockito.Mockito.mock(SubjectAccessPolicyApi.class);
         }
     }
 }
