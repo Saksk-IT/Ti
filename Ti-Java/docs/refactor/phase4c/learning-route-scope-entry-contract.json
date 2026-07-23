@@ -1,0 +1,1245 @@
+{
+  "already_migrated": [
+    {
+      "baseline_migration_status": "pending",
+      "baseline_target_module": "personalbank",
+      "client_surfaces": [
+        "miniprogram"
+      ],
+      "effective_owner": "learning",
+      "endpoint": "user_bank_api_root.user_bank_api.get_user_counts",
+      "group": "migrated_personal_bank_user_counts",
+      "legacy_module": "user_bank",
+      "method": "GET",
+      "ordinal": 1,
+      "path": "/api/user/banks/api/<int:bank_id>/user-counts",
+      "route_id": "6858f6fa506f",
+      "source": "app/modules/user_bank/routes/api_quiz.py:774"
+    },
+    {
+      "baseline_migration_status": "pending",
+      "baseline_target_module": "personalbank",
+      "client_surfaces": [
+        "tests",
+        "web"
+      ],
+      "effective_owner": "learning",
+      "endpoint": "user_bank.user_bank_api.get_user_counts",
+      "group": "migrated_personal_bank_user_counts",
+      "legacy_module": "user_bank",
+      "method": "GET",
+      "ordinal": 2,
+      "path": "/user/banks/api/<int:bank_id>/user-counts",
+      "route_id": "006913d0d956",
+      "source": "app/modules/user_bank/routes/api_quiz.py:774"
+    }
+  ],
+  "authorization": {
+    "client_gateway_or_proxy_change": false,
+    "flyway_baseline_or_migration": false,
+    "legacy_runtime_permanently_disabled": false,
+    "production_cutover": false,
+    "production_schema_or_index": false,
+    "progress_and_tags_implementation_authorized": false,
+    "real_data_migration_execution": false,
+    "route_or_openapi_delta": false,
+    "route_scope_partition_closed": true,
+    "selection_search_and_count_implementation_authorized": false,
+    "statistics_and_data_center_implementation_authorized": false,
+    "transaction_write_golden_capture_authorized": true,
+    "transaction_write_implementation_authorized": false
+  },
+  "captured_at": "2026-07-23T19:20:00+08:00",
+  "contract_id": "ti.phase4c.learning-route-scope-entry-contract",
+  "control_plane": {
+    "bootstrap": true,
+    "closes_no_business_implementation_gate": true,
+    "current_control_sources_external_git_anchor_complete": false,
+    "self_signed": false
+  },
+  "cross_domain_transfers": [
+    {
+      "baseline_migration_status": "pending",
+      "baseline_target_module": "learning",
+      "client_surfaces": [
+        "miniprogram",
+        "web"
+      ],
+      "disposition": "transfer_out_of_phase4c_learning_implementation",
+      "effective_owner": "intelligence",
+      "endpoint": "main.main_pages.api_data_ai_advice",
+      "group": "cross_domain_transfer",
+      "legacy_module": "main",
+      "method": "POST",
+      "ordinal": 1,
+      "path": "/api/data/ai-advice",
+      "route_id": "1156cacff587",
+      "source": "app/modules/main/routes/pages_components/data_center.py:242"
+    },
+    {
+      "baseline_migration_status": "pending",
+      "baseline_target_module": "learning",
+      "client_surfaces": [
+        "tests",
+        "web"
+      ],
+      "disposition": "transfer_out_of_phase4c_learning_implementation",
+      "effective_owner": "assessment",
+      "endpoint": "api_grade_subjective",
+      "group": "cross_domain_transfer",
+      "legacy_module": "quiz_alias",
+      "method": "POST",
+      "ordinal": 2,
+      "path": "/api/grade_subjective",
+      "route_id": "c256dab89924",
+      "source": "app/modules/quiz/routes/api_components/core_grading.py:224"
+    },
+    {
+      "baseline_migration_status": "pending",
+      "baseline_target_module": "learning",
+      "client_surfaces": [
+        "miniprogram",
+        "tests"
+      ],
+      "disposition": "transfer_out_of_phase4c_learning_implementation",
+      "effective_owner": "assessment",
+      "endpoint": "quiz_api.api_grade_subjective",
+      "group": "cross_domain_transfer",
+      "legacy_module": "quiz",
+      "method": "POST",
+      "ordinal": 3,
+      "path": "/api/quiz/grade_subjective",
+      "route_id": "7de6db064715",
+      "source": "app/modules/quiz/routes/api_components/core_grading.py:224"
+    }
+  ],
+  "document_payload_sha256": "ca589656cbdf50aba9e4cb15b5e2cbb047f2b3f9e48eb4661e8e642c94124d49",
+  "frozen_route_authority": {
+    "baseline_learning_operation_count": 67,
+    "operation_count": 611,
+    "rule_count": 592,
+    "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+    "source": "docs/refactor/02-route-parity-matrix.csv"
+  },
+  "legacy_source_authority": {
+    "commit_oid": "700006dfdfa063deb4387be572911e782bcea0d9",
+    "live_worktree_is_not_authority": true,
+    "source_sha256": {
+      "app/modules/admin/routes/api_components/system_config.py": "6773c3068d81c912f5df8504a0ac9043297dc6536a99f221ba86361aa5687305",
+      "app/modules/main/routes/pages_components/data_center.py": "616accd0b07a9764dc3e878f544e0d33c4362dc56cc9a4bfb67c1cf0064e7431",
+      "app/modules/quiz/routes/api_components/core.py": "cee9606ad15b40ead85fd409cace6cf6621ef0e6b65b3068837bcf066142e600",
+      "app/modules/quiz/routes/api_components/core_counts.py": "01cdbb4254f71b87d61de406524944b560c4e480d7f370ecb522effa8d325063",
+      "app/modules/quiz/routes/api_components/core_grading.py": "b29be55bf8c87139817baea025cd76123409f97e8e3db625f01e37cde8c1f47d",
+      "app/modules/quiz/routes/api_components/core_history.py": "6cd0322ef9707f64f6fca26700fb8e8b421e4e5c9bc069e8fc7ca17255559b33",
+      "app/modules/quiz/routes/api_components/core_reinforce.py": "7250a12e47c481be761a48818397379e3a54655344b5516acef976b324c8cde8",
+      "app/modules/quiz/routes/api_components/progress_tags_notifications.py": "4dfaa547800ee6a1e01d57fac4ccd235a524e98d1be90ec14e466b2094eddbfc",
+      "app/modules/quiz/routes/api_components/questions_study.py": "c872216fc7361305a822a5c5f4238c4ec2887f1ad6e9376e4980f567d5fc50ca",
+      "app/modules/quiz/routes/api_components/search.py": "33f45693ebadf56919d723b746e9490af7ac85257d9d9206a230edec1729c12e",
+      "app/modules/quiz/routes/api_components/subjects.py": "2ab1ff6e2dded31c230a7905fd028b72bfdfe92ef840baed00de1163f740f36e",
+      "app/modules/user/routes/api.py": "9ff19da21259d0fe1ccae205e8c286c83fd30534b10619911b1bcddce958606c"
+    },
+    "transport_for_next_capture": "read-only git archive of the fixed commit into a temporary directory"
+  },
+  "module_boundary": {
+    "catalog_owned_tables": [
+      "questions",
+      "subjects"
+    ],
+    "cross_module_database_transaction_forbidden": true,
+    "learning_direct_catalog_table_write_forbidden": true,
+    "learning_may_call": [
+      "catalog::api",
+      "identity::api",
+      "personalbank::api"
+    ],
+    "learning_owned_tables": [
+      "favorites",
+      "mistakes",
+      "study_learning",
+      "study_review",
+      "user_answers",
+      "user_bank_answers",
+      "user_bank_favorites",
+      "user_bank_mistakes",
+      "user_checkins",
+      "user_progress",
+      "user_question_tag_items",
+      "user_quiz_stats"
+    ]
+  },
+  "next_gate": {
+    "exact_operation_count": 9,
+    "implementation_authorized": false,
+    "name": "transaction-write fixed-commit golden and invariants",
+    "production_cutover_authorized": false,
+    "production_schema_or_flyway_authorized": false,
+    "required_evidence": [
+      "complete fixed-commit app archive",
+      "active caller attestation",
+      "authentication, CSRF and rate-limit matrix",
+      "request and response parity",
+      "isolated database before/after fingerprints",
+      "SQL and transaction trace",
+      "duplicate and concurrent request outcomes",
+      "rollback and retry boundaries"
+    ],
+    "route_or_openapi_delta_authorized": false
+  },
+  "ordered_learning_groups": {
+    "progress_and_tags": [
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_progress",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz_alias",
+        "method": "DELETE",
+        "ordinal": 1,
+        "path": "/api/progress",
+        "route_id": "7f23a2deabf0",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:24"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_progress",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz_alias",
+        "method": "GET",
+        "ordinal": 2,
+        "path": "/api/progress",
+        "route_id": "7f23a2deabf0",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:24"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_progress",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz_alias",
+        "method": "POST",
+        "ordinal": 3,
+        "path": "/api/progress",
+        "route_id": "7f23a2deabf0",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:24"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.progress_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "DELETE",
+        "ordinal": 4,
+        "path": "/api/quiz/progress",
+        "route_id": "1e59f49d87aa",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:24"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.progress_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 5,
+        "path": "/api/quiz/progress",
+        "route_id": "1e59f49d87aa",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:24"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.progress_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 6,
+        "path": "/api/quiz/progress",
+        "route_id": "1e59f49d87aa",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:24"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.question_tags_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 7,
+        "path": "/api/quiz/questions/<int:question_id>/tags",
+        "route_id": "abe53704e095",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:206"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.question_tags_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 8,
+        "path": "/api/quiz/questions/<int:question_id>/tags",
+        "route_id": "abe53704e095",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:206"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.tags_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "DELETE",
+        "ordinal": 9,
+        "path": "/api/quiz/tags",
+        "route_id": "af8df0b4e70a",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:85"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.tags_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 10,
+        "path": "/api/quiz/tags",
+        "route_id": "af8df0b4e70a",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:85"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.tags_api",
+        "group": "progress_and_tags",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 11,
+        "path": "/api/quiz/tags",
+        "route_id": "af8df0b4e70a",
+        "source": "app/modules/quiz/routes/api_components/progress_tags_notifications.py:85"
+      }
+    ],
+    "selection_search_and_count": [
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "tests"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_get_questions",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 1,
+        "path": "/api/quiz/questions",
+        "route_id": "bacda2bed9be",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:70"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_get_question_detail",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 2,
+        "path": "/api/quiz/questions/<int:question_id>",
+        "route_id": "5272d44a3138",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:258"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_reinforce",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 3,
+        "path": "/api/quiz/reinforce",
+        "route_id": "9c473c8cfb67",
+        "source": "app/modules/quiz/routes/api_components/core_reinforce.py:176"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_search_questions",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 4,
+        "path": "/api/quiz/search",
+        "route_id": "bf3236e06b84",
+        "source": "app/modules/quiz/routes/api_components/search.py:30"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "tests"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_subjects",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 5,
+        "path": "/api/quiz/subjects",
+        "route_id": "d3cd12aaca90",
+        "source": "app/modules/quiz/routes/api_components/subjects.py:33"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_subject_info",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 6,
+        "path": "/api/quiz/subjects/<subject>/info",
+        "route_id": "91204289b3ce",
+        "source": "app/modules/quiz/routes/api_components/subjects.py:200"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_subject_questions",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 7,
+        "path": "/api/quiz/subjects/<subject>/questions",
+        "route_id": "d895bea1983a",
+        "source": "app/modules/quiz/routes/api_components/subjects.py:832"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "catalog",
+        "client_surfaces": [
+          "tests",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_questions_count",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz_alias",
+        "method": "GET",
+        "ordinal": 8,
+        "path": "/api/questions/count",
+        "route_id": "c618fb5f9f97",
+        "source": "app/modules/quiz/routes/api_components/core_counts.py:34"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "catalog",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_questions_count",
+        "group": "selection_search_and_count",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 9,
+        "path": "/api/quiz/questions/count",
+        "route_id": "bb21e7730d04",
+        "source": "app/modules/quiz/routes/api_components/core_counts.py:34"
+      }
+    ],
+    "statistics_and_data_center": [
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "admin.admin_api.get_user_quiz_stats",
+        "group": "statistics_and_data_center",
+        "legacy_module": "admin",
+        "method": "GET",
+        "ordinal": 1,
+        "path": "/admin/api/users/<int:user_id>/quiz_stats",
+        "route_id": "2dffa3596c39",
+        "source": "app/modules/admin/routes/api_components/system_config.py:191"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "main.main_pages.api_data_center",
+        "group": "statistics_and_data_center",
+        "legacy_module": "main",
+        "method": "GET",
+        "ordinal": 2,
+        "path": "/api/data/center",
+        "route_id": "79d6503d1216",
+        "source": "app/modules/main/routes/pages_components/data_center.py:205"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "main.main_pages.api_data_tags",
+        "group": "statistics_and_data_center",
+        "legacy_module": "main",
+        "method": "GET",
+        "ordinal": 3,
+        "path": "/api/data/tags",
+        "route_id": "b4487d996c52",
+        "source": "app/modules/main/routes/pages_components/data_center.py:222"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_questions_user_counts",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz_alias",
+        "method": "GET",
+        "ordinal": 4,
+        "path": "/api/questions/user_counts",
+        "route_id": "20f46b0b55fd",
+        "source": "app/modules/quiz/routes/api_components/core_counts.py:158"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_user_counts",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 5,
+        "path": "/api/quiz/questions/user_counts",
+        "route_id": "cdbecd968cba",
+        "source": "app/modules/quiz/routes/api_components/core_counts.py:158"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_history_stats",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 6,
+        "path": "/api/quiz/history",
+        "route_id": "2e2664962668",
+        "source": "app/modules/quiz/routes/api_components/core_history.py:37"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.study_review_summary",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 7,
+        "path": "/api/quiz/study/review/summary",
+        "route_id": "52585295556c",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:681"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_subject_favorites_trend",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 8,
+        "path": "/api/quiz/subjects/<subject>/favorites/trend",
+        "route_id": "9ffa45b71103",
+        "source": "app/modules/quiz/routes/api_components/subjects.py:1032"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_subject_stats_detail",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 9,
+        "path": "/api/quiz/subjects/<subject>/stats",
+        "route_id": "c21a8a1f1d3e",
+        "source": "app/modules/quiz/routes/api_components/subjects.py:341"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_subjects_meta",
+        "group": "statistics_and_data_center",
+        "legacy_module": "quiz",
+        "method": "GET",
+        "ordinal": 10,
+        "path": "/api/quiz/subjects/meta",
+        "route_id": "7fd9b0fc8111",
+        "source": "app/modules/quiz/routes/api_components/subjects.py:100"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.stats_by_subject",
+        "group": "statistics_and_data_center",
+        "legacy_module": "user",
+        "method": "GET",
+        "ordinal": 11,
+        "path": "/api/stats/by_subject",
+        "route_id": "bfc8079d63de",
+        "source": "app/modules/user/routes/api.py:694"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.stats_by_type",
+        "group": "statistics_and_data_center",
+        "legacy_module": "user",
+        "method": "GET",
+        "ordinal": 12,
+        "path": "/api/stats/by_type",
+        "route_id": "6e4561abf335",
+        "source": "app/modules/user/routes/api.py:725"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "tests",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.stats_daily",
+        "group": "statistics_and_data_center",
+        "legacy_module": "user",
+        "method": "GET",
+        "ordinal": 13,
+        "path": "/api/stats/daily",
+        "route_id": "7de8331891aa",
+        "source": "app/modules/user/routes/api.py:662"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.user_checkin_status",
+        "group": "statistics_and_data_center",
+        "legacy_module": "user",
+        "method": "GET",
+        "ordinal": 14,
+        "path": "/api/user/checkin/status",
+        "route_id": "088865391e1a",
+        "source": "app/modules/user/routes/api.py:154"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.user_last_practice",
+        "group": "statistics_and_data_center",
+        "legacy_module": "user",
+        "method": "GET",
+        "ordinal": 15,
+        "path": "/api/user/last-practice",
+        "route_id": "18352825da6c",
+        "source": "app/modules/user/routes/api.py:843"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "not_found_static_scan"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.user_stats",
+        "group": "statistics_and_data_center",
+        "legacy_module": "user",
+        "method": "GET",
+        "ordinal": 16,
+        "path": "/api/user/stats",
+        "route_id": "497b72cfd701",
+        "source": "app/modules/user/routes/api.py:283"
+      }
+    ],
+    "transaction_writes": [
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_favorite",
+        "group": "transaction_writes",
+        "legacy_module": "quiz_alias",
+        "method": "POST",
+        "ordinal": 1,
+        "path": "/api/favorite",
+        "route_id": "6d548bfd6830",
+        "source": "app/modules/quiz/routes/api_components/core.py:43"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.toggle_favorite",
+        "group": "transaction_writes",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 2,
+        "path": "/api/quiz/favorite",
+        "route_id": "b52d3008d4d1",
+        "source": "app/modules/quiz/routes/api_components/core.py:43"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "api_record_result",
+        "group": "transaction_writes",
+        "legacy_module": "quiz_alias",
+        "method": "POST",
+        "ordinal": 3,
+        "path": "/api/record_result",
+        "route_id": "87bb4fb340c8",
+        "source": "app/modules/quiz/routes/api_components/core.py:85"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.record_result",
+        "group": "transaction_writes",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 4,
+        "path": "/api/quiz/record_result",
+        "route_id": "67dccafb3ea4",
+        "source": "app/modules/quiz/routes/api_components/core.py:85"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.study_learn_record",
+        "group": "transaction_writes",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 5,
+        "path": "/api/quiz/study/learn/record",
+        "route_id": "bf3cb0c4f9ab",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:561"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.study_review_record",
+        "group": "transaction_writes",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 6,
+        "path": "/api/quiz/study/review/record",
+        "route_id": "c797832c43db",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:708"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.study_review_master",
+        "group": "transaction_writes",
+        "legacy_module": "quiz",
+        "method": "POST",
+        "ordinal": 7,
+        "path": "/api/quiz/study/review/master",
+        "route_id": "278e1eac5eb4",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:778"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram",
+          "web"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "user.user_api.user_checkin",
+        "group": "transaction_writes",
+        "legacy_module": "user",
+        "method": "POST",
+        "ordinal": 8,
+        "path": "/api/user/checkin",
+        "route_id": "59c9c7366ec3",
+        "source": "app/modules/user/routes/api.py:210"
+      },
+      {
+        "baseline_migration_status": "pending",
+        "baseline_target_module": "learning",
+        "client_surfaces": [
+          "miniprogram"
+        ],
+        "effective_owner": "learning",
+        "endpoint": "quiz_api.api_update_question",
+        "group": "transaction_writes",
+        "legacy_module": "quiz",
+        "method": "PUT",
+        "ordinal": 9,
+        "path": "/api/quiz/questions/<int:question_id>",
+        "route_id": "624b5ac217d0",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:375"
+      }
+    ]
+  },
+  "page_shells": [
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data",
+      "route_id": "ff3b6347feb8",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/ai",
+      "route_id": "c89a5c2475b4",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/banks",
+      "route_id": "170e5d7b9ce3",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/favorites",
+      "route_id": "c55ee1cbea6a",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/global",
+      "route_id": "d9beaa039834",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/mistakes",
+      "route_id": "2c1d2b5fe615",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/tags",
+      "route_id": "dfc23329690e",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/data/trend",
+      "route_id": "10a932308b1a",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.favorites_detail_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/favorites",
+      "route_id": "abc88cd2717d",
+      "source": "app/modules/main/routes/pages_components/review_center.py:30"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.favorites_center_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/favorites/center",
+      "route_id": "8a67416e65cd",
+      "source": "app/modules/main/routes/pages_components/review_center.py:156"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.history_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/history",
+      "route_id": "85b7407ec189",
+      "source": "app/modules/main/routes/pages_components/data_center.py:51"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.mistakes_detail_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/mistakes",
+      "route_id": "dfb5f0ce9624",
+      "source": "app/modules/main/routes/pages_components/review_center.py:94"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.mistakes_center_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/mistakes/center",
+      "route_id": "0a914e5bcca9",
+      "source": "app/modules/main/routes/pages_components/review_center.py:150"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "quiz.quiz_pages.quiz_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/quiz",
+      "route_id": "ef3d36e8a914",
+      "source": "app/modules/quiz/routes/pages.py:66"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "quiz.quiz_pages.quiz_settlement_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/quiz/settlement",
+      "route_id": "c17ce3885134",
+      "source": "app/modules/quiz/routes/pages.py:1036"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.quiz_settings_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/quiz_settings",
+      "route_id": "604329f44104",
+      "source": "app/modules/main/routes/pages_components/misc.py:12"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.review_entry_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/review",
+      "route_id": "61d085584dec",
+      "source": "app/modules/main/routes/pages_components/review_center.py:58"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.subject_data_redirect_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/subjects/<int:subject_id>/data",
+      "route_id": "484b85a4974c",
+      "source": "app/modules/main/routes/pages_components/subjects.py:149"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.subject_data_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/subjects/<int:subject_id>/data/<subtab>",
+      "route_id": "d4cdd92bcc32",
+      "source": "app/modules/main/routes/pages_components/subjects.py:160"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.tags_select_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/tags",
+      "route_id": "4d772f2bf86b",
+      "source": "app/modules/main/routes/pages_components/review_center.py:122"
+    },
+    {
+      "disposition": "phase6_web_page_shell",
+      "endpoint": "main.main_pages.tags_center_page",
+      "method": "GET",
+      "migration_status": "pending",
+      "path": "/tags/center",
+      "route_id": "b03fe5dc3fc8",
+      "source": "app/modules/main/routes/pages_components/review_center.py:162"
+    }
+  ],
+  "phase4c_partition": {
+    "already_migrated_learning_operation_count": 2,
+    "cross_domain_transfer_operation_count": 3,
+    "final_route_target": {
+      "migrated": 58,
+      "pending": 553,
+      "production_cutover": 0
+    },
+    "learning_backend_operation_count": 47,
+    "ordered_remaining_group_counts": [
+      9,
+      11,
+      9,
+      16
+    ],
+    "phase6_page_shell_operation_count": 21,
+    "remaining_learning_operation_count": 45,
+    "total_operation_count": 71
+  },
+  "predecessor": {
+    "byte_count": 80324,
+    "contract_id": "ti.phase4c.personal-bank-tag-migration-execution-protocol-post-push-anchor-contract",
+    "document_payload_sha256": "1a8bf429fe15f85e380f417329c0ca25c3245a6f1254c774b1a14ee7ebc48164",
+    "fixed_d0_commit": "19db389aacad439f63cb93b930bea20ddd31f5e8",
+    "fixed_d1_commit": "aff3c9e8d6b1ed33dc0a050c0e435572cddd51db",
+    "fixed_d2_commit": "2579dfd344dbe318c9fb59d067c843356b98fece",
+    "immutable": true,
+    "sha256": "a6dff0717d0da91091f50cb7a51d35ffc66db364e966c568fec40bdb3ca936cd",
+    "source": "docs/refactor/phase4c/personal-bank-tag-migration-execution-protocol-post-push-anchor-contract.json"
+  },
+  "route_state": {
+    "legacy_flask_remains_production_owner": true,
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-learning-route-scope-and-ordered-execution-entry",
+  "status": "route_scope_partition_closed_transaction_write_golden_capture_only_implementation_route_promotion_and_cutover_unauthorized",
+  "transaction_write_semantics": {
+    "answer_aliases": {
+      "legacy_without_idempotency_key": "preserve one logical attempt per accepted HTTP request",
+      "owner_tables": [
+        "mistakes",
+        "user_answers",
+        "user_quiz_stats"
+      ],
+      "rate_limit": "60/minute",
+      "route_ids": [
+        "87bb4fb340c8",
+        "67dccafb3ea4"
+      ],
+      "shared_legacy_handler": "record_result",
+      "target_atomicity": "mistake transition, answer append, quota increment and idempotency receipt commit in one learning transaction",
+      "target_optional_idempotency_key": {
+        "concurrent_same_key": "one commit; wait or replay; never double count",
+        "header": "Idempotency-Key",
+        "persistence": "PostgreSQL learning-owned durable receipt",
+        "same_actor_same_key_different_payload": "409 conflict",
+        "same_actor_same_key_same_payload": "replay first committed response"
+      }
+    },
+    "checkin": {
+      "concurrency": "unique conflict resolves to the already committed checkin",
+      "natural_idempotency_key": [
+        "user_id",
+        "Asia/Shanghai local date"
+      ],
+      "owner_tables": [
+        "user_checkins"
+      ],
+      "route_ids": [
+        "59c9c7366ec3"
+      ]
+    },
+    "favorite_aliases": {
+      "catalog_precondition": "question exists and subject access is allowed",
+      "owner_tables": [
+        "favorites"
+      ],
+      "rate_limit": "30/minute",
+      "route_ids": [
+        "6d548bfd6830",
+        "b52d3008d4d1"
+      ],
+      "shared_legacy_handler": "toggle_favorite",
+      "target_atomicity": "toggle row and publish cache invalidation only after commit"
+    },
+    "question_edit": {
+      "forbidden": "learning SQL against questions",
+      "persistent_owner": "catalog",
+      "required_dependency": "learning -> catalog::api",
+      "route_ids": [
+        "624b5ac217d0"
+      ],
+      "route_orchestrator": "learning compatibility HTTP boundary"
+    },
+    "study_learning": {
+      "owner_tables": [
+        "study_learning",
+        "study_review",
+        "mistakes",
+        "user_bank_mistakes"
+      ],
+      "route_ids": [
+        "bf3cb0c4f9ab"
+      ],
+      "target_atomicity": "streak/counters, mistake transition and first due-review creation commit together"
+    },
+    "study_review": {
+      "owner_tables": [
+        "study_review"
+      ],
+      "route_ids": [
+        "c797832c43db",
+        "278e1eac5eb4"
+      ],
+      "target_atomicity": "review level/due date or mastered state commits once"
+    }
+  }
+}
