@@ -111,12 +111,19 @@ logging:
 
 ti:
   catalog:
+    question-edit-idempotency:
+      key-secret: ${TI_CATALOG_QUESTION_EDIT_IDEMPOTENCY_KEY_SECRET:local-only-catalog-question-edit-idempotency-key-0001}
+      receipt-ttl: ${TI_CATALOG_QUESTION_EDIT_IDEMPOTENCY_RECEIPT_TTL:24h}
     public-bank:
       snapshot:
         # Remains disabled until this shadow slice owns production reads and its schema is active.
         readiness-enabled: ${TI_PUBLIC_BANK_SNAPSHOT_READINESS_ENABLED:false}
         refresh-lock-namespace: ${TI_PUBLIC_BANK_SNAPSHOT_LOCK_NAMESPACE:ti-java:catalog:public-bank-snapshot}
         refresh-lock-ttl: ${TI_PUBLIC_BANK_SNAPSHOT_LOCK_TTL:15m}
+  learning:
+    write-idempotency:
+      key-secret: ${TI_LEARNING_WRITE_IDEMPOTENCY_KEY_SECRET:local-only-learning-write-idempotency-key-0001}
+      receipt-ttl: ${TI_LEARNING_WRITE_IDEMPOTENCY_RECEIPT_TTL:24h}
   security:
     client-address:
       trusted-proxy-cidrs: ${TI_TRUSTED_PROXY_CIDRS:}

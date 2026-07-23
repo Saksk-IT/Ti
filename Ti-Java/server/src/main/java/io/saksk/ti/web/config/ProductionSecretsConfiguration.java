@@ -16,6 +16,8 @@ public class ProductionSecretsConfiguration {
         requireNonBlank(environment, "spring.datasource.password");
         requireNonBlank(environment, "spring.data.redis.host");
         requireNonBlank(environment, "spring.data.redis.password");
+        requireNonBlank(environment, "ti.catalog.question-edit-idempotency.key-secret");
+        requireNonBlank(environment, "ti.learning.write-idempotency.key-secret");
         requireNonBlank(environment, "ti.security.login-rate-limit.key-secret");
         requireSecureHostCookie(environment, "ti.security.session.cookie-name");
         requireSecureHostCookie(environment, "ti.security.session.csrf-cookie-name");

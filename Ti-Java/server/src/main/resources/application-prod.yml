@@ -30,6 +30,14 @@ management:
     port: ${TI_MANAGEMENT_PORT:9090}
 
 ti:
+  catalog:
+    question-edit-idempotency:
+      key-secret: ${ti.catalog-question-edit-idempotency.key-secret:${TI_CATALOG_QUESTION_EDIT_IDEMPOTENCY_KEY_SECRET}}
+      receipt-ttl: ${TI_CATALOG_QUESTION_EDIT_IDEMPOTENCY_RECEIPT_TTL:24h}
+  learning:
+    write-idempotency:
+      key-secret: ${ti.learning-write-idempotency.key-secret:${TI_LEARNING_WRITE_IDEMPOTENCY_KEY_SECRET}}
+      receipt-ttl: ${TI_LEARNING_WRITE_IDEMPOTENCY_RECEIPT_TTL:24h}
   security:
     login-rate-limit:
       namespace: ${TI_LOGIN_RATE_LIMIT_NAMESPACE:ti-java:identity:login-rate}

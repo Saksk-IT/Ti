@@ -32,6 +32,10 @@ class ProductionSecretsConfigurationTest {
                     "spring.datasource.password=db-secret",
                     "spring.data.redis.host=redis",
                     "spring.data.redis.password=redis-secret",
+                    "ti.catalog.question-edit-idempotency.key-secret="
+                            + "production-catalog-idempotency-key-secret-0001",
+                    "ti.learning.write-idempotency.key-secret="
+                            + "production-learning-idempotency-key-secret-0001",
                     "ti.security.login-rate-limit.key-secret=production-login-rate-key-secret-0001",
                     "ti.security.session.cookie-name=__Host-ti_session",
                     "ti.security.session.csrf-cookie-name=__Host-ti_csrf",
@@ -56,6 +60,10 @@ class ProductionSecretsConfigurationTest {
                     "spring.datasource.password=db-secret",
                     "spring.data.redis.host=redis",
                     "spring.data.redis.password=redis-secret",
+                    "ti.catalog.question-edit-idempotency.key-secret="
+                            + "production-catalog-idempotency-key-secret-0001",
+                    "ti.learning.write-idempotency.key-secret="
+                            + "production-learning-idempotency-key-secret-0001",
                     "ti.security.login-rate-limit.key-secret=production-login-rate-key-secret-0001",
                     "ti.security.session.cookie-name=__Host-ti_session",
                     "ti.security.session.csrf-cookie-name=__Host-ti_csrf",
