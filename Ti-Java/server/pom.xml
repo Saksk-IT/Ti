@@ -84,6 +84,15 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
@@ -196,7 +205,6 @@
                                         <exclude>org.springframework.boot:spring-boot-starter-data-r2dbc</exclude>
                                         <exclude>org.springframework.data:spring-data-r2dbc</exclude>
                                         <exclude>io.r2dbc:*</exclude>
-                                        <exclude>org.flywaydb:*</exclude>
                                         <exclude>redis.clients.authentication:redis-authx-core</exclude>
                                         <exclude>*:*:*:*:*SNAPSHOT*</exclude>
                                         <exclude>*:*:*:*:*M*</exclude>
