@@ -1,0 +1,67 @@
+{
+  "contract_id": "ti.phase4c.learning-transaction-write-implementation-post-push-anchor",
+  "schema_version": 1,
+  "captured_at": "2026-07-23T20:25:00+08:00",
+  "fixed_git_object": {
+    "commit_oid": "56df49730dc09d550e64d5b4087af5060cceab64",
+    "root_tree_oid": "4c961bc64c9bc50b4715cca9e78bfb3719d84f71",
+    "parent_commit_oid": "22a1d81b14be61129427ca614a68ea12befde919",
+    "branch": "main",
+    "remote_ref": "refs/heads/main",
+    "remote_observed_at_capture": "56df49730dc09d550e64d5b4087af5060cceab64",
+    "commit_contains_predecessor_bytes": true
+  },
+  "predecessor_contract": {
+    "path": "docs/refactor/phase4c/learning-transaction-write-implementation-contract.json",
+    "sha256": "c4f4b2aed1836ffb2515ca6f13d0e5d822557e57be1a8befc7b696959a814cd3",
+    "document_payload_sha256": "56eca630a339aae9d19c232573d722d64de67a2e3e53068a5a6346e4a2d0b6f6",
+    "git_blob_oid": "5d21164912376dbdc791e2ef00453218e0ae89f5",
+    "size_bytes": 15652
+  },
+  "accepted_authorization": {
+    "operation_count": 9,
+    "approved_difference_count": 3,
+    "transaction_write_implementation": true,
+    "scoped_flyway_migrations": true,
+    "openapi_draft": true,
+    "route_matrix_delta": false,
+    "production_schema_execution": false,
+    "production_cutover": false,
+    "other_phase4c_groups": false
+  },
+  "route_state": {
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "anchor_is_not_route_migration": true
+  },
+  "control_plane": {
+    "fixed_commit_external_git_anchor_complete": true,
+    "predecessor_physical_bytes_in_fixed_commit": true,
+    "predecessor_git_blob_fixed": true,
+    "self_signed": false,
+    "live_worktree_is_not_authority": true
+  },
+  "status": {
+    "anchor_complete": true,
+    "implementation_authorized": true,
+    "implementation_complete": false,
+    "route_migration_complete": false,
+    "production_cutover": false,
+    "next_gate": "transaction-write schema, application, HTTP, Redis and PostgreSQL implementation evidence"
+  },
+  "provenance": {
+    "builder": {
+      "path": "tools/build_phase4c_learning_transaction_write_implementation_post_push_anchor.py",
+      "sha256": "d832432c78ac2a40decfabdb0565a19195973035e55ee2b526d4e97bde291973",
+      "size_bytes": 6858
+    },
+    "builder_test": {
+      "path": "tools/test_phase4c_learning_transaction_write_implementation_post_push_anchor.py",
+      "sha256": "bc1993904b268f54869c89af4fecf4aa36112f09ed59b1276aa9c6d91eaea8fa",
+      "size_bytes": 3807
+    },
+    "secrets_embedded": false
+  },
+  "document_payload_sha256": "c1ed14a4ec3baee7ce5c7b58a08862da56582cc659fdc5d87259bf311bbea698"
+}
