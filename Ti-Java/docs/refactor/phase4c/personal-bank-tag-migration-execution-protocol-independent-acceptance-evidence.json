@@ -1,0 +1,240 @@
+{
+  "contract_id": "ti.phase4c.personal-bank-tag-migration-execution-protocol-independent-acceptance-evidence",
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "phase4c-learning-tag-migration-execution-protocol-fixed-d0-independent-copy",
+  "captured_at": "2026-07-23T09:41:35Z",
+  "fixed_d0_authority": {
+    "commit_oid": "19db389aacad439f63cb93b930bea20ddd31f5e8",
+    "parent_oid": "4c47d1ea220ae9e310338bbf23b74d87d477e20f",
+    "subject": "feat(java): add tag migration execution protocol",
+    "object_format": "sha1",
+    "root_tree_oid": "76ddb6bfd9a864c350dcdf86303518404227afae",
+    "ti_java_tree_oid": "a6c06e505bb3fbd1792ebcc02a78074d306ba830",
+    "server_tree_oid": "4743880e2a4bdd6c58c4d274ecdf50fb939c9d06",
+    "server_src_main_tree_oid": "9abb4667d87a9433a67d0556dbeac37e10c87dfc",
+    "web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215",
+    "miniprogram_tree_oid": "9e4f37fe49303329df392dfbe64d2ce9064b7c86",
+    "parent_root_tree_oid": "e6ef65c88e87dd73a380f7e7fb095506b9e9b4bd",
+    "parent_ti_java_tree_oid": "e214920a30f837aa1760bd4fbc14687f45e9c79d",
+    "parent_server_tree_oid": "8deb885bcddbe35485ff67c6a07ded2a77bd3e2e",
+    "parent_server_src_main_tree_oid": "bdd88effe149c61fada2300a4ec85bb2a3fdaf1c",
+    "parent_web_tree_oid": "a75f69a8205a56843feb055656ddb015ec5b5215",
+    "parent_miniprogram_tree_oid": "9e4f37fe49303329df392dfbe64d2ce9064b7c86",
+    "diff": {
+      "changed_path_count": 55,
+      "added_path_count": 18,
+      "modified_path_count": 37,
+      "deleted_path_count": 0,
+      "control_source_count": 7,
+      "fixed_non_control_source_count": 48,
+      "standard_raw_sha256": "02edc714c98d4ef9cff4f1fdc0a9164e5cdbc8b68ac167fe47f7c107ee307e6c",
+      "standard_name_status_sha256": "dbcdea6367033d145b9e19e2b157004a6b34c662e754fa80916b55373cb64cd7",
+      "standard_numstat_sha256": "54aae46c9f36d3959f980434db36aee85088ff8a2c09a7e6abde6d2a1c11cbf8",
+      "nul_raw_sha256": "6186a3200dbc095dc92a93a53128c6c314ee9445a722a85d439eecc7f109c3be",
+      "nul_name_status_sha256": "1c0b855bbf744b0b8378edecee0cefef257c1bb50d96a0a7bd4c2c1b6a490342",
+      "nul_numstat_sha256": "ed68630f5627c70359d4651276eba4c174117ef292f4716328c383d1fa54b78b"
+    }
+  },
+  "fixed_d0_artifacts": {
+    "execution_protocol_contract": {
+      "path": "docs/refactor/phase4c/personal-bank-tag-migration-execution-protocol-contract.json",
+      "sha256": "e236b3cde251026c3a189762b650eb4df80213dcdab667a5b8f50eb20a0e8e14",
+      "byte_count": 44336,
+      "document_payload_sha256": "42599261bc5632feed89fc41637ee1a98cff844dd9dc776f889d155a0567a7c4"
+    },
+    "worm": {
+      "path": "docs/refactor/phase4c/personal-bank-tag-migration-execution-protocol-worm-evidence.json",
+      "sha256": "5c3fe0f9d7cba79fca6c2351d811924346182cf61e06b730a0eeb0bcef50081c",
+      "byte_count": 1442
+    },
+    "build_context_sha256": "36978a808a327abfb3c7b3dfe138f5622000213a25bad762b59128c78894d7c7",
+    "dockerfile_sha256": "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+  },
+  "independent_acceptance_runner": {
+    "path": "tools/run_phase4c_tag_migration_execution_protocol_independent_acceptance.sh",
+    "sha256": "127a99443a670362e81349742477f5ba596df5694fe50fec6b64f485ece3d994",
+    "byte_count": 66124,
+    "git_mode": "100755",
+    "raw_report": {
+      "path": "server/target/phase4c-tag-migration-execution-protocol-independent-acceptance-raw.json",
+      "sha256": "183efaafbe3a55643780b43350853c402d22c9af8919d619fcd6f448b8b07489",
+      "byte_count": 8718,
+      "tracked": false,
+      "embedded": false,
+      "required_for_gitless_successor_acceptance": false
+    }
+  },
+  "fixed_archive": {
+    "git_archive_only": true,
+    "git_modes_normalized_for_execution": true,
+    "live_ref_resolved": false,
+    "live_worktree_copied": false,
+    "symlink_or_submodule_count": 0,
+    "forbidden_artifact_count": 0,
+    "tracked_files_unchanged_after_verification": true,
+    "unexpected_files_outside_server_target": 0,
+    "ti_java": {
+      "archive_sha256": "7b85ab9f2d863e3c350a3ccf74fda61a19c44f4cfd35b666e35bdef1256164e1",
+      "archive_byte_count": 37785600,
+      "file_count": 1730,
+      "manifest_sha256": "46844d1c034ce0d599108dc546de6d2a77af5a8c2609ce84e43ef1b8a84e116c"
+    },
+    "miniprogram": {
+      "archive_sha256": "0480cc05c722cf4a5ce673ae2220835cd4fe2614826712b1eea23e1794a02cb8",
+      "archive_byte_count": 10362880,
+      "file_count": 630,
+      "manifest_sha256": "770b125807cc7b0c17b8cc996a7016d307cf7554dfa045f34dbd64e3c1c151ef"
+    }
+  },
+  "verification": {
+    "timezone": "UTC",
+    "phase1_passed": true,
+    "phase2_static_passed": true,
+    "phase3_static_passed": true,
+    "phase3_topology_static_passed": true,
+    "topology_data_plane_passed": true,
+    "miniprogram": {
+      "tests": 36,
+      "passed": 36,
+      "failed": 0
+    },
+    "maven_cache_empty_at_start": true,
+    "maven_full": {
+      "surefire": {
+        "tests": 898,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failsafe": {
+        "tests": 178,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "focused_node_d": {
+      "unit": {
+        "tests": 31,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "execution_protocol_integration": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "source_discovery": {
+      "executed_inside_independent_copy": false,
+      "claimed_independent_copy_test_count": 0,
+      "reason": "legacy frozen-source dependencies live outside the fixed Ti-Java archive"
+    },
+    "image": {
+      "built": true,
+      "removed": true
+    },
+    "compose": {
+      "service_count": 3,
+      "healthy_service_count": 3,
+      "restarted_service_count": 3,
+      "all_services_healthy_after_restart": true,
+      "api_restart_recovery_passed": true,
+      "livez_status": 200,
+      "readyz_status": 200,
+      "unknown_status": 401,
+      "external_metrics_status": 404,
+      "internal_metrics_status": 200,
+      "internal_metrics_after_restart_status": 200,
+      "postgres_ready": true,
+      "postgres_ready_after_restart": true,
+      "read_only_bind_count": 9,
+      "unique_bind_source_count": 7,
+      "source_worktree_bind_count": 0,
+      "exact_runtime_policy_service_count": 3,
+      "read_only_rootfs_service_count": 3,
+      "cap_drop_all_service_count": 3,
+      "no_new_privileges_service_count": 3,
+      "init_service_count": 3,
+      "environment_secret_value_count": 0
+    },
+    "cleanup": {
+      "baseline_container_set_preserved": true,
+      "baseline_network_set_preserved": true,
+      "baseline_volume_set_preserved": true,
+      "container_residue": 0,
+      "network_residue": 0,
+      "volume_residue": 0,
+      "image_residue": 0,
+      "cache_volume_residue": 0,
+      "port_residue": 0,
+      "daemon_build_cache_preservation_claimed": false,
+      "daemon_image_set_preservation_claimed": false
+    }
+  },
+  "docker_and_host_trust_boundary": {
+    "docker_cli_path": "/Applications/Docker.app/Contents/Resources/bin/docker",
+    "docker_cli_sha256": "4d2d27ffb3326eaa343a39611d0edfad629f5dc2a7ad8e655ca560e9dddf36c6",
+    "compose_plugin_sha256": "17c88279db5199876ddef60be90dff9b5f69cb7b0fa7f1c04564d30e25a12883",
+    "buildx_plugin_sha256": "0feb83d47b1738d7d4f701788ac667bbb4c21ae50e903a01e94db3e88bcaf00b",
+    "local_unix_daemon_verified": true,
+    "isolated_credential_config": true,
+    "buildx_state_isolated": true,
+    "caller_endpoint_overrides_unset": true,
+    "caller_tls_overrides_unset": true,
+    "nested_maven_socket_matches_pinned_socket": true,
+    "trusted_local_host_kernel_and_shell": true,
+    "trusted_host_git_tar_python_node_curl_and_jq": true,
+    "phase3_data_gate_preexisting_resource_prefix_rejected": true,
+    "adversarial_concurrent_docker_daemon_actor_excluded": true
+  },
+  "route_state": {
+    "total_operation_count": 611,
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "legacy_flask_remains_production_owner": true
+  },
+  "production_boundary": {
+    "production_compose_read_or_mutated": false,
+    "production_credentials_read": false,
+    "production_database_connected": false,
+    "production_data_read_or_mutated": false,
+    "production_operator_executed": false,
+    "real_migration_execution": false,
+    "gateway_or_proxy_changed": false,
+    "legacy_runtime_disabled": false,
+    "production_cutover": false
+  },
+  "attempt_history": {
+    "discarded_attempt_count": 2,
+    "successful_attempt_from_clean_start": true,
+    "discarded_attempts_authoritative": false,
+    "discarded_attempts": [
+      {
+        "stage": "fixed_archive_preflight",
+        "reason": "fixed commit timestamp changes tar metadata and required a commit-specific miniprogram archive digest",
+        "maven_started": false,
+        "cleanup_residue": 0
+      },
+      {
+        "stage": "maven_surefire",
+        "reason": "portable git archive extraction required explicit 100644/100755 to 0644/0755 execution-mode normalization",
+        "tests_run": 898,
+        "failures": 7,
+        "cleanup_residue": 0
+      }
+    ]
+  },
+  "closure": {
+    "fixed_d0_independent_copy_acceptance_closed": true,
+    "proves_only_commit": "19db389aacad439f63cb93b930bea20ddd31f5e8",
+    "proves_d1_evidence_commit": false,
+    "proves_d2_anchor_commit": false,
+    "execution_protocol_control_sources_external_git_anchor_complete": false,
+    "self_hash_embedded": false
+  }
+}
