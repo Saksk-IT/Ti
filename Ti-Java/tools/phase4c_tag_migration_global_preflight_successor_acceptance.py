@@ -3,12 +3,13 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 import importlib
 import json
 from pathlib import Path
 import subprocess
-from typing import Mapping
+from typing import Iterator, Mapping
 from typing import Any
 
 try:
@@ -71,7 +72,22 @@ def _load_node_c_successor() -> object:
     except ModuleNotFoundError as error:
         if error.name != NODE_C_SUCCESSOR_DIRECT_MODULE:
             raise
-        raise AssertionError("tag preflight Node C successor is required") from error
+        raise AssertionError(
+            "tag preflight Node C/D composed successor is required"
+        ) from error
+
+
+@contextmanager
+def validation_session() -> Iterator[None]:
+    node_c_successor = _load_node_c_successor()
+    node_d_successor = getattr(node_c_successor, "_load_node_d_successor")()
+    session = getattr(node_d_successor, "validation_session", None)
+    if not callable(session):
+        raise AssertionError(
+            "tag preflight Node D validation session is absent"
+        )
+    with session():
+        yield
 
 
 def _validate_exact_authorization(document: dict[str, Any]) -> None:
@@ -557,7 +573,9 @@ def validate_production_runtime_successor(
             None,
         )
         if not callable(validate_node_c):
-            raise AssertionError("tag preflight Node C runtime bridge is absent")
+            raise AssertionError(
+                "tag preflight Node C/D composed runtime bridge is absent"
+            )
         node_c = validate_node_c(
             resolved_root,
             expected_successor,
@@ -569,7 +587,9 @@ def validate_production_runtime_successor(
             or node_c.accepted_manifest_sha256
             != semantic["successor_manifest_sha256"]
         ):
-            raise AssertionError("tag preflight Node C runtime bridge drifted")
+            raise AssertionError(
+                "tag preflight Node C/D composed runtime bridge drifted"
+            )
         composed_added_files = dict(semantic["added_files"])
         composed_added_files.update(dict(node_c.added_files))
         composed_changed_files = dict(semantic["changed_files"])
@@ -641,7 +661,9 @@ def validate_worm_successor(
         validate_node_c = getattr(
             _load_node_c_successor(), "validate_worm_successor", None)
         if not callable(validate_node_c):
-            raise AssertionError("tag preflight Node C WORM bridge is absent")
+            raise AssertionError(
+                "tag preflight Node C/D composed WORM bridge is absent"
+            )
         node_c = validate_node_c(
             resolved_root,
             semantic["terminal_successor_worm"]["sha256"],
@@ -649,11 +671,13 @@ def validate_worm_successor(
         )
         if (
             node_c.accepted_chain_node_count != 7
-            or node_c.current_chain_node_count != 8
+            or node_c.current_chain_node_count != 9
             or node_c.current_build_context_sha256
             != physical_build_context_sha256
         ):
-            raise AssertionError("tag preflight Node C WORM bridge drifted")
+            raise AssertionError(
+                "tag preflight Node C/D composed WORM bridge drifted"
+            )
         return WormSuccessor(
             accepted_report_sha256=accepted_report_sha256,
             accepted_build_context_sha256=accepted_build_context_sha256,

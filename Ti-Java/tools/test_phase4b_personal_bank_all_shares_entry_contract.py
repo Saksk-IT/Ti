@@ -18,6 +18,9 @@ try:
     from tools.phase4c_http_target_execution_successor_acceptance import (
         fixed_source_sha256 as target_fixed_source_sha256,
     )
+    from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_read_successor_acceptance import (
         load_read_successor_contract,
@@ -26,6 +29,9 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     )
     from phase4c_http_target_execution_successor_acceptance import (
         fixed_source_sha256 as target_fixed_source_sha256,
+    )
+    from phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
     )
 
 
@@ -137,8 +143,27 @@ def document_payload_sha256(document: dict) -> str:
     })
 
 
+_VALIDATED_READ_SUCCESSORS: dict[str, str] = {}
+
+
+def capture_validated_read_successors(contract: dict | None) -> None:
+    if contract is None:
+        return
+    history = contract["historical_successor_acceptance"]
+    for section in ("python_sources", "java_sources", "auxiliary_sources"):
+        for relative in history[section]:
+            _VALIDATED_READ_SUCCESSORS[relative] = sha256(
+                TI_JAVA_ROOT / relative
+            )
+
+
 def phase4c_successor_hash(relative: str) -> str | None:
-    return successor_sha256(TI_JAVA_ROOT, relative)
+    validated = _VALIDATED_READ_SUCCESSORS.get(relative)
+    if validated is None:
+        return successor_sha256(TI_JAVA_ROOT, relative)
+    if sha256(TI_JAVA_ROOT / relative) != validated:
+        raise AssertionError(f"validated read successor drifted: {relative}")
+    return validated
 
 
 def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
@@ -155,7 +180,11 @@ def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
 class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls._validation_session = acceptance_validation_session()
+        cls._validation_session.__enter__()
+        cls.addClassCleanup(cls._validation_session.__exit__, None, None, None)
         cls.read_successor = load_read_successor_contract(TI_JAVA_ROOT)
+        capture_validated_read_successors(cls.read_successor)
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(
             PHASE4B_ROOT / "personal-bank-share-list-read-contract.json"
@@ -527,8 +556,8 @@ class Phase4bPersonalBankAllSharesEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, runtime.accepted_file_count)
-            self.assertEqual(50, runtime.current_file_count)
-            self.assertEqual(10, len(runtime.added_files))
+            self.assertEqual(54, runtime.current_file_count)
+            self.assertEqual(14, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
         application_api = (

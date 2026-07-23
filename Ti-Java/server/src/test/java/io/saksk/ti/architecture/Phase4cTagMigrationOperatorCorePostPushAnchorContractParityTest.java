@@ -89,12 +89,30 @@ class Phase4cTagMigrationOperatorCorePostPushAnchorContractParityTest {
                 assertThat(artifacts.path(relative).path("change_type")
                         .asString()).as(relative).isEqualTo("M"));
         for (String relative : partition) {
-            assertThat(
-                    Phase4cTagMigrationOperatorCorePostPushAnchorSuccessorAcceptance
-                            .acceptedSha256(root(), relative))
-                    .as(relative)
-                    .isEqualTo(artifacts.path(relative)
-                            .path("sha256").asString());
+            String accepted = artifacts.path(relative)
+                    .path("sha256").asString();
+            long acceptedBytes = artifacts.path(relative)
+                    .path("byte_count").asLong();
+            var nodeD =
+                    Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                            .sourceTransition(root(), relative);
+            if (nodeD == null) {
+                assertThat(
+                        Phase4cTagMigrationOperatorCorePostPushAnchorSuccessorAcceptance
+                                .acceptedSha256(root(), relative))
+                        .as(relative)
+                        .isEqualTo(accepted);
+            } else {
+                assertThat(
+                        Phase4cTagMigrationOperatorCorePostPushAnchorSuccessorAcceptance
+                                .acceptedSha256(root(), relative))
+                        .as(relative)
+                        .isNull();
+                assertThat(nodeD.acceptedSha256()).as(relative)
+                        .isEqualTo(accepted);
+                assertThat(nodeD.acceptedByteCount()).as(relative)
+                        .isEqualTo(acceptedBytes);
+            }
         }
     }
 
@@ -286,7 +304,7 @@ class Phase4cTagMigrationOperatorCorePostPushAnchorContractParityTest {
         assertThat(temporary.resolve(".git")).doesNotExist();
         Phase4cTagMigrationOperatorCorePostPushAnchorSuccessorAcceptance
                 .load(fixture);
-        String anchoredSample = inputs.get(4);
+        String anchoredSample = inputs.get(1);
         String anchoredSampleSha256 = contract()
                 .path("implementation_checkpoint").path("artifacts")
                 .path(anchoredSample).path("sha256").asString();

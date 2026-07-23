@@ -58,12 +58,21 @@ class Phase6WebFoundationSourceSuccessorContractParityTest {
         assertThat(Phase6WebFoundationSourceSuccessorAcceptance.successorPaths())
                 .containsExactlyInAnyOrderElementsOf(CURRENT.keySet());
         for (String relative : CURRENT.keySet()) {
+            var nodeD =
+                    Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                            .sourceTransition(root(), relative);
+            String expectedCurrent = CURRENT.get(relative);
+            if (nodeD != null) {
+                assertThat(nodeD.acceptedSha256()).as(relative)
+                        .isEqualTo(expectedCurrent);
+                expectedCurrent = nodeD.successorSha256();
+            }
             assertThat(Phase6WebFoundationSourceSuccessorAcceptance
                     .acceptedHash(relative)).as(relative)
                     .isEqualTo(ACCEPTED.get(relative));
             assertThat(Phase6WebFoundationSourceSuccessorAcceptance
                     .successorHash(root(), relative)).as(relative)
-                    .isEqualTo(CURRENT.get(relative))
+                    .isEqualTo(expectedCurrent)
                     .isNotEqualTo(ACCEPTED.get(relative));
         }
         for (String relative : Set.of(

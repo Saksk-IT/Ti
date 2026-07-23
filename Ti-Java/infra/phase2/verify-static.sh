@@ -277,6 +277,18 @@ assert_file_contains "Fixed Phase 4C tag operator-core Dockerfile" \
 assert_file_contains "Fixed Phase 4C tag operator-core predecessor" \
     'predecessor_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag execution-protocol WORM successor" \
+    '5c3fe0f9d7cba79fca6c2351d811924346182cf61e06b730a0eeb0bcef50081c' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag execution-protocol build-context" \
+    '36978a808a327abfb3c7b3dfe138f5622000213a25bad762b59128c78894d7c7' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag execution-protocol Dockerfile" \
+    'dockerfile_sha256=PHASE4C_TAG_EXECUTION_PROTOCOL_DOCKERFILE_SHA256' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag execution-protocol predecessor" \
+    'predecessor_sha256=PHASE4C_TAG_OPERATOR_CORE_REPORT_SHA256' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
 assert_file_contains "Fixed Phase 4C target-execution successor contract" \
     'load_http_target_execution_successor_contract(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
@@ -315,6 +327,12 @@ assert_file_contains "Fixed Phase 4C tag operator-core successor module" \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 assert_file_contains "Fixed Phase 4C tag operator-core successor contract" \
     'load_tag_operator_core_successor(ti_java_root)' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag execution-protocol successor module" \
+    'tools.phase4c_tag_migration_execution_protocol_successor_acceptance' \
+    "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C tag execution-protocol successor contract" \
+    'load_tag_execution_protocol_successor(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"

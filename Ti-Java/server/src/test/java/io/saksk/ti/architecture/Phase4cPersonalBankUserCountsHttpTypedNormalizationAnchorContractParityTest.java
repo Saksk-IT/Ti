@@ -146,9 +146,18 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
         for (Map.Entry<String, String> entry
                 : PHASE6_CURRENT_SUCCESSORS.entrySet()) {
             String relative = entry.getKey();
+            String expectedCurrent = entry.getValue();
+            var nodeD =
+                    Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                            .sourceTransition(root(), relative);
+            if (nodeD != null) {
+                assertThat(nodeD.acceptedSha256()).as(relative)
+                        .isEqualTo(expectedCurrent);
+                expectedCurrent = nodeD.successorSha256();
+            }
             assertThat(Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                     .successorHash(root(), relative)).as(relative)
-                    .isEqualTo(entry.getValue())
+                    .isEqualTo(expectedCurrent)
                     .isEqualTo(Phase6WebFoundationSourceSuccessorAcceptance
                             .successorHash(root(), relative));
             assertThat(Phase6WebFoundationSourceSuccessorAcceptance
@@ -160,9 +169,18 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
         for (Map.Entry<String, String> entry
                 : TAG_PREFLIGHT_CURRENT_SUCCESSORS.entrySet()) {
             String relative = entry.getKey();
+            String expectedCurrent = entry.getValue();
+            var nodeD =
+                    Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                            .sourceTransition(root(), relative);
+            if (nodeD != null) {
+                assertThat(nodeD.acceptedSha256()).as(relative)
+                        .isEqualTo(expectedCurrent);
+                expectedCurrent = nodeD.successorSha256();
+            }
             assertThat(Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                     .successorHash(root(), relative)).as(relative)
-                    .isEqualTo(entry.getValue())
+                    .isEqualTo(expectedCurrent)
                     .isEqualTo(
                             Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                                     .successorSha256(root(), relative));
@@ -214,6 +232,9 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
                 Phase4cTagMigrationOperatorCoreSuccessorAcceptance
                         .contractRelative());
         fixturePaths.add(
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .contractRelative());
+        fixturePaths.add(
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
                         .contractRelative());
         fixturePaths.add(relative);
@@ -232,9 +253,10 @@ class Phase4cPersonalBankUserCountsHttpTypedNormalizationAnchorContractParityTes
                 temporary.resolve(relative), " ", StandardOpenOption.APPEND);
         assertThatThrownBy(() ->
                 Phase4cHttpTypedNormalizationAnchorSuccessorAcceptance
-                .successorHash(temporary, relative))
+                        .successorHash(temporary, relative))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Node C source bridge drifted");
+                .hasMessageContaining(
+                        "Node C/D composed source bridge drifted");
 
         Files.copy(
                 root().resolve(relative),

@@ -357,13 +357,41 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
                 descriptor.path("successor_sha256").asString(),
                 descriptor.path("successor_byte_count").asLong());
         Path physical = fixedRegularFile(root, relative);
-        require(relative.equals(transition.source())
-                        && Files.size(physical) == transition.successorByteCount()
-                        && sha256(physical).equals(
-                        transition.successorSha256()),
-                "operator-core source transition physical bytes drifted: "
+        String physicalSha256 = sha256(physical);
+        long physicalByteCount = Files.size(physical);
+        require(relative.equals(transition.source()),
+                "operator-core source transition path drifted: " + relative);
+        if (physicalByteCount == transition.successorByteCount()
+                && physicalSha256.equals(transition.successorSha256())) {
+            return transition;
+        }
+        Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                .SourceTransition nodeD;
+        try {
+            nodeD = Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                    .sourceTransition(root, relative);
+        } catch (AssertionError error) {
+            throw new AssertionError(
+                    "operator-core source transition physical bytes drifted: "
+                            + relative,
+                    error);
+        }
+        require(nodeD != null
+                        && relative.equals(nodeD.source())
+                        && transition.successorSha256().equals(
+                        nodeD.acceptedSha256())
+                        && transition.successorByteCount()
+                        == nodeD.acceptedByteCount()
+                        && physicalSha256.equals(nodeD.successorSha256())
+                        && physicalByteCount == nodeD.successorByteCount(),
+                "operator-core Node D source transition drifted: "
                         + relative);
-        return transition;
+        return new SourceTransition(
+                relative,
+                transition.acceptedSha256(),
+                transition.acceptedByteCount(),
+                physicalSha256,
+                physicalByteCount);
     }
 
     static ProductionRuntimeSuccessor validateProductionRuntimeSuccessor(
@@ -400,13 +428,50 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
         expectedCurrent.putAll(textMap(semantic.path("changed_files")));
         strings(semantic.path("deleted_files"))
                 .forEach(expectedCurrent::remove);
-        require(normalizedCurrent.equals(expectedCurrent)
-                        && normalizedCurrent.size()
-                        == semantic.path("current_file_count").asInt()
-                        && canonicalSha256(JSON.valueToTree(normalizedCurrent))
-                        .equals(semantic.path(
-                                "current_manifest_sha256").asString()),
-                "operator-core rejected current production manifest");
+        boolean currentMatchesNodeC = normalizedCurrent.equals(expectedCurrent)
+                && normalizedCurrent.size()
+                == semantic.path("current_file_count").asInt()
+                && canonicalSha256(JSON.valueToTree(normalizedCurrent))
+                .equals(semantic.path(
+                        "current_manifest_sha256").asString());
+        if (!currentMatchesNodeC) {
+            var nodeD = Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                    .validateProductionRuntimeSuccessor(
+                            root, expectedCurrent, normalizedCurrent, view);
+            require(nodeD.acceptedFileCount()
+                            == semantic.path("current_file_count").asInt()
+                            && nodeD.acceptedManifestSha256().equals(
+                            semantic.path("current_manifest_sha256")
+                                    .asString()),
+                    "operator-core Node D production runtime drifted");
+            TreeMap<String, String> additions = new TreeMap<>(
+                    textMap(semantic.path("added_files")));
+            TreeMap<String, String> changes = new TreeMap<>(
+                    textMap(semantic.path("changed_files")));
+            nodeD.addedFiles().forEach((relative, digest) -> {
+                if (normalizedAccepted.containsKey(relative)) {
+                    changes.put(relative, digest);
+                } else {
+                    additions.put(relative, digest);
+                }
+            });
+            nodeD.changedFiles().forEach((relative, digest) -> {
+                if (additions.containsKey(relative)) {
+                    additions.put(relative, digest);
+                } else {
+                    changes.put(relative, digest);
+                }
+            });
+            return new ProductionRuntimeSuccessor(
+                    view,
+                    semantic.path("accepted_file_count").asInt(),
+                    semantic.path("accepted_manifest_sha256").asString(),
+                    nodeD.currentFileCount(),
+                    nodeD.currentManifestSha256(),
+                    Map.copyOf(additions),
+                    Map.copyOf(changes),
+                    Set.copyOf(nodeD.deletedFiles()));
+        }
         return new ProductionRuntimeSuccessor(
                 view,
                 semantic.path("accepted_file_count").asInt(),
@@ -432,9 +497,33 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
                         && worm.path("accepted_chain_node_count").asInt() == 7,
                 "operator-core rejected accepted WORM authority");
         String physicalBuildContext = javaBuildContextSha256(root);
-        require(physicalBuildContext.equals(
-                        worm.path("current_build_context_sha256").asString()),
-                "operator-core physical build-context successor drifted");
+        String nodeCBuildContext = worm.path(
+                "current_build_context_sha256").asString();
+        if (!physicalBuildContext.equals(nodeCBuildContext)) {
+            var nodeD = Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                    .validateWormSuccessor(
+                            root,
+                            worm.path("current_report").path("sha256")
+                                    .asString(),
+                            nodeCBuildContext);
+            require(nodeD.acceptedReportSha256().equals(
+                            worm.path("current_report").path("sha256")
+                                    .asString())
+                            && nodeD.acceptedBuildContextSha256().equals(
+                            nodeCBuildContext)
+                            && nodeD.acceptedChainNodeCount() == 8
+                            && nodeD.currentChainNodeCount() == 9
+                            && nodeD.currentBuildContextSha256().equals(
+                            physicalBuildContext),
+                    "operator-core Node D WORM bridge drifted");
+            return new WormSuccessor(
+                    acceptedReportSha256,
+                    acceptedBuildContextSha256,
+                    worm.path("accepted_chain_node_count").asInt(),
+                    nodeD.currentReportSha256(),
+                    physicalBuildContext,
+                    nodeD.currentChainNodeCount());
+        }
         return new WormSuccessor(
                 acceptedReportSha256,
                 acceptedBuildContextSha256,
@@ -454,6 +543,9 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
         paths.add(HASHER_RELATIVE);
         paths.add("server/Dockerfile");
         paths.addAll(FIXED_SOURCE_PATHS);
+        paths.addAll(
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .minimalFixturePaths());
         return Set.copyOf(paths);
     }
 
@@ -1027,13 +1119,41 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
                     "operator-core fixed source descriptor drifted: "
                             + relative);
             Path path = fixedRegularFile(root, relative);
-            require(Files.size(path) == descriptor.path(
-                            "byte_count").asLong()
-                            && sha256(path).equals(
-                            descriptor.path("sha256").asString())
-                            && byPath.put(relative, descriptor) == null,
-                    "operator-core fixed source physical bytes drifted: "
-                            + relative);
+            long physicalByteCount = Files.size(path);
+            String physicalSha256 = sha256(path);
+            boolean nodeCBytes = physicalByteCount == descriptor.path(
+                    "byte_count").asLong()
+                    && physicalSha256.equals(
+                    descriptor.path("sha256").asString());
+            if (!nodeCBytes) {
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .SourceTransition nodeD;
+                try {
+                    nodeD =
+                            Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                                    .sourceTransition(root, relative);
+                } catch (AssertionError error) {
+                    throw new AssertionError(
+                            "operator-core fixed source physical bytes drifted: "
+                                    + relative,
+                            error);
+                }
+                require(SOURCE_TRANSITION_PATHS.contains(relative)
+                                && nodeD != null
+                                && relative.equals(nodeD.source())
+                                && descriptor.path("sha256").asString().equals(
+                                nodeD.acceptedSha256())
+                                && descriptor.path("byte_count").asLong()
+                                == nodeD.acceptedByteCount()
+                                && physicalSha256.equals(
+                                nodeD.successorSha256())
+                                && physicalByteCount
+                                == nodeD.successorByteCount(),
+                        "operator-core fixed source physical bytes drifted "
+                                + "outside Node D: " + relative);
+            }
+            require(byPath.put(relative, descriptor) == null,
+                    "operator-core duplicate fixed source: " + relative);
         }
         require(byPath.keySet().equals(FIXED_SOURCE_PATHS),
                 "operator-core fixed source path set drifted");

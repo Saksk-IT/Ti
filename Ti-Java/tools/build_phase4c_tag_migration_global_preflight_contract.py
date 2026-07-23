@@ -1726,6 +1726,10 @@ NODE_C_SUCCESSOR_DIRECT_MODULE = (
     "phase4c_tag_migration_operator_core_successor_acceptance"
 )
 
+# Node C remains this historical builder's sole successor authority.  Its
+# fixed bridge may compose a reviewed Node D transition, but this Node A
+# contract never rewrites its own source bytes or skips the Node C boundary.
+
 
 def canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -1793,7 +1797,9 @@ def validated_source(root: Path, source_name: str) -> bytes:
         successor = _load_node_c_successor_acceptance()
         source_transition = getattr(successor, "source_transition", None)
         if not callable(source_transition):
-            raise AssertionError("tag preflight Node C source bridge is absent")
+            raise AssertionError(
+                "tag preflight Node C/D composed source bridge is absent"
+            )
         transition = source_transition(root, relative)
         if transition != {
             "source": relative,
@@ -1803,7 +1809,7 @@ def validated_source(root: Path, source_name: str) -> bytes:
             "successor_byte_count": len(payload),
         }:
             raise AssertionError(
-                f"tag preflight Node C source bridge drifted: {relative}"
+                f"tag preflight Node C/D composed source bridge drifted: {relative}"
             )
     return payload
 
@@ -1819,7 +1825,9 @@ def _load_node_c_successor_acceptance() -> Any:
     except ModuleNotFoundError as error:
         if error.name != NODE_C_SUCCESSOR_DIRECT_MODULE:
             raise
-        raise AssertionError("tag preflight Node C successor is required") from error
+        raise AssertionError(
+            "tag preflight Node C/D composed successor is required"
+        ) from error
 
 
 def _validated_json(root: Path, source_name: str) -> dict[str, Any]:
@@ -1856,7 +1864,7 @@ def _validate_fixed_worm_chain(root: Path) -> None:
     fixed_chain = getattr(phase2_worm, "FIXED_EVIDENCE_CHAIN", ())
     immutable_mirrors = getattr(
         phase2_worm, "FIXED_IMMUTABLE_MIRRORS", ())
-    if not callable(validate_evidence_chain) or len(fixed_chain) != 8:
+    if not callable(validate_evidence_chain) or len(fixed_chain) != 9:
         raise AssertionError("tag preflight fixed WORM chain validator drifted")
     historical_chain = fixed_chain[:7]
 

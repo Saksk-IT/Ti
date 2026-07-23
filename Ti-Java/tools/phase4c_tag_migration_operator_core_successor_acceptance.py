@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib
 import json
 from pathlib import Path
 import subprocess
@@ -28,6 +29,12 @@ CONTRACT_PAYLOAD_SHA256 = (
 )
 CONTRACT_BYTE_COUNT = 50_467
 BUILD_CONTEXT_SCRIPT_RELATIVE = "infra/phase2/hash-java-build-context.sh"
+NODE_D_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_execution_protocol_successor_acceptance"
+)
+NODE_D_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_tag_migration_execution_protocol_successor_acceptance"
+)
 
 
 @dataclass(frozen=True)
@@ -50,6 +57,22 @@ class WormSuccessor:
     current_report_sha256: str
     current_build_context_sha256: str
     current_chain_node_count: int
+
+
+def _load_node_d_successor() -> object:
+    try:
+        return importlib.import_module(NODE_D_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", NODE_D_SUCCESSOR_MODULE}:
+            raise
+    try:
+        return importlib.import_module(NODE_D_SUCCESSOR_DIRECT_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name != NODE_D_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError(
+            "operator-core Node D execution-protocol successor is required"
+        ) from error
 
 
 def _load_contract_envelope(root: Path) -> dict[str, Any]:
@@ -106,10 +129,84 @@ def _validate_authorization(document: Mapping[str, Any]) -> None:
         raise AssertionError("operator-core authorization boundary drifted")
 
 
+def _validate_node_c_or_fixed_node_d_sources(root: Path) -> None:
+    changed_sources: list[tuple[str, str, int, bytes, str]] = []
+    for relative, (node_c_sha256, node_c_byte_count) in builder.SOURCE_FILES.items():
+        payload = builder.fixed_regular_file(root, relative).read_bytes()
+        physical_sha256 = builder.sha256_bytes(payload)
+        if (
+            len(payload) == node_c_byte_count
+            and physical_sha256 == node_c_sha256
+        ):
+            continue
+        transition = builder.SOURCE_TRANSITIONS.get(relative)
+        if transition is None:
+            raise AssertionError(
+                f"operator-core unreviewed physical source drift: {relative}"
+            )
+        changed_sources.append(
+            (
+                relative,
+                node_c_sha256,
+                node_c_byte_count,
+                payload,
+                physical_sha256,
+            )
+        )
+
+    if not changed_sources:
+        return
+
+    node_d_successor = _load_node_d_successor()
+    node_d_load = getattr(node_d_successor, "load", None)
+    node_d_source_transition = getattr(
+        node_d_successor,
+        "source_transition_from_validated_document",
+        None,
+    )
+    if not callable(node_d_load) or not callable(node_d_source_transition):
+        raise AssertionError(
+            "operator-core Node D validated transition API is absent"
+        )
+    try:
+        node_d_document = node_d_load(root)
+    except AssertionError as error:
+        raise AssertionError(
+            "operator-core Node D fixed source bytes or authority drifted"
+        ) from error
+
+    for (
+        relative,
+        node_c_sha256,
+        node_c_byte_count,
+        payload,
+        physical_sha256,
+    ) in changed_sources:
+        try:
+            node_d = node_d_source_transition(
+                root,
+                relative,
+                node_d_document,
+            )
+        except AssertionError as error:
+            raise AssertionError(
+                f"operator-core fixed source bytes drifted: {relative}"
+            ) from error
+        if node_d != {
+            "source": relative,
+            "accepted_sha256": node_c_sha256,
+            "accepted_byte_count": node_c_byte_count,
+            "successor_sha256": physical_sha256,
+            "successor_byte_count": len(payload),
+        }:
+            raise AssertionError(
+                f"operator-core Node D physical source drifted: {relative}"
+            )
+
+
 def validate(document: dict[str, Any], root: Path = ROOT) -> None:
     resolved_root = root.resolve(strict=True)
-    if document != builder.build_contract(resolved_root):
-        raise AssertionError("operator-core deterministic contract drifted")
+    _validate_node_c_or_fixed_node_d_sources(resolved_root)
     _validate_authorization(document)
     if document.get("route_state") != builder.ROUTE_STATE:
         raise AssertionError("operator-core route state drifted")
@@ -237,11 +334,26 @@ def validate(document: dict[str, Any], root: Path = ROOT) -> None:
         raise AssertionError("operator-core WORM successor drifted")
 
 
-def load(root: Path = ROOT) -> dict[str, Any]:
+def _load_uncached(root: Path) -> dict[str, Any]:
     resolved_root = root.resolve(strict=True)
     document = _load_contract_envelope(resolved_root)
     validate(document, resolved_root)
     return document
+
+
+def load(root: Path = ROOT) -> dict[str, Any]:
+    resolved_root = root.resolve(strict=True)
+    node_d_successor = _load_node_d_successor()
+    session_cached = getattr(
+        node_d_successor, "validation_session_cached", None
+    )
+    if not callable(session_cached):
+        return _load_uncached(resolved_root)
+    return session_cached(
+        "phase4c-tag-migration-operator-core",
+        resolved_root,
+        lambda: _load_uncached(resolved_root),
+    )
 
 
 def source_transition(root: Path, relative: str) -> dict[str, Any] | None:
@@ -256,14 +368,42 @@ def source_transition(root: Path, relative: str) -> dict[str, Any] | None:
             f"operator-core source-transition contract drifted: {relative}"
         )
     payload = builder.fixed_regular_file(resolved_root, relative).read_bytes()
+    physical_sha256 = builder.sha256_bytes(payload)
     if (
-        len(payload) != transition["successor_byte_count"]
-        or builder.sha256_bytes(payload) != transition["successor_sha256"]
+        len(payload) == transition["successor_byte_count"]
+        and physical_sha256 == transition["successor_sha256"]
     ):
+        return dict(transition)
+    node_d_source_transition = getattr(
+        _load_node_d_successor(), "source_transition", None
+    )
+    if not callable(node_d_source_transition):
+        raise AssertionError(
+            "operator-core Node D source-transition bridge is absent"
+        )
+    try:
+        node_d = node_d_source_transition(resolved_root, relative)
+    except AssertionError as error:
         raise AssertionError(
             f"operator-core source-transition bytes drifted: {relative}"
+        ) from error
+    if node_d != {
+        "source": relative,
+        "accepted_sha256": transition["successor_sha256"],
+        "accepted_byte_count": transition["successor_byte_count"],
+        "successor_sha256": physical_sha256,
+        "successor_byte_count": len(payload),
+    }:
+        raise AssertionError(
+            f"operator-core Node D source-transition bridge drifted: {relative}"
         )
-    return dict(transition)
+    return {
+        "source": relative,
+        "accepted_sha256": transition["accepted_sha256"],
+        "accepted_byte_count": transition["accepted_byte_count"],
+        "successor_sha256": physical_sha256,
+        "successor_byte_count": len(payload),
+    }
 
 
 def accepted_sha256(relative: str) -> str | None:
@@ -314,13 +454,63 @@ def validate_production_runtime_successor(
         != semantic["accepted_manifest_sha256"]
     ):
         raise AssertionError("operator-core rejected accepted production manifest")
-    if (
-        normalized_current != expected_current
-        or len(normalized_current) != semantic["current_file_count"]
-        or builder.sha256_json(normalized_current)
-        != semantic["current_manifest_sha256"]
-    ):
-        raise AssertionError("operator-core rejected current production manifest")
+    current_matches_node_c = (
+        normalized_current == expected_current
+        and len(normalized_current) == semantic["current_file_count"]
+        and builder.sha256_json(normalized_current)
+        == semantic["current_manifest_sha256"]
+    )
+    if not current_matches_node_c:
+        validate_node_d = getattr(
+            _load_node_d_successor(),
+            "validate_production_runtime_successor",
+            None,
+        )
+        if not callable(validate_node_d):
+            raise AssertionError(
+                "operator-core Node D production-runtime bridge is absent"
+            )
+        try:
+            node_d = validate_node_d(
+                resolved_root,
+                expected_current,
+                normalized_current,
+                view=view,
+            )
+        except AssertionError as error:
+            raise AssertionError(
+                "operator-core rejected current production manifest"
+            ) from error
+        if (
+            node_d.accepted_file_count != semantic["current_file_count"]
+            or node_d.accepted_manifest_sha256
+            != semantic["current_manifest_sha256"]
+        ):
+            raise AssertionError(
+                "operator-core Node D production-runtime bridge drifted"
+            )
+        composed_added_files = dict(semantic["added_files"])
+        composed_changed_files = dict(semantic["changed_files"])
+        for relative_path, digest in node_d.added_files:
+            if relative_path in normalized_accepted:
+                composed_changed_files[relative_path] = digest
+            else:
+                composed_added_files[relative_path] = digest
+        for relative_path, digest in node_d.changed_files:
+            if relative_path in composed_added_files:
+                composed_added_files[relative_path] = digest
+            else:
+                composed_changed_files[relative_path] = digest
+        return ProductionRuntimeSuccessor(
+            view=view,
+            accepted_file_count=int(semantic["accepted_file_count"]),
+            accepted_manifest_sha256=str(semantic["accepted_manifest_sha256"]),
+            current_file_count=int(node_d.current_file_count),
+            current_manifest_sha256=str(node_d.current_manifest_sha256),
+            added_files=tuple(sorted(composed_added_files.items())),
+            changed_files=tuple(sorted(composed_changed_files.items())),
+            deleted_files=tuple(sorted(node_d.deleted_files)),
+        )
     return ProductionRuntimeSuccessor(
         view=view,
         accepted_file_count=int(semantic["accepted_file_count"]),
@@ -359,11 +549,37 @@ def validate_worm_successor(
         text=True,
     )
     physical_build_context = result.stdout.strip()
-    if (
-        result.returncode != 0
-        or physical_build_context != builder.CURRENT_BUILD_CONTEXT_SHA256
-        or physical_build_context != worm["current_build_context_sha256"]
-    ):
+    if result.returncode != 0:
+        raise AssertionError("operator-core physical build-context successor drifted")
+    if physical_build_context != builder.CURRENT_BUILD_CONTEXT_SHA256:
+        validate_node_d = getattr(
+            _load_node_d_successor(), "validate_worm_successor", None
+        )
+        if not callable(validate_node_d):
+            raise AssertionError("operator-core Node D WORM bridge is absent")
+        node_d = validate_node_d(
+            resolved_root,
+            builder.WORM_SHA256,
+            builder.CURRENT_BUILD_CONTEXT_SHA256,
+        )
+        if (
+            node_d.accepted_report_sha256 != builder.WORM_SHA256
+            or node_d.accepted_build_context_sha256
+            != builder.CURRENT_BUILD_CONTEXT_SHA256
+            or node_d.accepted_chain_node_count != 8
+            or node_d.current_chain_node_count != 9
+            or node_d.current_build_context_sha256 != physical_build_context
+        ):
+            raise AssertionError("operator-core Node D WORM bridge drifted")
+        return WormSuccessor(
+            accepted_report_sha256=accepted_report_sha256,
+            accepted_build_context_sha256=accepted_build_context_sha256,
+            accepted_chain_node_count=int(worm["accepted_chain_node_count"]),
+            current_report_sha256=str(node_d.current_report_sha256),
+            current_build_context_sha256=physical_build_context,
+            current_chain_node_count=int(node_d.current_chain_node_count),
+        )
+    if physical_build_context != worm["current_build_context_sha256"]:
         raise AssertionError("operator-core physical build-context successor drifted")
     return WormSuccessor(
         accepted_report_sha256=accepted_report_sha256,
@@ -376,6 +592,9 @@ def validate_worm_successor(
 
 
 def minimal_fixture_paths() -> tuple[str, ...]:
+    node_d_paths = getattr(
+        _load_node_d_successor(), "minimal_fixture_paths", lambda: ()
+    )()
     return tuple(
         dict.fromkeys(
             (
@@ -385,6 +604,7 @@ def minimal_fixture_paths() -> tuple[str, ...]:
                 builder.HISTORICAL_RUNTIME_CONTRACT_RELATIVE,
                 BUILD_CONTEXT_SCRIPT_RELATIVE,
                 *builder.SOURCE_FILES,
+                *node_d_paths,
             )
         )
     )

@@ -14,21 +14,41 @@ from unittest import mock
 try:
     from tools import build_phase4c_tag_migration_global_preflight_contract as builder
     from tools import build_phase4c_tag_migration_operator_core_contract as operator_builder
+    from tools import phase4c_tag_migration_execution_protocol_successor_acceptance as node_d_acceptance
     from tools import phase4c_tag_migration_global_preflight_successor_acceptance as acceptance
 except ModuleNotFoundError as error:
     if error.name not in {
         "tools",
         "tools.build_phase4c_tag_migration_global_preflight_contract",
         "tools.build_phase4c_tag_migration_operator_core_contract",
+        "tools.phase4c_tag_migration_execution_protocol_successor_acceptance",
         "tools.phase4c_tag_migration_global_preflight_successor_acceptance",
     }:
         raise
     import build_phase4c_tag_migration_global_preflight_contract as builder
     import build_phase4c_tag_migration_operator_core_contract as operator_builder
+    import phase4c_tag_migration_execution_protocol_successor_acceptance as node_d_acceptance
     import phase4c_tag_migration_global_preflight_successor_acceptance as acceptance
 
 
 ROOT = Path(__file__).resolve().parents[1]
+NODE_D_PRODUCTION_ADDITIONS = (
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "Ed25519TagMigrationEvidenceVerifier.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "LegacyPersonalBankTagMigrationExecutionProtocol.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "TagMigrationPlanCandidate.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "TagMigrationPlanCandidateFactory.java",
+)
+
+
+def node_d_runtime(current: dict[str, str], root: Path) -> dict[str, str]:
+    successor = dict(current)
+    for relative in NODE_D_PRODUCTION_ADDITIONS:
+        successor[relative] = builder.sha256_bytes((root / relative).read_bytes())
+    return dict(sorted(successor.items()))
 
 
 class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
@@ -319,6 +339,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 initial,
                 exact_tip,
                 object(),
+                object(),
             ),
             FIXED_IMMUTABLE_MIRRORS=immutable_mirrors,
             validate_evidence_chain=validate_evidence_chain,
@@ -523,6 +544,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         for relative, transition in builder.SOURCE_SUCCESSORS.items():
             with self.subTest(relative=relative):
                 node_c = operator_builder.SOURCE_TRANSITIONS.get(relative)
+                node_d = node_d_acceptance.source_transition(ROOT, relative)
                 self.assertEqual(
                     transition["accepted_sha256"],
                     acceptance.accepted_sha256(relative),
@@ -531,7 +553,11 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                     (
                         transition["successor_sha256"]
                         if node_c is None
-                        else node_c["successor_sha256"]
+                        else (
+                            node_c["successor_sha256"]
+                            if node_d is None
+                            else node_d["successor_sha256"]
+                        )
                     ),
                     acceptance.successor_sha256(ROOT, relative),
                 )
@@ -539,6 +565,12 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                     self.assertEqual(
                         transition["successor_sha256"],
                         node_c["accepted_sha256"],
+                    )
+                if node_d is not None:
+                    self.assertIsNotNone(node_c)
+                    self.assertEqual(
+                        node_c["successor_sha256"],
+                        node_d["accepted_sha256"],
                     )
         self.assertIsNone(acceptance.accepted_sha256("tools/unknown.py"))
         self.assertIsNone(acceptance.successor_sha256(ROOT, "tools/unknown.py"))
@@ -675,16 +707,19 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         node_c_current = dict(current)
         node_c_current.update(operator_builder.PRODUCTION_RUNTIME_ADDITIONS)
         node_c_current.update(operator_builder.PRODUCTION_RUNTIME_CHANGES)
+        node_d_current = node_d_runtime(node_c_current, ROOT)
         composed = acceptance.validate_production_runtime_successor(
-            ROOT, historical, node_c_current
+            ROOT, historical, node_d_current
         )
         self.assertEqual(297, composed.accepted_file_count)
-        self.assertEqual(307, composed.current_file_count)
+        self.assertEqual(311, composed.current_file_count)
         self.assertEqual(
-            operator_builder.CURRENT_PRODUCTION_MANIFEST_SHA256,
+            builder.sha256_bytes(
+                builder.canonical_json(node_d_current).encode("utf-8")
+            ),
             composed.current_manifest_sha256,
         )
-        self.assertEqual(10, len(composed.added_files))
+        self.assertEqual(14, len(composed.added_files))
         self.assertEqual((), composed.changed_files)
         self.assertEqual((), composed.deleted_files)
 
@@ -716,7 +751,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         )
         node_c_current_main = {
             relative: digest
-            for relative, digest in node_c_current.items()
+            for relative, digest in node_d_current.items()
             if relative.startswith(prefixes)
         }
         composed_main = acceptance.validate_production_runtime_successor(
@@ -726,9 +761,11 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             view="learning_personalbank_main",
         )
         self.assertEqual(40, composed_main.accepted_file_count)
-        self.assertEqual(50, composed_main.current_file_count)
+        self.assertEqual(54, composed_main.current_file_count)
         self.assertEqual(
-            operator_builder.CURRENT_LEARNING_PERSONALBANK_MAIN_MANIFEST_SHA256,
+            builder.sha256_bytes(
+                builder.canonical_json(node_c_current_main).encode("utf-8")
+            ),
             composed_main.current_manifest_sha256,
         )
 
@@ -739,12 +776,12 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         )
         self.assertEqual(5, worm.accepted_chain_node_count)
         self.assertEqual(6, worm.first_successor_chain_node_count)
-        self.assertEqual(8, worm.current_chain_node_count)
-        self.assertEqual(
+        self.assertEqual(9, worm.current_chain_node_count)
+        self.assertNotEqual(
             operator_builder.CURRENT_BUILD_CONTEXT_SHA256,
             worm.current_build_context_sha256,
         )
-        self.assertEqual(
+        self.assertNotEqual(
             operator_builder.WORM_SHA256,
             worm.current_report_sha256,
         )
@@ -788,10 +825,11 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
             current.update(builder.PRODUCTION_MANIFEST_ADDITIONS)
             current.update(operator_builder.PRODUCTION_RUNTIME_ADDITIONS)
             current.update(operator_builder.PRODUCTION_RUNTIME_CHANGES)
+            current = node_d_runtime(current, root)
             runtime = acceptance.validate_production_runtime_successor(
                 root, historical, current
             )
-            self.assertEqual((297, 307), (
+            self.assertEqual((297, 311), (
                 runtime.accepted_file_count,
                 runtime.current_file_count,
             ))
@@ -816,7 +854,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 current_main,
                 view="learning_personalbank_main",
             )
-            self.assertEqual((40, 50), (
+            self.assertEqual((40, 54), (
                 main.accepted_file_count,
                 main.current_file_count,
             ))
@@ -825,7 +863,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 builder.SOURCES["old_worm_predecessor"]["sha256"],
                 builder.HISTORICAL_BUILD_CONTEXT_SHA256,
             )
-            self.assertEqual((5, 6, 8), (
+            self.assertEqual((5, 6, 9), (
                 worm.accepted_chain_node_count,
                 worm.first_successor_chain_node_count,
                 worm.current_chain_node_count,
@@ -871,6 +909,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 AssertionError,
                 (
                     "operator-core fixed source bytes drifted|"
+                    "operator-core unreviewed physical source drift|"
                     "physical build-context successor drifted"
                 ),
             ):

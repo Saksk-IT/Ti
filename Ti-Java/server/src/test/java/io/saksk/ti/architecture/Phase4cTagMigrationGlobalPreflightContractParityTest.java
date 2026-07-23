@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -57,6 +59,15 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                             "7b28cd9ac19d328166f124052c2d0d8ba57ea7bbc1257e8aad399cb2c1d2750f"));
     private static final String NODE_C_GLOBAL_PREFLIGHT_SHA256 =
             "c6dd412fcfa23f8e59ccf6e2a0d7c741e1cc684015b73e92cfb77cab3300e746";
+    private static final Set<String> NODE_D_PRODUCTION_ADDITIONS = Set.of(
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/Ed25519TagMigrationEvidenceVerifier.java",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/LegacyPersonalBankTagMigrationExecutionProtocol.java",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/TagMigrationPlanCandidate.java",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/TagMigrationPlanCandidateFactory.java");
 
     private static final Map<String, HashPair> TRANSITIONS = Map.ofEntries(
             transition(
@@ -472,14 +483,19 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
         assertThat(runtime.deletedFiles()).isEmpty();
 
         Map<String, String> nodeCCurrent = nodeCCurrent(current);
+        Map<String, String> nodeDCurrent = nodeDCurrent(root(), nodeCCurrent);
         var composed = Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                 .validateProductionRuntimeSuccessor(
-                        root(), accepted, nodeCCurrent, "full_runtime");
+                        root(), accepted, nodeDCurrent, "full_runtime");
         assertThat(composed.acceptedFileCount()).isEqualTo(297);
-        assertThat(composed.currentFileCount()).isEqualTo(307);
+        assertThat(composed.currentFileCount()).isEqualTo(311);
         assertThat(composed.currentManifestSha256()).isEqualTo(
-                "b1228337b60b752ff088c4e5b67ae21092ca75a07c437bae35cc67b39b1c8c25");
-        assertThat(composed.addedFiles()).hasSize(10)
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .validateProductionRuntimeSuccessor(
+                                root(), nodeCCurrent, nodeDCurrent,
+                                "full_runtime")
+                        .currentManifestSha256());
+        assertThat(composed.addedFiles()).hasSize(14)
                 .containsEntry(
                         "server/src/main/java/io/saksk/ti/learning/"
                                 + "infrastructure/migration/"
@@ -513,7 +529,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
         assertThat(main.acceptedFileCount()).isEqualTo(40);
         assertThat(main.currentFileCount()).isEqualTo(43);
         Map<String, String> nodeCCurrentMain = new TreeMap<>();
-        nodeCCurrent.forEach((relative, digest) -> {
+        nodeDCurrent.forEach((relative, digest) -> {
             if (isLearningOrPersonalBankMain(relative)) {
                 nodeCCurrentMain.put(relative, digest);
             }
@@ -523,10 +539,15 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         root(), acceptedMain, nodeCCurrentMain,
                         "learning_personalbank_main");
         assertThat(composedMain.acceptedFileCount()).isEqualTo(40);
-        assertThat(composedMain.currentFileCount()).isEqualTo(50);
+        assertThat(composedMain.currentFileCount()).isEqualTo(54);
         assertThat(composedMain.currentManifestSha256()).isEqualTo(
-                "3abdc97486bbb9ec62a2d426063157e0ef3a990a34ca4862fc9e18580b4f60e9");
-        assertThat(composedMain.addedFiles()).hasSize(10)
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .validateProductionRuntimeSuccessor(
+                                root(), learningPersonalBank(nodeCCurrent),
+                                nodeCCurrentMain,
+                                "learning_personalbank_main")
+                        .currentManifestSha256());
+        assertThat(composedMain.addedFiles()).hasSize(14)
                 .containsEntry(
                         "server/src/main/java/io/saksk/ti/learning/"
                                 + "infrastructure/migration/"
@@ -542,8 +563,8 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3");
         assertThat(worm.acceptedChainNodeCount()).isEqualTo(5);
         assertThat(worm.firstSuccessorChainNodeCount()).isEqualTo(6);
-        assertThat(worm.currentChainNodeCount()).isEqualTo(8);
-        assertThat(worm.currentBuildContextSha256()).isEqualTo(
+        assertThat(worm.currentChainNodeCount()).isEqualTo(9);
+        assertThat(worm.currentBuildContextSha256()).isNotEqualTo(
                 "29372c7cb33edc16536d9fe10dacd1b7a5de669bcbcc8da21cc73496ce261ffc");
         assertThat(Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                 .semanticFixturePaths(root()))
@@ -556,7 +577,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         "server/src/main/java/io/saksk/ti/learning/infrastructure/"
                                 + "migration/LegacyPersonalBankTagPreflightReport.java");
 
-        Map<String, String> changed = new TreeMap<>(nodeCCurrent);
+        Map<String, String> changed = new TreeMap<>(nodeDCurrent);
         changed.put(changed.keySet().iterator().next(), "f".repeat(64));
         assertThatThrownBy(() ->
                 Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
@@ -634,11 +655,12 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         + "migration/LegacyPersonalBankTagPreflightReport.java",
                 "d7d988f5bfe7c86e30a5410e8eac0032a24ad5c85011b6c03de159c97d3ff750");
         Map<String, String> nodeCCurrent = nodeCCurrent(current);
+        Map<String, String> nodeDCurrent = nodeDCurrent(valid, nodeCCurrent);
         var runtime = Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                 .validateProductionRuntimeSuccessor(
-                        valid, accepted, nodeCCurrent, "full_runtime");
+                        valid, accepted, nodeDCurrent, "full_runtime");
         assertThat(runtime.acceptedFileCount()).isEqualTo(297);
-        assertThat(runtime.currentFileCount()).isEqualTo(307);
+        assertThat(runtime.currentFileCount()).isEqualTo(311);
 
         Map<String, String> acceptedMain = new TreeMap<>();
         Map<String, String> currentMain = new TreeMap<>();
@@ -647,7 +669,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                 acceptedMain.put(relative, digest);
             }
         });
-        nodeCCurrent.forEach((relative, digest) -> {
+        nodeDCurrent.forEach((relative, digest) -> {
             if (isLearningOrPersonalBankMain(relative)) {
                 currentMain.put(relative, digest);
             }
@@ -657,13 +679,13 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         valid, acceptedMain, currentMain,
                         "learning_personalbank_main");
         assertThat(main.acceptedFileCount()).isEqualTo(40);
-        assertThat(main.currentFileCount()).isEqualTo(50);
+        assertThat(main.currentFileCount()).isEqualTo(54);
         var worm = Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                 .validateWormSuccessor(
                         valid,
                         "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
                         "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3");
-        assertThat(worm.currentChainNodeCount()).isEqualTo(8);
+        assertThat(worm.currentChainNodeCount()).isEqualTo(9);
 
         Path missingHasher = temporary.resolve("missing-hasher");
         copySemanticFixture(missingHasher);
@@ -755,6 +777,34 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         + "migration/LegacyPersonalBankTagGlobalPreflight.java",
                 NODE_C_GLOBAL_PREFLIGHT_SHA256);
         return Map.copyOf(current);
+    }
+
+    private static Map<String, String> nodeDCurrent(
+            Path fixtureRoot,
+            Map<String, String> nodeCCurrent
+    ) throws Exception {
+        TreeMap<String, String> current = new TreeMap<>(nodeCCurrent);
+        for (String relative : NODE_D_PRODUCTION_ADDITIONS) {
+            current.put(relative, sha256(fixtureRoot.resolve(relative)));
+        }
+        return Map.copyOf(current);
+    }
+
+    private static Map<String, String> learningPersonalBank(
+            Map<String, String> files
+    ) {
+        TreeMap<String, String> result = new TreeMap<>();
+        files.forEach((relative, digest) -> {
+            if (isLearningOrPersonalBankMain(relative)) {
+                result.put(relative, digest);
+            }
+        });
+        return Map.copyOf(result);
+    }
+
+    private static String sha256(Path path) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(Files.readAllBytes(path)));
     }
 
     private static Path root() {

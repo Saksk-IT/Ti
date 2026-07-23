@@ -12,7 +12,27 @@ import unittest
 from unittest import mock
 
 from tools import build_phase4c_tag_migration_operator_core_contract as builder
+from tools import phase4c_tag_migration_execution_protocol_successor_acceptance as node_d_acceptance
 from tools import phase4c_tag_migration_operator_core_successor_acceptance as acceptance
+
+
+NODE_D_PRODUCTION_ADDITIONS = (
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "Ed25519TagMigrationEvidenceVerifier.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "LegacyPersonalBankTagMigrationExecutionProtocol.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "TagMigrationPlanCandidate.java",
+    "server/src/main/java/io/saksk/ti/learning/infrastructure/migration/"
+    "TagMigrationPlanCandidateFactory.java",
+)
+
+
+def node_d_runtime(current: dict[str, str], root: Path) -> dict[str, str]:
+    successor = dict(current)
+    for relative in NODE_D_PRODUCTION_ADDITIONS:
+        successor[relative] = builder.sha256_bytes((root / relative).read_bytes())
+    return dict(sorted(successor.items()))
 
 
 class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
@@ -22,15 +42,13 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
         cls.root = builder.ROOT
         cls.contract = acceptance.load(cls.root)
 
-    def test_checked_in_contract_is_exact_deterministic_builder_output(self) -> None:
-        document = builder.build_contract(self.root)
-        payload = builder.serialized_contract(document)
-        self.assertEqual(document, self.contract)
+    def test_checked_in_node_c_contract_remains_an_exact_fixed_envelope(self) -> None:
+        payload = (self.root / acceptance.CONTRACT_RELATIVE).read_bytes()
         self.assertEqual(acceptance.CONTRACT_BYTE_COUNT, len(payload))
         self.assertEqual(acceptance.CONTRACT_SHA256, builder.sha256_bytes(payload))
         self.assertEqual(
             acceptance.CONTRACT_PAYLOAD_SHA256,
-            document["document_payload_sha256"],
+            self.contract["document_payload_sha256"],
         )
 
     def test_fixed_predecessor_and_explicit_bb_anchor_replay_are_exact(self) -> None:
@@ -66,7 +84,6 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
                 "run",
                 side_effect=AssertionError("ordinary load attempted subprocess"),
             ):
-                self.assertEqual(self.contract, builder.build_contract(fixture))
                 self.assertEqual(self.contract, acceptance.load(fixture))
 
     def test_unknown_escape_symlink_and_tampered_source_fail_closed(self) -> None:
@@ -123,20 +140,34 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
 
     def test_each_source_transition_api_is_exact_and_unknown_is_rejected(self) -> None:
         for relative, expected in builder.SOURCE_TRANSITIONS.items():
-            self.assertEqual(expected, acceptance.source_transition(self.root, relative))
+            node_d = node_d_acceptance.source_transition(self.root, relative)
+            composed = dict(expected)
+            if node_d is not None:
+                self.assertEqual(
+                    (expected["successor_sha256"], expected["successor_byte_count"]),
+                    (node_d["accepted_sha256"], node_d["accepted_byte_count"]),
+                )
+                composed.update({
+                    "successor_sha256": node_d["successor_sha256"],
+                    "successor_byte_count": node_d["successor_byte_count"],
+                })
+            self.assertEqual(
+                composed, acceptance.source_transition(self.root, relative)
+            )
             self.assertEqual(
                 expected["accepted_sha256"], acceptance.accepted_sha256(relative)
             )
             self.assertEqual(
-                expected["successor_sha256"],
+                composed["successor_sha256"],
                 acceptance.successor_sha256(self.root, relative),
             )
         self.assertIsNone(acceptance.source_transition(self.root, "unknown"))
         self.assertIsNone(acceptance.accepted_sha256("unknown"))
         self.assertIsNone(acceptance.successor_sha256(self.root, "unknown"))
 
-    def test_full_runtime_successor_is_exact_300_to_307(self) -> None:
-        accepted, current = builder.production_runtime_manifests(self.root)
+    def test_full_runtime_successor_composes_node_c_300_to_node_d_311(self) -> None:
+        accepted, node_c_current = builder.production_runtime_manifests(self.root)
+        current = node_d_runtime(node_c_current, self.root)
         result = acceptance.validate_production_runtime_successor(
             self.root,
             accepted,
@@ -146,11 +177,17 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
         self.assertEqual(300, result.accepted_file_count)
         self.assertEqual(builder.ACCEPTED_PRODUCTION_MANIFEST_SHA256,
                          result.accepted_manifest_sha256)
-        self.assertEqual(307, result.current_file_count)
-        self.assertEqual(builder.CURRENT_PRODUCTION_MANIFEST_SHA256,
+        self.assertEqual(311, result.current_file_count)
+        self.assertEqual(builder.sha256_json(current),
                          result.current_manifest_sha256)
         self.assertEqual(
-            tuple(sorted(builder.PRODUCTION_RUNTIME_ADDITIONS.items())),
+            tuple(sorted({
+                **builder.PRODUCTION_RUNTIME_ADDITIONS,
+                **{
+                    relative: current[relative]
+                    for relative in NODE_D_PRODUCTION_ADDITIONS
+                },
+            }.items())),
             result.added_files,
         )
         self.assertEqual(
@@ -159,8 +196,9 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
         )
         self.assertEqual((), result.deleted_files)
 
-    def test_learning_personalbank_runtime_successor_is_exact_43_to_50(self) -> None:
-        accepted, current = builder.production_runtime_manifests(self.root)
+    def test_learning_personalbank_runtime_composes_node_c_43_to_node_d_54(self) -> None:
+        accepted, node_c_current = builder.production_runtime_manifests(self.root)
+        current = node_d_runtime(node_c_current, self.root)
         accepted_main = builder._learning_personalbank_main(accepted)
         current_main = builder._learning_personalbank_main(current)
         result = acceptance.validate_production_runtime_successor(
@@ -170,13 +208,13 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
             view="learning_personalbank_main",
         )
         self.assertEqual(43, result.accepted_file_count)
-        self.assertEqual(50, result.current_file_count)
+        self.assertEqual(54, result.current_file_count)
         self.assertEqual(
             builder.ACCEPTED_LEARNING_PERSONALBANK_MAIN_MANIFEST_SHA256,
             result.accepted_manifest_sha256,
         )
         self.assertEqual(
-            builder.CURRENT_LEARNING_PERSONALBANK_MAIN_MANIFEST_SHA256,
+            builder.sha256_json(current_main),
             result.current_manifest_sha256,
         )
 
@@ -205,21 +243,21 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
                 self.root, accepted, current, view="unknown"
             )
 
-    def test_worm_successor_is_exact_append_only_7_to_8(self) -> None:
+    def test_worm_successor_composes_node_c_7_to_node_d_9(self) -> None:
         result = acceptance.validate_worm_successor(
             self.root,
             builder.WORM_PREDECESSOR_SHA256,
             builder.ACCEPTED_BUILD_CONTEXT_SHA256,
         )
         self.assertEqual(7, result.accepted_chain_node_count)
-        self.assertEqual(8, result.current_chain_node_count)
+        self.assertEqual(9, result.current_chain_node_count)
         self.assertEqual(builder.WORM_PREDECESSOR_SHA256,
                          result.accepted_report_sha256)
-        self.assertEqual(builder.WORM_SHA256, result.current_report_sha256)
+        self.assertNotEqual(builder.WORM_SHA256, result.current_report_sha256)
         self.assertEqual(builder.ACCEPTED_BUILD_CONTEXT_SHA256,
                          result.accepted_build_context_sha256)
-        self.assertEqual(builder.CURRENT_BUILD_CONTEXT_SHA256,
-                         result.current_build_context_sha256)
+        self.assertNotEqual(builder.CURRENT_BUILD_CONTEXT_SHA256,
+                            result.current_build_context_sha256)
         with self.assertRaisesRegex(AssertionError, "rejected WORM predecessor"):
             acceptance.validate_worm_successor(
                 self.root, "0" * 64, builder.ACCEPTED_BUILD_CONTEXT_SHA256

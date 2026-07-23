@@ -206,7 +206,7 @@ ACK discard 模拟。其功能 checkpoint 与后继 Git 外锚均已闭合，普
 没有生产 schema/Flyway、Operator、真实冻结、真实备份恢复、真实 apply、旧运行时永久禁用或
 production cutover。路由保持 **13 migrated、598 pending、0 production cutover**。
 
-## Personal-bank legacy tag Operator Core Node C（当前恢复点）
+## Personal-bank legacy tag Operator Core Node C（已完成三段外锚的 predecessor）
 
 Node C 已物化显式调用、默认不可达的 `LegacyPersonalBankTagMigrationOperatorCore`、JDBC store、
 schema verifier 与 `BoundedSqlRetry`。它提供 `prepare/freeze/apply/recover`，但没有 Spring、
@@ -226,8 +226,34 @@ IT、2 retry IT**，全部绿色。freeze、apply 与 recovery 分别绑定 sour
 Phase 3 29/29、topology 60/60、小程序 36/36、Phase 6 acceptance 10/10，以及 UTC
 `clean verify` 860 Surefire + 176 Failsafe 均为 0 failure/error/skip。
 
+Node C 功能 checkpoint `a70c365959e123950d30bff05adb4fabbb72d640`、独立验收 checkpoint
+`4ec9966f836378a33058b574fd1812d4d19cac10` 与 post-push anchor
+`4c47d1ea220ae9e310338bbf23b74d87d477e20f` 已依次固定。Node C 历史合同、验收 bridge
+及其 accepted/successor 字节保持不可变；当前物理源码的后续漂移只能由 Node D fixed transition
+精确承接，不能回写 Node C 历史事实或改为动态 source discovery。
+
 本节点的授权上限只包括 Operator Core 证据、有界重试实现与 Operator Core 实现，不授权生产
-schema/index/Flyway、真实迁移、旧运行时永久禁用、gateway/cutover，也不自授权 Node C 控制源
-外锚。下一顺序是 **Node C 功能提交并推送 → 独立 Git 外锚 → Node D 整体执行协议**；
-有效路由继续是 **13 migrated、598 pending、0 production cutover**。详细边界见
+schema/index/Flyway、真实迁移、旧运行时永久禁用或 gateway/cutover。有效路由继续是
+**13 migrated、598 pending、0 production cutover**。详细边界见
 `personal-bank-tag-migration-operator-core.md`。
+
+## Personal-bank legacy tag Execution Protocol Node D（当前实现中）
+
+Node D 正在把已外锚的 Node A 全局预检、Node B durable-ledger/freeze 设计与 Node C Operator Core
+组合为显式、逐阶段、默认不可达的库协议。当前范围包括 canonical redacted candidate、四 purpose
+Ed25519 证据 verifier、每次只推进一步的 `prepare/freeze/apply/recover` 协议，以及仅供 disposable
+PostgreSQL 16.14/18.4 使用的 078/079 本地备份恢复演练；没有 Spring Bean、Runner、Scheduler、
+HTTP、CLI、env/file/Redis/KMS/网络密钥发现、`executeAll`、force、reset、skip 或 rollback 入口。
+
+本批完成时只允许关闭 `migration_execution_protocol_implemented`、
+`cryptographic_evidence_verifier_implemented`、
+`local_test_backup_restore_execution_rehearsal_closed` 三项本地/协议 gate。受控生产 runtime 合同
+目标为 **311** 个文件，`learning/personalbank` main 合同目标为 **54** 个文件。固定 WORM 链已追加
+第九节点 `5c3fe0f9d7cba79fca6c2351d811924346182cf61e06b730a0eeb0bcef50081c`，绑定 build-context
+`36978a808a327abfb3c7b3dfe138f5622000213a25bad762b59128c78894d7c7`。生产 schema/index/Flyway、
+durable ledger 部署、真实 writer freeze/connection drain、生产
+trust root 与 issuer、真实备份恢复/apply、legacy 永久禁用、route/OpenAPI/client/gateway/proxy
+及 production cutover 全部保持关闭；有效路由保持 **13 migrated、598 pending、0 production
+cutover**。Node D 自身还必须经过功能提交、独立后继 runner 复验和第二个后继 Git 外锚，不能
+从当前工作树、live `HEAD` 或 `origin/main` 自授权。详细边界见
+`personal-bank-tag-migration-execution-protocol.md`。

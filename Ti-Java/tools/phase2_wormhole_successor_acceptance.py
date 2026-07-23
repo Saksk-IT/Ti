@@ -130,6 +130,19 @@ PHASE4C_TAG_OPERATOR_CORE_BUILD_CONTEXT_SHA256 = (
 PHASE4C_TAG_OPERATOR_CORE_DOCKERFILE_SHA256 = (
     "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
 )
+PHASE4C_TAG_EXECUTION_PROTOCOL_REPORT_PATH = (
+    "docs/refactor/phase4c/"
+    "personal-bank-tag-migration-execution-protocol-worm-evidence.json"
+)
+PHASE4C_TAG_EXECUTION_PROTOCOL_REPORT_SHA256 = (
+    "5c3fe0f9d7cba79fca6c2351d811924346182cf61e06b730a0eeb0bcef50081c"
+)
+PHASE4C_TAG_EXECUTION_PROTOCOL_BUILD_CONTEXT_SHA256 = (
+    "36978a808a327abfb3c7b3dfe138f5622000213a25bad762b59128c78894d7c7"
+)
+PHASE4C_TAG_EXECUTION_PROTOCOL_DOCKERFILE_SHA256 = (
+    "bb99afb7264a3a0d64b2e76d07a663bfe4a08cacca0387dff07635818a1ef499"
+)
 
 READ_SUCCESSOR_MODULE = "tools.phase4c_read_successor_acceptance"
 TARGET_EXECUTION_SUCCESSOR_MODULE = (
@@ -152,6 +165,9 @@ TAG_GLOBAL_PREFLIGHT_SUCCESSOR_MODULE = (
 )
 TAG_OPERATOR_CORE_SUCCESSOR_MODULE = (
     "tools.phase4c_tag_migration_operator_core_successor_acceptance"
+)
+TAG_EXECUTION_PROTOCOL_SUCCESSOR_MODULE = (
+    "tools.phase4c_tag_migration_execution_protocol_successor_acceptance"
 )
 
 
@@ -239,6 +255,14 @@ PHASE4C_TAG_OPERATOR_CORE_SUCCESSOR = EvidenceDescriptor(
     dockerfile_sha256=PHASE4C_TAG_OPERATOR_CORE_DOCKERFILE_SHA256,
     predecessor_sha256=PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_REPORT_SHA256,
 )
+PHASE4C_TAG_EXECUTION_PROTOCOL_SUCCESSOR = EvidenceDescriptor(
+    label="phase4c-personal-bank-tag-migration-execution-protocol",
+    relative_path=PHASE4C_TAG_EXECUTION_PROTOCOL_REPORT_PATH,
+    sha256=PHASE4C_TAG_EXECUTION_PROTOCOL_REPORT_SHA256,
+    build_context_sha256=PHASE4C_TAG_EXECUTION_PROTOCOL_BUILD_CONTEXT_SHA256,
+    dockerfile_sha256=PHASE4C_TAG_EXECUTION_PROTOCOL_DOCKERFILE_SHA256,
+    predecessor_sha256=PHASE4C_TAG_OPERATOR_CORE_REPORT_SHA256,
+)
 FIXED_EVIDENCE_CHAIN = (
     HISTORICAL_ANCHOR,
     PHASE4C_SUCCESSOR,
@@ -248,6 +272,7 @@ FIXED_EVIDENCE_CHAIN = (
     PHASE4C_TAG_GLOBAL_PREFLIGHT_SUCCESSOR,
     PHASE4C_TAG_GLOBAL_PREFLIGHT_HARDENING_SUCCESSOR,
     PHASE4C_TAG_OPERATOR_CORE_SUCCESSOR,
+    PHASE4C_TAG_EXECUTION_PROTOCOL_SUCCESSOR,
 )
 FIXED_IMMUTABLE_MIRRORS = (
     ImmutableMirror(
@@ -767,6 +792,20 @@ def validate_fixed_acceptance(
     require(
         isinstance(load_tag_operator_core_successor(ti_java_root), dict),
         "Phase4C fixed tag operator-core successor contract is required",
+    )
+    tag_execution_protocol_successor = _load_fixed_successor_module(
+        TAG_EXECUTION_PROTOCOL_SUCCESSOR_MODULE,
+        "phase4c_tag_migration_execution_protocol_successor_acceptance",
+        "Phase4C fixed tag execution-protocol successor acceptance",
+    )
+    load_tag_execution_protocol_successor = _required_loader(
+        tag_execution_protocol_successor,
+        "load",
+        "Phase4C fixed tag execution-protocol successor acceptance",
+    )
+    require(
+        isinstance(load_tag_execution_protocol_successor(ti_java_root), dict),
+        "Phase4C fixed tag execution-protocol successor contract is required",
     )
 
     return validate_fixed_chain(

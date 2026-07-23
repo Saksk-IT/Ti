@@ -162,6 +162,8 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
 
     /**
      * The only historical Node A inputs that Node C is allowed to replace.
+     * Node D may advance those physical bytes only through Node C's composed
+     * fixed bridge; this Node A authority never skips or rewrites Node C.
      * Node A's six control-source transitions are intentionally absent here:
      * they are fixed directly by Node C and were never self-authority inputs
      * of this contract.
@@ -964,7 +966,7 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                             && nodeC.acceptedManifestSha256().equals(
                             semantic.path("successor_manifest_sha256")
                                     .asString()),
-                    "tag preflight Node C runtime bridge drifted");
+                    "tag preflight Node C/D composed runtime bridge drifted");
             TreeMap<String, String> composedAdditions = new TreeMap<>();
             TreeMap<String, String> composedChanges = new TreeMap<>();
             normalizedCurrent.forEach((relative, digest) -> {
@@ -1030,10 +1032,10 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                                     .path("sha256").asString(),
                             nodeABuildContext);
             require(nodeC.acceptedChainNodeCount() == 7
-                            && nodeC.currentChainNodeCount() == 8
+                            && nodeC.currentChainNodeCount() == 9
                             && nodeC.currentBuildContextSha256().equals(
                             physicalBuildContext),
-                    "tag preflight Node C WORM bridge drifted");
+                    "tag preflight Node C/D composed WORM bridge drifted");
             return new WormSuccessor(
                     acceptedReportSha256,
                     acceptedBuildContextSha256,
@@ -1609,7 +1611,8 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                         && expectedAcceptedBytes == transition.acceptedByteCount()
                         && physicalSha256.equals(transition.successorSha256())
                         && physicalBytes == transition.successorByteCount(),
-                "tag preflight Node C source bridge drifted: " + relative);
+                "tag preflight Node C/D composed source bridge drifted: "
+                        + relative);
     }
 
     private static Path fixedRegularFile(Path root, String relative)

@@ -42,6 +42,15 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                             + "infrastructure/migration/"
                             + "LegacyPersonalBankTagPreflightReport.java",
                     "d7d988f5bfe7c86e30a5410e8eac0032a24ad5c85011b6c03de159c97d3ff750");
+    private static final Set<String> NODE_D_RUNTIME_ADDITIONS = Set.of(
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/Ed25519TagMigrationEvidenceVerifier.java",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/LegacyPersonalBankTagMigrationExecutionProtocol.java",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/TagMigrationPlanCandidate.java",
+            "server/src/main/java/io/saksk/ti/learning/infrastructure/"
+                    + "migration/TagMigrationPlanCandidateFactory.java");
 
     @Test
     void loadsFixedIdentityPredecessorAndNodeBGitAuthority() throws Exception {
@@ -142,7 +151,8 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
     void composesExactRuntimeViewsFromNodeAToNodeC() throws Exception {
         JsonNode contract = contract();
         Map<String, String> accepted = acceptedRuntime();
-        Map<String, String> current = currentRuntime(contract, accepted);
+        Map<String, String> nodeCCurrent = currentRuntime(contract, accepted);
+        Map<String, String> current = nodeDCurrent(root(), nodeCCurrent);
 
         var full = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
                 .validateProductionRuntimeSuccessor(
@@ -150,11 +160,13 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
         assertThat(full.acceptedFileCount()).isEqualTo(300);
         assertThat(full.acceptedManifestSha256()).isEqualTo(
                 "8d28a382447c8756b2ec4cfc4107bc55fd744587d81a8835b71eee1f1942fbb3");
-        assertThat(full.currentFileCount()).isEqualTo(307);
-        assertThat(full.currentManifestSha256()).isEqualTo(contract.path(
-                "production_runtime_successor")
-                .path("current_manifest_sha256").asString());
-        assertThat(full.addedFiles()).hasSize(7);
+        assertThat(full.currentFileCount()).isEqualTo(311);
+        assertThat(full.currentManifestSha256()).isEqualTo(
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .validateProductionRuntimeSuccessor(
+                                root(), nodeCCurrent, current, "full_runtime")
+                        .currentManifestSha256());
+        assertThat(full.addedFiles()).hasSize(11);
         assertThat(full.changedFiles()).containsOnlyKeys(
                 "server/src/main/java/io/saksk/ti/learning/"
                         + "infrastructure/migration/"
@@ -168,11 +180,13 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                         root(), acceptedMain, currentMain,
                         "learning_personalbank_main");
         assertThat(main.acceptedFileCount()).isEqualTo(43);
-        assertThat(main.currentFileCount()).isEqualTo(50);
-        assertThat(main.currentManifestSha256()).isEqualTo(contract.path(
-                "production_runtime_successor")
-                .path("learning_personalbank_main")
-                .path("current_manifest_sha256").asString());
+        assertThat(main.currentFileCount()).isEqualTo(54);
+        assertThat(main.currentManifestSha256()).isEqualTo(
+                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
+                        .validateProductionRuntimeSuccessor(
+                                root(), learningPersonalBank(nodeCCurrent),
+                                currentMain, "learning_personalbank_main")
+                        .currentManifestSha256());
 
         Map<String, String> changed = new TreeMap<>(current);
         changed.put(changed.keySet().iterator().next(), "f".repeat(64));
@@ -212,10 +226,10 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                         "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
                         "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17");
         assertThat(successor.acceptedChainNodeCount()).isEqualTo(7);
-        assertThat(successor.currentChainNodeCount()).isEqualTo(8);
-        assertThat(successor.currentReportSha256()).isEqualTo(
+        assertThat(successor.currentChainNodeCount()).isEqualTo(9);
+        assertThat(successor.currentReportSha256()).isNotEqualTo(
                 worm.path("current_report").path("sha256").asString());
-        assertThat(successor.currentBuildContextSha256()).isEqualTo(
+        assertThat(successor.currentBuildContextSha256()).isNotEqualTo(
                 worm.path("current_build_context_sha256").asString());
         assertThat(worm.path("appended_node_count").asInt()).isEqualTo(1);
         assertThat(worm.path("historical_nodes_rewritten").asBoolean()).isFalse();
@@ -404,18 +418,19 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                 Phase4cTagMigrationOperatorCoreSuccessorAcceptance
                         .load(fixture);
         Map<String, String> accepted = acceptedRuntime(fixture);
-        Map<String, String> current = currentRuntime(contract, accepted);
+        Map<String, String> current = nodeDCurrent(
+                fixture, currentRuntime(contract, accepted));
 
         assertThat(Phase4cTagMigrationOperatorCoreSuccessorAcceptance
                 .validateProductionRuntimeSuccessor(
                         fixture, accepted, current, "full_runtime")
-                .currentFileCount()).isEqualTo(307);
+                .currentFileCount()).isEqualTo(311);
         assertThat(Phase4cTagMigrationOperatorCoreSuccessorAcceptance
                 .validateWormSuccessor(
                         fixture,
                         "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
                         "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17")
-                .currentChainNodeCount()).isEqualTo(8);
+                .currentChainNodeCount()).isEqualTo(9);
     }
 
     @Test
@@ -490,6 +505,17 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                 current.put(entry.getKey(), entry.getValue().asString()));
         runtime.path("changed_files").properties().forEach(entry ->
                 current.put(entry.getKey(), entry.getValue().asString()));
+        return Map.copyOf(current);
+    }
+
+    private static Map<String, String> nodeDCurrent(
+            Path fixtureRoot,
+            Map<String, String> nodeCCurrent
+    ) throws Exception {
+        TreeMap<String, String> current = new TreeMap<>(nodeCCurrent);
+        for (String relative : NODE_D_RUNTIME_ADDITIONS) {
+            current.put(relative, sha256(fixtureRoot.resolve(relative)));
+        }
         return Map.copyOf(current);
     }
 

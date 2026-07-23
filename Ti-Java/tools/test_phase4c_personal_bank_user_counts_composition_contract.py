@@ -33,6 +33,9 @@ try:
         accepted_sha256 as target_execution_accepted_sha256,
         successor_sha256 as target_execution_successor_sha256,
     )
+    from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_entry_successor_acceptance import (
         accepted_sha256 as http_entry_accepted_sha256,
@@ -53,6 +56,9 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_target_execution_successor_acceptance import (
         accepted_sha256 as target_execution_accepted_sha256,
         successor_sha256 as target_execution_successor_sha256,
+    )
+    from phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
     )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -246,6 +252,9 @@ def canonical_effective_owners() -> list[dict]:
 class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls._validation_session = acceptance_validation_session()
+        cls._validation_session.__enter__()
+        cls.addClassCleanup(cls._validation_session.__exit__, None, None, None)
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(PREDECESSOR_PATH)
         cls.effective = load_json(EFFECTIVE_PATH)
@@ -793,7 +802,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     view="learning_personalbank_main",
                 )
                 self.assertEqual(40, main_successor.accepted_file_count)
-                self.assertEqual(50, main_successor.current_file_count)
+                self.assertEqual(54, main_successor.current_file_count)
                 self.assertEqual([], list(main_successor.changed_files))
                 self.assertEqual([], list(main_successor.deleted_files))
             read_runtime = implementation["production_runtime_surface"]
@@ -822,7 +831,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     view="full_runtime",
                 )
                 self.assertEqual(297, runtime_successor.accepted_file_count)
-                self.assertEqual(307, runtime_successor.current_file_count)
+                self.assertEqual(311, runtime_successor.current_file_count)
                 self.assertEqual([], list(runtime_successor.changed_files))
                 self.assertEqual([], list(runtime_successor.deleted_files))
             requirements = self.contract["successor_handoff"][
@@ -881,7 +890,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     accepted_build_context,
                     successor.accepted_build_context_sha256,
                 )
-                self.assertEqual(8, successor.current_chain_node_count)
+                self.assertEqual(9, successor.current_chain_node_count)
                 self.assertEqual(
                     build_context,
                     successor.current_build_context_sha256,

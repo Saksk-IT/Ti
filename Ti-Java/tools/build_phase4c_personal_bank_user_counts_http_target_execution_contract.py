@@ -1247,7 +1247,7 @@ def validate_worm() -> dict:
         if (
             successor.accepted_chain_node_count != 5
             or successor.current_build_context_sha256 != build_context
-            or successor.current_chain_node_count != 8
+            or successor.current_chain_node_count != 9
         ):
             raise ValueError("tag preflight WORM successor descriptor drifted")
     worm = load_json(path)

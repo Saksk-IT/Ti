@@ -21,11 +21,17 @@ try:
         phase4c_tag_migration_operator_core_post_push_anchor_successor_acceptance
         as acceptance,
     )
+    from tools import (
+        phase4c_tag_migration_execution_protocol_successor_acceptance
+        as execution_protocol_successor,
+    )
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     import build_phase4c_tag_migration_operator_core_post_push_anchor_contract \
         as builder
     import phase4c_tag_migration_operator_core_post_push_anchor_successor_acceptance \
         as acceptance
+    import phase4c_tag_migration_execution_protocol_successor_acceptance \
+        as execution_protocol_successor
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -197,9 +203,25 @@ class OperatorCorePostPushAnchorContractTest(unittest.TestCase):
                     builder.C0_CHANGES.get(relative)
                     or builder.C1_CHANGES[relative]
                 )
-                self.assertEqual(
-                    descriptor["sha256"], acceptance.accepted_sha256(ROOT, relative)
+                transition = execution_protocol_successor.source_transition(
+                    ROOT, relative
                 )
+                if transition is None:
+                    self.assertEqual(
+                        descriptor["sha256"],
+                        acceptance.accepted_sha256(ROOT, relative),
+                    )
+                else:
+                    self.assertIsNone(
+                        acceptance.accepted_sha256(ROOT, relative)
+                    )
+                    self.assertEqual(
+                        descriptor["sha256"], transition["accepted_sha256"]
+                    )
+                    self.assertEqual(
+                        descriptor["byte_count"],
+                        transition["accepted_byte_count"],
+                    )
         self.assertIsNone(acceptance.accepted_sha256(ROOT, "tools/unknown.py"))
         for relative in builder.CURRENT_CONTROL_SOURCES:
             self.assertIsNone(acceptance.accepted_sha256(ROOT, relative))

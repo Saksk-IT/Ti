@@ -28,6 +28,9 @@ try:
         load_http_implementation_successor_contract,
         successor_sha256 as implementation_successor_sha256,
     )
+    from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_successor_acceptance import (
         ACCEPTED_COMMIT,
@@ -45,6 +48,9 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
         fixed_source_sha256 as implementation_fixed_source_sha256,
         load_http_implementation_successor_contract,
         successor_sha256 as implementation_successor_sha256,
+    )
+    from phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
     )
 
 
@@ -221,6 +227,9 @@ def junit_test_methods(path: Path) -> set[str]:
 class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls._validation_session = acceptance_validation_session()
+        cls._validation_session.__enter__()
+        cls.addClassCleanup(cls._validation_session.__exit__, None, None, None)
         cls.phase4c_read = load_read_successor_contract(ROOT)
         cls.contract = load_json(CONTRACT_PATH)
         cls.predecessor = load_json(PREDECESSOR_PATH)
@@ -406,8 +415,8 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, runtime.accepted_file_count)
-            self.assertEqual(50, runtime.current_file_count)
-            self.assertEqual(10, len(runtime.added_files))
+            self.assertEqual(54, runtime.current_file_count)
+            self.assertEqual(14, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
             self.assertEqual(
@@ -478,8 +487,8 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 view="full_runtime",
             )
             self.assertEqual(297, full_runtime.accepted_file_count)
-            self.assertEqual(307, full_runtime.current_file_count)
-            self.assertEqual(10, len(full_runtime.added_files))
+            self.assertEqual(311, full_runtime.current_file_count)
+            self.assertEqual(14, len(full_runtime.added_files))
             self.assertEqual((), full_runtime.changed_files)
             self.assertEqual((), full_runtime.deleted_files)
             self.assertEqual(9, transition["exact_delta"]["added_file_count"])

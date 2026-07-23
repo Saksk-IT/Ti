@@ -15,11 +15,17 @@ try:
         successor_sha256,
         validate_tag_preflight_production_runtime_successor,
     )
+    from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_read_successor_acceptance import (
         load_read_successor_contract,
         successor_sha256,
         validate_tag_preflight_production_runtime_successor,
+    )
+    from phase4c_tag_migration_global_preflight_successor_acceptance import (
+        validation_session as acceptance_validation_session,
     )
 
 
@@ -398,8 +404,25 @@ def payload_sha256(document: dict) -> str:
     return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
+_VALIDATED_READ_SUCCESSORS: dict[str, str] = {}
+
+
+def capture_validated_read_successors(contract: dict | None) -> None:
+    if contract is None:
+        return
+    history = contract["historical_successor_acceptance"]
+    for section in ("python_sources", "java_sources", "auxiliary_sources"):
+        for relative in history[section]:
+            _VALIDATED_READ_SUCCESSORS[relative] = sha256(ROOT / relative)
+
+
 def phase4c_successor_hash(relative: str) -> str | None:
-    return successor_sha256(ROOT, relative)
+    validated = _VALIDATED_READ_SUCCESSORS.get(relative)
+    if validated is None:
+        return successor_sha256(ROOT, relative)
+    if sha256(ROOT / relative) != validated:
+        raise AssertionError(f"validated read successor drifted: {relative}")
+    return validated
 
 
 def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
@@ -416,7 +439,11 @@ def learning_and_personalbank_main_source_manifest() -> dict[str, str]:
 class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls._validation_session = acceptance_validation_session()
+        cls._validation_session.__enter__()
+        cls.addClassCleanup(cls._validation_session.__exit__, None, None, None)
         cls.read_successor = load_read_successor_contract(ROOT)
+        capture_validated_read_successors(cls.read_successor)
         cls.contract = load_json(CONTRACT_PATH)
         cls.entry = load_json(ENTRY_PATH)
         cls.shape = load_json(SHAPE_PATH)
@@ -680,8 +707,8 @@ class Phase4bPersonalBankUsageStatsReadContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, len(accepted_manifest))
-            self.assertEqual(50, len(current_manifest))
-            self.assertEqual(10, len(runtime.added_files))
+            self.assertEqual(54, len(current_manifest))
+            self.assertEqual(14, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
 
