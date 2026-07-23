@@ -21,6 +21,26 @@ final class LearningWriteRequestFingerprints {
         return digest.digest();
     }
 
+    static byte[] recordResult(
+            long actorId,
+            long questionId,
+            boolean correct,
+            boolean clearMistakeOnCorrect
+    ) {
+        MessageDigest digest = sha256();
+        frame(digest, "ti-java:learning-write-request:v1");
+        frame(digest, "POST");
+        frame(digest, "record-result");
+        frame(digest, Long.toString(actorId));
+        frame(digest, "[]");
+        frame(
+                digest,
+                "{\"clear_mistake_on_correct\":" + clearMistakeOnCorrect
+                        + ",\"is_correct\":" + correct
+                        + ",\"question_id\":" + questionId + "}");
+        return digest.digest();
+    }
+
     private static MessageDigest sha256() {
         try {
             return MessageDigest.getInstance("SHA-256");
