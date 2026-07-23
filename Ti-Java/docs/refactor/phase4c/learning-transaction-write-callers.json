@@ -1,0 +1,763 @@
+{
+  "contract_id": "ti.phase4c.learning-transaction-write-caller-attestation",
+  "schema_version": 1,
+  "captured_at": "2026-07-23",
+  "legacy_commit": "700006dfdfa063deb4387be572911e782bcea0d9",
+  "legacy_root_tree": "db528464896085fe14849baef3c5e686ad1bc253",
+  "predecessor": {
+    "path": "docs/refactor/phase4c/learning-route-scope-entry-contract.json",
+    "sha256": "73c235dac971a52b2bf620565f3e4070c663a9584a63b2cc0a668f121cb73684",
+    "size_bytes": 43260,
+    "document_payload_sha256": "ca589656cbdf50aba9e4cb15b5e2cbb047f2b3f9e48eb4661e8e642c94124d49"
+  },
+  "route_matrix": {
+    "path": "docs/refactor/02-route-parity-matrix.csv",
+    "sha256": "fdbdfedf3dd70cd09778b2a7072711d103eee8461d0e7dd356d797006fc92c74",
+    "size_bytes": 416225,
+    "selected_rows": [
+      {
+        "route_id": "6d548bfd6830",
+        "path": "/api/favorite",
+        "methods": "POST",
+        "endpoint": "api_favorite",
+        "legacy_module": "quiz_alias",
+        "source": "app/modules/quiz/routes/api_components/core.py:43",
+        "registration_source": "app/modules/quiz/__init__.py::add_url_rule",
+        "registration_kind": "application_compatibility_alias",
+        "decorators": "[\"auth_required\",\"limiter.limit('30/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "web",
+        "client_references": "{\"web\":[\"app/modules/main/templates/main/search/search.html:1459:fetch_literal\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/core.py:43",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "b52d3008d4d1",
+        "path": "/api/quiz/favorite",
+        "methods": "POST",
+        "endpoint": "quiz_api.toggle_favorite",
+        "legacy_module": "quiz",
+        "source": "app/modules/quiz/routes/api_components/core.py:43",
+        "registration_source": "app/modules/quiz/routes/api_components/core.py:43",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\",\"limiter.limit('30/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "miniprogram",
+        "client_references": "{\"miniprogram\":[\"miniprogram-1/miniprogram/utils/api-endpoints.ts:279:request\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/core.py:43",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "624b5ac217d0",
+        "path": "/api/quiz/questions/<int:question_id>",
+        "methods": "PUT",
+        "endpoint": "quiz_api.api_update_question",
+        "legacy_module": "quiz",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:375",
+        "registration_source": "app/modules/quiz/routes/api_components/questions_study.py:375",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\",\"limiter.limit('10/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"unauthorized_response_signal\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_PUT:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "miniprogram",
+        "client_references": "{\"miniprogram\":[\"miniprogram-1/miniprogram/utils/api-endpoints.ts:833:request\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/questions_study.py:375",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "67dccafb3ea4",
+        "path": "/api/quiz/record_result",
+        "methods": "POST",
+        "endpoint": "quiz_api.record_result",
+        "legacy_module": "quiz",
+        "source": "app/modules/quiz/routes/api_components/core.py:85",
+        "registration_source": "app/modules/quiz/routes/api_components/core.py:85",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\",\"limiter.limit('60/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "miniprogram",
+        "client_references": "{\"miniprogram\":[\"miniprogram-1/miniprogram/utils/api-endpoints.ts:263:request\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/core.py:85",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "bf3cb0c4f9ab",
+        "path": "/api/quiz/study/learn/record",
+        "methods": "POST",
+        "endpoint": "quiz_api.study_learn_record",
+        "legacy_module": "quiz",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:561",
+        "registration_source": "app/modules/quiz/routes/api_components/questions_study.py:561",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\",\"limiter.limit('60/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "web",
+        "client_references": "{\"web\":[\"app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html:788:fetch_literal\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/questions_study.py:561",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "278e1eac5eb4",
+        "path": "/api/quiz/study/review/master",
+        "methods": "POST",
+        "endpoint": "quiz_api.study_review_master",
+        "legacy_module": "quiz",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:778",
+        "registration_source": "app/modules/quiz/routes/api_components/questions_study.py:778",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\",\"limiter.limit('30/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "web",
+        "client_references": "{\"web\":[\"app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html:835:fetch_literal\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/questions_study.py:778",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "c797832c43db",
+        "path": "/api/quiz/study/review/record",
+        "methods": "POST",
+        "endpoint": "quiz_api.study_review_record",
+        "legacy_module": "quiz",
+        "source": "app/modules/quiz/routes/api_components/questions_study.py:708",
+        "registration_source": "app/modules/quiz/routes/api_components/questions_study.py:708",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\",\"limiter.limit('60/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "web",
+        "client_references": "{\"web\":[\"app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html:807:fetch_literal\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/questions_study.py:708",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "87bb4fb340c8",
+        "path": "/api/record_result",
+        "methods": "POST",
+        "endpoint": "api_record_result",
+        "legacy_module": "quiz_alias",
+        "source": "app/modules/quiz/routes/api_components/core.py:85",
+        "registration_source": "app/modules/quiz/__init__.py::add_url_rule",
+        "registration_kind": "application_compatibility_alias",
+        "decorators": "[\"auth_required\",\"limiter.limit('60/minute')\"]",
+        "inline_auth_signals": "[\"current_user_resolution\",\"forbidden_response_signal\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "web",
+        "client_references": "{\"web\":[\"app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html:293:fetch_literal\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/quiz/routes/api_components/core.py:85",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      },
+      {
+        "route_id": "59c9c7366ec3",
+        "path": "/api/user/checkin",
+        "methods": "POST",
+        "endpoint": "user.user_api.user_checkin",
+        "legacy_module": "user",
+        "source": "app/modules/user/routes/api.py:210",
+        "registration_source": "app/modules/user/routes/api.py:210",
+        "registration_kind": "blueprint_decorator",
+        "decorators": "[\"auth_required\"]",
+        "inline_auth_signals": "[\"current_user_resolution\"]",
+        "auth_semantics": "[\"global_write_csrf_for_POST:valid_jwt_or_xhr_required\",\"global_session_or_valid_jwt_else_401\",\"route_decorator:session_or_jwt\"]",
+        "client_surfaces": "miniprogram;web",
+        "client_references": "{\"miniprogram\":[\"miniprogram-1/miniprogram/utils/api-endpoints.ts:614:request\"],\"web\":[\"app/modules/main/templates/main/hub/hub.html:1517:fetch_literal\"]}",
+        "contract_source": "runtime:url_map;source:app/modules/user/routes/api.py:210",
+        "target_module": "learning",
+        "migration_status": "pending",
+        "compatibility_notes": "preserve path/method/status/envelope/auth/null/pagination"
+      }
+    ],
+    "selected_rows_sha256": "63111a735c3f39ac1787635176892d3e251ee234918c3318629698a5240f09e3"
+  },
+  "caller_attestation": {
+    "caller_count": 13,
+    "route_count": 9,
+    "surface_counts": {
+      "web": 9,
+      "miniprogram": 4
+    },
+    "callers_by_route": {
+      "6d548bfd6830": [
+        "web-quiz-toggle-favorite",
+        "web-search-toggle-favorite"
+      ],
+      "b52d3008d4d1": [
+        "miniprogram-toggle-favorite"
+      ],
+      "87bb4fb340c8": [
+        "web-quiz-record-result",
+        "web-subjective-self-eval-record-result"
+      ],
+      "67dccafb3ea4": [
+        "miniprogram-record-result"
+      ],
+      "bf3cb0c4f9ab": [
+        "web-study-learn-record"
+      ],
+      "c797832c43db": [
+        "web-study-review-record"
+      ],
+      "278e1eac5eb4": [
+        "web-study-review-master"
+      ],
+      "59c9c7366ec3": [
+        "miniprogram-user-checkin",
+        "web-user-checkin"
+      ],
+      "624b5ac217d0": [
+        "miniprogram-question-edit",
+        "web-question-edit"
+      ]
+    },
+    "callers": [
+      {
+        "caller_id": "web-search-toggle-favorite",
+        "route_id": "6d548bfd6830",
+        "surface": "web",
+        "source": "app/modules/main/templates/main/search/search.html",
+        "line": 1459,
+        "transport": "web-main-fetch",
+        "source_attestation": {
+          "source": "app/modules/main/templates/main/search/search.html",
+          "line": 1459,
+          "text": "const res = await fetch('/api/favorite', {",
+          "source_sha256": "42965d61b959e97682c05bea928800391015f46d7fd4d38c9c36445bec675e17",
+          "source_size_bytes": 45871,
+          "git_blob": "723fe8a8f830f745a07aa762b136640a2fa78b80"
+        }
+      },
+      {
+        "caller_id": "web-quiz-toggle-favorite",
+        "route_id": "6d548bfd6830",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_09_settings_modal.html",
+        "line": 267,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_09_settings_modal.html",
+          "line": 267,
+          "text": ": '/api/favorite';",
+          "source_sha256": "a9782530e0257082d0f9c0f3a8690ffcf882b8cdfb89e931084277aa40c67d3a",
+          "source_size_bytes": 46806,
+          "git_blob": "187660f41dd7c62be5604e514cbd11a47f5881f8"
+        }
+      },
+      {
+        "caller_id": "miniprogram-toggle-favorite",
+        "route_id": "b52d3008d4d1",
+        "surface": "miniprogram",
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 279,
+        "transport": "miniprogram-request",
+        "source_attestation": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 279,
+          "text": "request('/quiz/favorite', 'POST', { question_id: questionId }),",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851,
+          "git_blob": "773dfef26af774b1bc9f21f4bd8933875f7ff4a3"
+        }
+      },
+      {
+        "caller_id": "web-quiz-record-result",
+        "route_id": "87bb4fb340c8",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html",
+        "line": 43,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html",
+          "line": 43,
+          "text": ": '/api/record_result';",
+          "source_sha256": "e62b2560dd845e35aecf21b0e27e5fbad03dc5495a45991bed42fb35f63bf67a",
+          "source_size_bytes": 46960,
+          "git_blob": "37ca12510dcbc52f206f97fa4421a8fac9d4f278"
+        }
+      },
+      {
+        "caller_id": "web-subjective-self-eval-record-result",
+        "route_id": "87bb4fb340c8",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html",
+        "line": 293,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html",
+          "line": 293,
+          "text": "await fetch('/api/record_result', {",
+          "source_sha256": "e62b2560dd845e35aecf21b0e27e5fbad03dc5495a45991bed42fb35f63bf67a",
+          "source_size_bytes": 46960,
+          "git_blob": "37ca12510dcbc52f206f97fa4421a8fac9d4f278"
+        }
+      },
+      {
+        "caller_id": "miniprogram-record-result",
+        "route_id": "67dccafb3ea4",
+        "surface": "miniprogram",
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 263,
+        "transport": "miniprogram-request",
+        "source_attestation": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 263,
+          "text": "request('/quiz/record_result', 'POST', {",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851,
+          "git_blob": "773dfef26af774b1bc9f21f4bd8933875f7ff4a3"
+        }
+      },
+      {
+        "caller_id": "web-study-learn-record",
+        "route_id": "bf3cb0c4f9ab",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+        "line": 788,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+          "line": 788,
+          "text": "const res = await fetch('/api/quiz/study/learn/record', {",
+          "source_sha256": "4662c19f07d7bba23bb7c8cff2124df3566e62492eb9329eaf1ce057709b93fe",
+          "source_size_bytes": 41839,
+          "git_blob": "a614a2ddb7d5acc135171c22a29293c47be48e8a"
+        }
+      },
+      {
+        "caller_id": "web-study-review-record",
+        "route_id": "c797832c43db",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+        "line": 807,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+          "line": 807,
+          "text": "const res = await fetch('/api/quiz/study/review/record', {",
+          "source_sha256": "4662c19f07d7bba23bb7c8cff2124df3566e62492eb9329eaf1ce057709b93fe",
+          "source_size_bytes": 41839,
+          "git_blob": "a614a2ddb7d5acc135171c22a29293c47be48e8a"
+        }
+      },
+      {
+        "caller_id": "web-study-review-master",
+        "route_id": "278e1eac5eb4",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+        "line": 835,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+          "line": 835,
+          "text": "const res = await fetch('/api/quiz/study/review/master', {",
+          "source_sha256": "4662c19f07d7bba23bb7c8cff2124df3566e62492eb9329eaf1ce057709b93fe",
+          "source_size_bytes": 41839,
+          "git_blob": "a614a2ddb7d5acc135171c22a29293c47be48e8a"
+        }
+      },
+      {
+        "caller_id": "web-user-checkin",
+        "route_id": "59c9c7366ec3",
+        "surface": "web",
+        "source": "app/modules/main/templates/main/hub/hub.html",
+        "line": 1517,
+        "transport": "web-main-fetch",
+        "source_attestation": {
+          "source": "app/modules/main/templates/main/hub/hub.html",
+          "line": 1517,
+          "text": "var res = await fetch('/api/user/checkin', {",
+          "source_sha256": "532563e86d2c02d56eb820318deb686927fb007c61b975fe372a32d0c216c50d",
+          "source_size_bytes": 63829,
+          "git_blob": "a7eb1fb7c2ccfb73468b0c8a8fbaea251b505b4f"
+        }
+      },
+      {
+        "caller_id": "miniprogram-user-checkin",
+        "route_id": "59c9c7366ec3",
+        "surface": "miniprogram",
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 614,
+        "transport": "miniprogram-request",
+        "source_attestation": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 614,
+          "text": "request('/user/checkin', 'POST') as Promise<{",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851,
+          "git_blob": "773dfef26af774b1bc9f21f4bd8933875f7ff4a3"
+        }
+      },
+      {
+        "caller_id": "web-question-edit",
+        "route_id": "624b5ac217d0",
+        "surface": "web",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_03_question_edit.html",
+        "line": 429,
+        "transport": "web-quiz-fetch",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_03_question_edit.html",
+          "line": 429,
+          "text": "const url = IS_USER_BANK ? `${getUserBankApiPrefix()}/questions/${qid}` : `/api/quiz/questions/${qid}`;",
+          "source_sha256": "d5c34fac7d05988e01a6bd3cc73fa38f4c6db8e44bb5653cd3d0d5379e1f2b78",
+          "source_size_bytes": 19770,
+          "git_blob": "1685478de2003a1e4e43ecf383d4ad4397fb8374"
+        }
+      },
+      {
+        "caller_id": "miniprogram-question-edit",
+        "route_id": "624b5ac217d0",
+        "surface": "miniprogram",
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 833,
+        "transport": "miniprogram-request",
+        "source_attestation": {
+          "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+          "line": 833,
+          "text": "}) => request(`/quiz/questions/${questionId}`, 'PUT', data),",
+          "source_sha256": "0954859eade86b09c7002a6b8948c7264d5da984947f67be4d63aee192b55702",
+          "source_size_bytes": 31851,
+          "git_blob": "773dfef26af774b1bc9f21f4bd8933875f7ff4a3"
+        }
+      }
+    ],
+    "caller_set_sha256": "b0c11f99abaa3c4822f6aa253b335f09986c0b76c02c091831ebb0c7f4a8dd3a",
+    "active_caller_attestation_complete": true
+  },
+  "transport_attestation": {
+    "transport_count": 3,
+    "transports": [
+      {
+        "transport_id": "web-main-fetch",
+        "source": "app/modules/main/templates/main/shared/app_shell.html",
+        "line": 37,
+        "credential": "same-origin Session",
+        "csrf_boundary": "XHR marker injected by the shared app shell",
+        "source_attestation": {
+          "source": "app/modules/main/templates/main/shared/app_shell.html",
+          "line": 37,
+          "text": "opts.headers.set('X-Requested-With', 'XMLHttpRequest');",
+          "source_sha256": "80a574c7ba089a3bea468eb739eb68c83a2cc3a2caaa5eddf21cc6b189d2f71f",
+          "source_size_bytes": 66745,
+          "git_blob": "7fffe795964e7c22ae1303f262fb5febe5939fd6"
+        }
+      },
+      {
+        "transport_id": "web-quiz-fetch",
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/head/_head_meta.html",
+        "line": 41,
+        "credential": "same-origin Session",
+        "csrf_boundary": "XHR marker injected by the quiz document head",
+        "source_attestation": {
+          "source": "app/modules/quiz/templates/quiz/partials/quiz/head/_head_meta.html",
+          "line": 41,
+          "text": "opts.headers.set('X-Requested-With', 'XMLHttpRequest');",
+          "source_sha256": "bb778a292bb293644a5aba0033ae7822330d2d4e72a70b746ac6015f7a2133c8",
+          "source_size_bytes": 2510,
+          "git_blob": "5f15a6ee441d8f5d14d20c2ad4a750f0c4e06192"
+        }
+      },
+      {
+        "transport_id": "miniprogram-request",
+        "source": "miniprogram-1/miniprogram/utils/api-client.ts",
+        "line": 115,
+        "credential": "Bearer token",
+        "csrf_boundary": "valid JWT bypasses the legacy API write XHR check",
+        "source_attestation": {
+          "source": "miniprogram-1/miniprogram/utils/api-client.ts",
+          "line": 115,
+          "text": "'Authorization': tokenAtRequest ? `Bearer ${tokenAtRequest}` : ''",
+          "source_sha256": "42c3ebc26b9d20f663d4bf182da762a81ee4d2cd53c03fbb248ef415389a973d",
+          "source_size_bytes": 9157,
+          "git_blob": "d6f137a3507e92b9d3691b035425b45600a8b7e4"
+        }
+      }
+    ],
+    "all_callers_have_transport": true,
+    "web_session_write_has_xhr_marker": true,
+    "miniprogram_write_has_bearer_transport": true
+  },
+  "full_fixed_commit_usage_scan": {
+    "scope": [
+      "fixed commit app/",
+      "fixed commit miniprogram-1/"
+    ],
+    "excluded_paths": [
+      "miniprogram-1/analyse-data.json"
+    ],
+    "pattern": "/api/favorite|/api/record_result|/quiz/favorite|/quiz/record_result|/api/quiz/study/(?:learn/record|review/(?:record|master))|/api/user/checkin|/user/checkin|/api/quiz/questions|/quiz/questions/",
+    "match_count": 42,
+    "matches_sha256": "3c1ddbe229a0dd41fde8fabdc4b52be8bfbdc19391aae0569037eda4652a1064",
+    "matches": [
+      {
+        "source": "app/__init__.py",
+        "line": 946,
+        "text": "'/api/favorite',"
+      },
+      {
+        "source": "app/__init__.py",
+        "line": 947,
+        "text": "'/api/record_result',"
+      },
+      {
+        "source": "app/modules/main/templates/main/hub/hub.html",
+        "line": 1500,
+        "text": "var res = await fetch('/api/user/checkin/status', { credentials: 'same-origin' });"
+      },
+      {
+        "source": "app/modules/main/templates/main/hub/hub.html",
+        "line": 1517,
+        "text": "var res = await fetch('/api/user/checkin', {"
+      },
+      {
+        "source": "app/modules/main/templates/main/search/search.html",
+        "line": 1459,
+        "text": "const res = await fetch('/api/favorite', {"
+      },
+      {
+        "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_03_search.html",
+        "line": 230,
+        "text": "const resp = await fetch(`/api/quiz/questions/${encodeURIComponent(String(qid))}`, { credentials: 'same-origin' });"
+      },
+      {
+        "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_06_reinforce.html",
+        "line": 109,
+        "text": ": fetch(`/api/quiz/questions/${encodeURIComponent(String(safeId))}`, { credentials: 'same-origin' })"
+      },
+      {
+        "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_06_reinforce.html",
+        "line": 168,
+        "text": ": fetch(`/api/quiz/questions/${encodeURIComponent(String(leftId))}`, { credentials: 'same-origin' })"
+      },
+      {
+        "source": "app/modules/main/templates/main/subject/subject_detail/body_end/_06_reinforce.html",
+        "line": 180,
+        "text": ": fetch(`/api/quiz/questions/${encodeURIComponent(String(rightId))}`, { credentials: 'same-origin' })"
+      },
+      {
+        "source": "app/modules/quiz/__init__.py",
+        "line": 42,
+        "text": "app.add_url_rule('/api/favorite', endpoint='api_favorite', view_func=toggle_favorite, methods=['POST'])"
+      },
+      {
+        "source": "app/modules/quiz/__init__.py",
+        "line": 43,
+        "text": "app.add_url_rule('/api/record_result', endpoint='api_record_result', view_func=record_result, methods=['POST'])"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_03_question_edit.html",
+        "line": 429,
+        "text": "const url = IS_USER_BANK ? `${getUserBankApiPrefix()}/questions/${qid}` : `/api/quiz/questions/${qid}`;"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+        "line": 788,
+        "text": "const res = await fetch('/api/quiz/study/learn/record', {"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+        "line": 807,
+        "text": "const res = await fetch('/api/quiz/study/review/record', {"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_07_render_show_question.html",
+        "line": 835,
+        "text": "const res = await fetch('/api/quiz/study/review/master', {"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html",
+        "line": 43,
+        "text": ": '/api/record_result';"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_08_check_answer.html",
+        "line": 293,
+        "text": "await fetch('/api/record_result', {"
+      },
+      {
+        "source": "app/modules/quiz/templates/quiz/partials/quiz/assets/js/_09_settings_modal.html",
+        "line": 267,
+        "text": ": '/api/favorite';"
+      },
+      {
+        "source": "app/modules/user/routes/api.py",
+        "line": 154,
+        "text": "@user_api_bp.route('/user/checkin/status')"
+      },
+      {
+        "source": "app/modules/user/routes/api.py",
+        "line": 210,
+        "text": "@user_api_bp.route('/user/checkin', methods=['POST'])"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 155,
+        "text": "getQuestionDetail: function (id) { return (0, api_client_1.request)(\"/quiz/questions/\".concat(id), 'GET'); },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 160,
+        "text": "return (0, api_client_1.request)('/quiz/record_result', 'POST', {"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 169,
+        "text": "return (0, api_client_1.request)('/quiz/favorite', 'POST', { question_id: questionId });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 193,
+        "text": "getQuestionsCount: function (params) { return (0, api_client_1.request)('/quiz/questions/count', 'GET', params || {}); },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 195,
+        "text": "getUserCounts: function (params) { return (0, api_client_1.request)('/quiz/questions/user_counts', 'GET', params); },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 355,
+        "text": "// === 签到（与 Web 端 /api/user/checkin 互通） ==="
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 357,
+        "text": "return (0, api_client_1.request)('/user/checkin/status', 'GET');"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 360,
+        "text": "return (0, api_client_1.request)('/user/checkin', 'POST');"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 460,
+        "text": "getQuestionTags: function (questionId) { return (0, api_client_1.request)(\"/quiz/questions/\".concat(questionId, \"/tags\"), 'GET'); },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 463,
+        "text": "return (0, api_client_1.request)(\"/quiz/questions/\".concat(questionId, \"/tags\"), 'POST', { tags: tags });"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.js",
+        "line": 466,
+        "text": "updateQuestion: function (questionId, data) { return (0, api_client_1.request)(\"/quiz/questions/\".concat(questionId), 'PUT', data); },"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 247,
+        "text": "getQuestionDetail: (id: number) => request(`/quiz/questions/${id}`, 'GET'),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 263,
+        "text": "request('/quiz/record_result', 'POST', {"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 279,
+        "text": "request('/quiz/favorite', 'POST', { question_id: questionId }),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 323,
+        "text": "}) => request('/quiz/questions/count', 'GET', params || {}),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 330,
+        "text": "}) => request('/quiz/questions/user_counts', 'GET', params),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 603,
+        "text": "// === 签到（与 Web 端 /api/user/checkin 互通） ==="
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 605,
+        "text": "request('/user/checkin/status', 'GET') as Promise<{"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 614,
+        "text": "request('/user/checkin', 'POST') as Promise<{"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 821,
+        "text": "getQuestionTags: (questionId: number) => request(`/quiz/questions/${questionId}/tags`, 'GET'),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 825,
+        "text": "request(`/quiz/questions/${questionId}/tags`, 'POST', { tags }),"
+      },
+      {
+        "source": "miniprogram-1/miniprogram/utils/api-endpoints.ts",
+        "line": 833,
+        "text": "}) => request(`/quiz/questions/${questionId}`, 'PUT', data),"
+      }
+    ]
+  },
+  "ownership_boundary": {
+    "learning_owned_route_ids": [
+      "6d548bfd6830",
+      "b52d3008d4d1",
+      "87bb4fb340c8",
+      "67dccafb3ea4",
+      "bf3cb0c4f9ab",
+      "c797832c43db",
+      "278e1eac5eb4",
+      "59c9c7366ec3"
+    ],
+    "catalog_owned_route_ids": [
+      "624b5ac217d0"
+    ],
+    "question_edit_dependency": "learning -> catalog::api",
+    "learning_direct_question_table_write_forbidden": true
+  },
+  "closure": {
+    "caller_attestation_complete": true,
+    "golden_execution_complete": false,
+    "implementation_authorized": false,
+    "route_delta_authorized": false,
+    "migration_status": "pending",
+    "production_cutover": false,
+    "next_gate": "fixed-commit route execution, isolated database before/after fingerprints, SQL/transaction trace, duplicate/concurrent outcomes, and rollback/retry boundaries"
+  },
+  "provenance": {
+    "source_transport": "read-only git show/grep against the immutable legacy commit",
+    "capture_tool": {
+      "path": "tools/capture_phase4c_learning_transaction_write_callers.py",
+      "sha256": "387b065d70087ed7146e2a23131526e5fd17719ec2ae18ce6b3d1c0fc3fe8987",
+      "size_bytes": 18555
+    },
+    "capture_test": {
+      "path": "tools/test_capture_phase4c_learning_transaction_write_callers.py",
+      "sha256": "7ae0819c5b900b2ee48d2b5212b70df0d3bde3182ee274aed7f00dc4247ceaf0",
+      "size_bytes": 5463
+    },
+    "secrets_captured": false
+  },
+  "document_payload_sha256": "24aa1166a861a12e6982a9640bf6bb566b868ec642003b587c9ec6bc3adafa69"
+}
