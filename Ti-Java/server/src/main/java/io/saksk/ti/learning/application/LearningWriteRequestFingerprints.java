@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 
 final class LearningWriteRequestFingerprints {
 
@@ -83,6 +84,19 @@ final class LearningWriteRequestFingerprints {
                 questionId,
                 scope,
                 "\"is_mastered\":" + mastered);
+    }
+
+    static byte[] checkin(long actorId, LocalDate beijingDate) {
+        MessageDigest digest = sha256();
+        frame(digest, "ti-java:learning-write-request:v1");
+        frame(digest, "POST");
+        frame(digest, "checkin");
+        frame(digest, Long.toString(actorId));
+        frame(digest, "[]");
+        frame(
+                digest,
+                "{\"beijing_date\":" + jsonString(beijingDate.toString()) + "}");
+        return digest.digest();
     }
 
     private static byte[] study(

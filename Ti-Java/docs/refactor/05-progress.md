@@ -36,6 +36,14 @@
 - **已修复的验证期缺陷：** 首轮真实 PostgreSQL 暴露 advisory lock 文本键含 NUL，两个版本均正确拒绝；已改为无 NUL 的长度分帧键并在同一双版本命令重跑全绿。首轮 learning standalone context 暴露新增 catalog API 测试替身缺失；补齐模块依赖替身后 36/36 全绿。这两项均未形成提交或路由晋级。
 - **下一项具体动作：** 固定并推送本学习组检查点，然后实现 `POST /api/user/checkin` 的北京时间自然幂等事务与 PostgreSQL 并发证据，再实现 catalog-owned question edit。
 
+### 2026-07-24 签到事务写检查点
+
+- **当前绿色候选：** `POST /api/user/checkin` 的 HTTP-neutral 应用、learning-owned JDBC 与双 PostgreSQL 事务证据已闭合；本节随实现提交固定后追加完整 SHA。该 operation 仍为 pending，九条写路由统一晋级前权威状态保持 **13/598/0**。
+- **本轮完成：** 以 `(user_id, Asia/Shanghai local date)` 既有唯一约束作为自然幂等键，首个无 header 请求插入并返回 `just_checked_in=true`，同日后续无 header 请求返回原始 `created_at` 与 `just_checked_in=false`；显式 `Idempotency-Key` 仍只持久化 HMAC，并逐字义回放首个已提交响应。
+- **事务与响应语义：** 本日插入、原始签到时刻、累计天数、最多 100 个日期的旧连续天数算法、本月有序签到日期及 durable receipt 在一个 learning 事务中完成；北京时间日期被纳入请求指纹，避免跨自然日错误回放。旧数据中的无效日期使 streak fail closed 为 0，nullable `created_at` 保持 null。
+- **验证命令与结果：** checkin API/应用/事务/架构、learning standalone 与 Modulith 共 17 tests 全绿；`Phase4cCheckinWriteTransactionIT` 在 PostgreSQL 16.14 与 18.4 为 2/2 通过，覆盖首签/自然重复、月/总数/连续天数、显式 replay/conflict、业务与回执共同回滚后重试、无 header 并发一真一假、同键并发一次提交、畸形旧日期、nullable 时间和事务外 fail closed。
+- **下一项具体动作：** 固定并推送签到检查点，然后实现 catalog-owned `PUT /api/quiz/questions/{questionId}` 原子编辑命令、catalog 回执和双 PostgreSQL 并发证据；随后九条 operation 进入统一 HTTP/认证/CSRF/Redis/OpenAPI/真实网络闭环。
+
 ## 本轮已完成
 
 - 完成 record-result 两 alias 的类型化命令/结果、稳定语义指纹、配额拒绝响应、错题与最新答案持久化、用户级并发锁、幂等回执和 operations-owned 配额配置读取；真实双 PostgreSQL 证明业务行、配额行和回执同事务提交或回滚。
