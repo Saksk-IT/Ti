@@ -29,7 +29,7 @@
 
 ### 2026-07-24 学习/复习事务写检查点
 
-- **当前绿色候选：** `study-learn-record`、`study-review-record`、`study-review-master` 三个 HTTP-neutral 用例已闭合应用层、learning-owned JDBC 与双 PostgreSQL 事务证据；本节随实现提交固定后，再追加该提交的完整 SHA。九条 HTTP operation 仍不得创建 route delta，权威状态保持 **13/598/0**。
+- **最近通过的学习组实现提交：** `866c8358159cbd48a1835ff64f893a405c87d496`（`feat(java): implement phase4c study transactions`）。`study-learn-record`、`study-review-record`、`study-review-master` 三个 HTTP-neutral 用例已闭合应用层、learning-owned JDBC 与双 PostgreSQL 事务证据；九条 HTTP operation 仍不得创建 route delta，权威状态保持 **13/598/0**。
 - **本轮完成：** catalog 新增大小写敏感、空白不折叠的精确科目名公开查询；personalbank 继续通过既有公开 API 完成题库访问与题目归属证明。learning 在长度分帧的 scope advisory transaction lock 下原子更新 `study_learning`、公共或个人题库错题、`study_review` 与 HMAC 幂等回执；未知非 `user_bank` source 保留旧存储值并按公共科目解析。
 - **业务语义：** 连续三次正确从未学习转为已学习并在北京时间下一次 04:00 激活复习；答错把 streak/learned 重置并累加对应错题；known/fuzzy/unknown 按 `[1,2,4,7,15,30,60,120]` 日间隔和 0..7 等级计算；掌握清空到期时间，取消掌握恢复下一次 04:00，同时保留既有复习等级、评分和 lapse。
 - **验证命令与结果：** 学习组 API/应用/事务/架构、科目精确解析、Phase 4C 固定实现合同及三模块上下文共 36 tests 全绿；`Phase4cStudyWriteTransactionIT` 在 PostgreSQL 16.14 与 18.4 为 2/2 通过，覆盖公共/个人错题、首次复习激活、三类评分、掌握/取消掌握、同键 replay/conflict、业务与回执共同回滚后重试、同键并发一次提交、无 header 并发两次逻辑作答及事务外 fail closed。
