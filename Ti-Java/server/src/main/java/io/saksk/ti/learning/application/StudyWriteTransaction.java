@@ -38,6 +38,8 @@ class StudyWriteTransaction {
                     + "\"next_due_at\":(null|\"([^\"]+)\")}");
     private static final Pattern REVIEW_RECEIPT = Pattern.compile(
             "\\{\"review_level\":([0-7]),\"next_due_at\":\"([^\"]+)\"}");
+    private static final Pattern REVIEW_RECEIPT_JSONB_ORDER = Pattern.compile(
+            "\\{\"next_due_at\":\"([^\"]+)\",\"review_level\":([0-7])}");
     private static final Pattern MASTER_RECEIPT =
             Pattern.compile("\\{\"is_mastered\":([01])}");
 
@@ -378,14 +380,24 @@ class StudyWriteTransaction {
             LearningWriteReceiptPort.StoredResponse response
     ) {
         requireSuccess(response, "study-review-record");
-        Matcher matcher = REVIEW_RECEIPT.matcher(compact(response.bodyJson()));
-        if (!matcher.matches()) {
+        String compact = compact(response.bodyJson());
+        Matcher matcher = REVIEW_RECEIPT.matcher(compact);
+        Matcher jsonbMatcher = REVIEW_RECEIPT_JSONB_ORDER.matcher(compact);
+        boolean emittedOrder = matcher.matches();
+        boolean jsonbOrder = jsonbMatcher.matches();
+        if (!emittedOrder && !jsonbOrder) {
             throw new IllegalStateException("Study-review receipt has an invalid body");
         }
         try {
             return new StudyReviewRecordView(
-                    Integer.parseInt(matcher.group(1)),
-                    LocalDateTime.parse(matcher.group(2)));
+                    Integer.parseInt(
+                            emittedOrder
+                                    ? matcher.group(1)
+                                    : jsonbMatcher.group(2)),
+                    LocalDateTime.parse(
+                            emittedOrder
+                                    ? matcher.group(2)
+                                    : jsonbMatcher.group(1)));
         } catch (NumberFormatException | DateTimeParseException exception) {
             throw new IllegalStateException("Study-review receipt has invalid values", exception);
         }

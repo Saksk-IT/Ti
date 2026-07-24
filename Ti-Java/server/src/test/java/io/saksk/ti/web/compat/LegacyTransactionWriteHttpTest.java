@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -242,6 +243,75 @@ class LegacyTransactionWriteHttpTest {
                         "POST, OPTIONS"));
 
         verifyNoInteractions(limiter, favorites, study);
+    }
+
+    @Test
+    void malformedJsonUsesRouteSpecificCompatibility400InsteadOfGlobal500()
+            throws Exception {
+        mockMvc.perform(post("/api/favorite")
+                        .with(targetAuthentication())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .header("X-Request-ID", "phase4c-write-malformed-favorite")
+                        .contentType("application/json")
+                        .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("question_id 参数错误"))
+                .andExpect(jsonPath("$.request_id")
+                        .value("phase4c-write-malformed-favorite"));
+
+        mockMvc.perform(post("/api/quiz/study/review/record")
+                        .with(targetAuthentication())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .header("X-Request-ID", "phase4c-write-malformed-review")
+                        .contentType("application/json")
+                        .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("rating 参数错误"));
+
+        mockMvc.perform(put("/api/quiz/questions/93006")
+                        .with(targetAuthentication())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .header("X-Request-ID", "phase4c-write-malformed-edit")
+                        .contentType("application/json")
+                        .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("请求数据格式错误"));
+
+        verifyNoInteractions(favorites, study, questionEdits);
+    }
+
+    @Test
+    void oversizedIdempotencyKeyIsAStable400BeforeAnyApplicationMutation()
+            throws Exception {
+        String oversized = "x".repeat(256);
+
+        mockMvc.perform(post("/api/quiz/favorite")
+                        .with(targetAuthentication())
+                        .requestAttr(
+                                TargetSessionAuthenticationFilter
+                                        .LEGACY_BEARER_AUTHENTICATED_ATTRIBUTE,
+                                Boolean.TRUE)
+                        .header("Idempotency-Key", oversized)
+                        .contentType("application/json")
+                        .content("{\"question_id\":93001}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Idempotency-Key 参数错误"));
+
+        mockMvc.perform(put("/api/quiz/questions/93006")
+                        .with(targetAuthentication())
+                        .requestAttr(
+                                TargetSessionAuthenticationFilter
+                                        .LEGACY_BEARER_AUTHENTICATED_ATTRIBUTE,
+                                Boolean.TRUE)
+                        .header("Idempotency-Key", oversized)
+                        .contentType("application/json")
+                        .content("{\"content\":\"valid\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Idempotency-Key 参数错误"));
+
+        verifyNoInteractions(favorites, questionEdits, statuses);
     }
 
     private static org.springframework.test.web.servlet.request.RequestPostProcessor

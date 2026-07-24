@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -426,6 +427,42 @@ final class LegacyTransactionWriteController {
         return response(HttpStatus.INTERNAL_SERVER_ERROR, body);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ObjectNode> malformedJson(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        String path = request.getRequestURI();
+        String message;
+        if (path != null && (path.equals("/api/favorite")
+                || path.equals("/api/quiz/favorite")
+                || path.equals("/api/quiz/study/learn/record")
+                || path.equals("/api/quiz/study/review/master"))) {
+            message = "question_id 参数错误";
+        } else if (path != null && (path.equals("/api/record_result")
+                || path.equals("/api/quiz/record_result"))) {
+            message = "参数不完整";
+        } else if (path != null
+                && path.equals("/api/quiz/study/review/record")) {
+            message = "rating 参数错误";
+        } else {
+            message = "请求数据格式错误";
+        }
+        return error(request, HttpStatus.BAD_REQUEST, "error", message);
+    }
+
+    @ExceptionHandler(InvalidIdempotencyKeyException.class)
+    ResponseEntity<ObjectNode> invalidIdempotencyKey(
+            InvalidIdempotencyKeyException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                request,
+                HttpStatus.BAD_REQUEST,
+                "error",
+                "Idempotency-Key 参数错误");
+    }
+
     private ResponseEntity<ObjectNode> questionEditSuccess(
             HttpServletRequest request,
             long identityId,
@@ -499,11 +536,19 @@ final class LegacyTransactionWriteController {
     }
 
     private LearningWriteIdempotencyKey learningKey(String raw) {
-        return LearningWriteIdempotencyKey.fromNullable(raw);
+        try {
+            return LearningWriteIdempotencyKey.fromNullable(raw);
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidIdempotencyKeyException();
+        }
     }
 
     private QuestionEditIdempotencyKey questionKey(String raw) {
-        return QuestionEditIdempotencyKey.fromNullable(raw);
+        try {
+            return QuestionEditIdempotencyKey.fromNullable(raw);
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidIdempotencyKeyException();
+        }
     }
 
     private AuthenticatedLearningViewer viewer(Authentication authentication) {
@@ -697,5 +742,13 @@ final class LegacyTransactionWriteController {
 
     private static String legacyDateTime(LocalDateTime value) {
         return LEGACY_DATE_TIME.format(value);
+    }
+
+    private static final class InvalidIdempotencyKeyException
+            extends RuntimeException {
+
+        private InvalidIdempotencyKeyException() {
+            super("Invalid Idempotency-Key");
+        }
     }
 }

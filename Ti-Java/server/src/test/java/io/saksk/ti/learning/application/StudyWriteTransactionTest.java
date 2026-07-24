@@ -249,8 +249,8 @@ class StudyWriteTransactionTest {
         when(receipts.complete(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new LearningWriteReceiptPort.StoredResponse(
                         200,
-                        "{\"review_level\": 1,"
-                                + "\"next_due_at\": \"2026-07-26T04:00:00\"}"));
+                        "{\"next_due_at\": \"2026-07-26T04:00:00\","
+                                + "\"review_level\": 1}"));
 
         StudyWriteResult<StudyReviewRecordView> result = transaction.recordReview(
                 91,
