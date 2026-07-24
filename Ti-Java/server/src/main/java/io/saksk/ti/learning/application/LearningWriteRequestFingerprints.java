@@ -1,5 +1,7 @@
 package io.saksk.ti.learning.application;
 
+import io.saksk.ti.learning.api.StudyReviewRating;
+import io.saksk.ti.learning.api.StudyScopeInput;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -39,6 +41,97 @@ final class LearningWriteRequestFingerprints {
                         + ",\"is_correct\":" + correct
                         + ",\"question_id\":" + questionId + "}");
         return digest.digest();
+    }
+
+    static byte[] studyLearn(
+            long actorId,
+            long questionId,
+            boolean correct,
+            StudyScopeInput scope
+    ) {
+        return study(
+                "study-learn",
+                actorId,
+                questionId,
+                scope,
+                "\"is_correct\":" + correct);
+    }
+
+    static byte[] studyReview(
+            long actorId,
+            long questionId,
+            StudyReviewRating rating,
+            StudyScopeInput scope
+    ) {
+        return study(
+                "study-review-record",
+                actorId,
+                questionId,
+                scope,
+                "\"rating\":" + jsonString(rating.wireValue()));
+    }
+
+    static byte[] studyReviewMaster(
+            long actorId,
+            long questionId,
+            boolean mastered,
+            StudyScopeInput scope
+    ) {
+        return study(
+                "study-review-master",
+                actorId,
+                questionId,
+                scope,
+                "\"is_mastered\":" + mastered);
+    }
+
+    private static byte[] study(
+            String operation,
+            long actorId,
+            long questionId,
+            StudyScopeInput scope,
+            String operationField
+    ) {
+        MessageDigest digest = sha256();
+        frame(digest, "ti-java:learning-write-request:v1");
+        frame(digest, "POST");
+        frame(digest, operation);
+        frame(digest, Long.toString(actorId));
+        frame(digest, "[]");
+        String body = "{\"bank_id\":"
+                + scope.bankId().map(String::valueOf).orElse("null")
+                + "," + operationField
+                + ",\"question_id\":" + questionId
+                + ",\"source\":" + jsonString(scope.source())
+                + ",\"subject\":"
+                + scope.subject().map(LearningWriteRequestFingerprints::jsonString)
+                        .orElse("null")
+                + "}";
+        frame(digest, body);
+        return digest.digest();
+    }
+
+    private static String jsonString(String value) {
+        StringBuilder escaped = new StringBuilder(value.length() + 2).append('"');
+        value.codePoints().forEach(codePoint -> {
+            switch (codePoint) {
+                case '"' -> escaped.append("\\\"");
+                case '\\' -> escaped.append("\\\\");
+                case '\b' -> escaped.append("\\b");
+                case '\f' -> escaped.append("\\f");
+                case '\n' -> escaped.append("\\n");
+                case '\r' -> escaped.append("\\r");
+                case '\t' -> escaped.append("\\t");
+                default -> {
+                    if (codePoint < 0x20) {
+                        escaped.append(String.format("\\u%04x", codePoint));
+                    } else {
+                        escaped.appendCodePoint(codePoint);
+                    }
+                }
+            }
+        });
+        return escaped.append('"').toString();
     }
 
     private static MessageDigest sha256() {

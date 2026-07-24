@@ -138,6 +138,42 @@ class SubjectMetadataQueryServiceTest {
         assertThat(transactional.readOnly()).isTrue();
     }
 
+    @Test
+    void exactNameLookupTrimsOnceAndDelegatesWithoutCaseFolding() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        List<String> received = new ArrayList<>();
+        SubjectContextView expected = new SubjectContextView(9, "高等数学");
+        SubjectContextQueryPort port = new SubjectContextQueryPort() {
+            @Override
+            public Optional<SubjectContextView> findSubjectById(long subjectId) {
+                throw new AssertionError("subject-id lookup must not be called");
+            }
+
+            @Override
+            public Optional<SubjectContextView> findSubjectByExactName(String subjectName) {
+                calls.incrementAndGet();
+                received.add(subjectName);
+                return Optional.of(expected);
+            }
+        };
+        SubjectMetadataQueryService service =
+                new SubjectMetadataQueryService(unusedSubjectInventoryPort(), port);
+
+        assertThat(service.findSubjectByExactName("  高等数学  ")).containsSame(expected);
+        assertThat(received).containsExactly("高等数学");
+        assertThat(calls).hasValue(1);
+        assertThatThrownBy(() -> service.findSubjectByExactName(" \t "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("subjectName must not be blank");
+        assertThat(calls).hasValue(1);
+
+        Transactional transactional = SubjectMetadataQueryService.class
+                .getDeclaredMethod("findSubjectByExactName", String.class)
+                .getAnnotation(Transactional.class);
+        assertThat(transactional).isNotNull();
+        assertThat(transactional.readOnly()).isTrue();
+    }
+
     private static SubjectInventoryQueryPort unusedSubjectInventoryPort() {
         return () -> {
             throw new AssertionError("subject-inventory port must not be called");

@@ -9,4 +9,6 @@ public interface SubjectMetadataApplicationApi {
     List<SubjectInventorySummaryView> listSubjectInventorySummaries();
 
     Optional<SubjectContextView> findSubjectById(long subjectId);
+
+    Optional<SubjectContextView> findSubjectByExactName(String subjectName);
 }

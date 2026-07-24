@@ -6,6 +6,7 @@ import io.saksk.ti.catalog.api.SubjectMetadataApplicationApi;
 import io.saksk.ti.catalog.application.port.SubjectContextQueryPort;
 import io.saksk.ti.catalog.application.port.SubjectInventoryQueryPort;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,5 +38,15 @@ class SubjectMetadataQueryService implements SubjectMetadataApplicationApi {
             throw new IllegalArgumentException("subjectId must not be negative");
         }
         return subjectContext.findSubjectById(subjectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<SubjectContextView> findSubjectByExactName(String subjectName) {
+        subjectName = Objects.requireNonNull(subjectName, "subjectName").strip();
+        if (subjectName.isEmpty()) {
+            throw new IllegalArgumentException("subjectName must not be blank");
+        }
+        return subjectContext.findSubjectByExactName(subjectName);
     }
 }

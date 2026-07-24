@@ -7,5 +7,9 @@ import java.util.Optional;
 public interface SubjectContextQueryPort {
 
     Optional<SubjectContextView> findSubjectById(long subjectId);
-}
 
+    default Optional<SubjectContextView> findSubjectByExactName(String subjectName) {
+        throw new UnsupportedOperationException(
+                "Exact subject-name lookup is not implemented by this adapter");
+    }
+}
