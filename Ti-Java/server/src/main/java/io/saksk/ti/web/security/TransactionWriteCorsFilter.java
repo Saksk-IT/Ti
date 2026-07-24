@@ -7,9 +7,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +22,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 /** Strict route-scoped CORS boundary for the Phase 4C transaction-write endpoints. */
 public final class TransactionWriteCorsFilter extends OncePerRequestFilter {
+
+    public static final String ALLOWED_ORIGINS_PROPERTY =
+            "ti.security.transaction-write-cors.allowed-origins";
 
     private static final Set<String> DEVELOPMENT_PROFILES =
             Set.of("dev", "development", "local");
@@ -42,14 +48,18 @@ public final class TransactionWriteCorsFilter extends OncePerRequestFilter {
             TransactionWriteRequestResolver routes,
             Environment environment
     ) {
-        this.routes = routes;
+        this.routes = Objects.requireNonNull(routes, "routes");
+        environment = Objects.requireNonNull(environment, "environment");
         LinkedHashSet<String> origins = new LinkedHashSet<>();
-        String configured = environment.getProperty("CORS_ALLOWED_ORIGINS", "");
+        String configured = environment.getProperty(ALLOWED_ORIGINS_PROPERTY, "");
         if (configured != null) {
             Arrays.stream(configured.split(",", -1))
                     .map(String::strip)
                     .filter(value -> !value.isEmpty())
-                    .forEach(origins::add);
+                    .forEach(value -> {
+                        validateOrigin(value);
+                        origins.add(value);
+                    });
         }
         String[] profiles = environment.getActiveProfiles().length == 0
                 ? environment.getDefaultProfiles()
@@ -60,6 +70,10 @@ public final class TransactionWriteCorsFilter extends OncePerRequestFilter {
             origins.addAll(DEVELOPMENT_ORIGINS);
         }
         this.allowedOrigins = Set.copyOf(origins);
+    }
+
+    Set<String> allowedOrigins() {
+        return allowedOrigins;
     }
 
     @Override
@@ -115,5 +129,34 @@ public final class TransactionWriteCorsFilter extends OncePerRequestFilter {
             }
         }
         return true;
+    }
+
+    private static void validateOrigin(String origin) {
+        if (origin.equals("*")
+                || origin.equalsIgnoreCase("null")
+                || origin.indexOf('\r') >= 0
+                || origin.indexOf('\n') >= 0) {
+            throw new IllegalArgumentException("Unsafe transaction-write CORS origin");
+        }
+        try {
+            URI parsed = new URI(origin);
+            String scheme = parsed.getScheme();
+            int port = parsed.getPort();
+            if (!("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
+                    || parsed.getHost() == null
+                    || parsed.getRawUserInfo() != null
+                    || parsed.getRawPath() != null && !parsed.getRawPath().isEmpty()
+                    || parsed.getRawQuery() != null
+                    || parsed.getRawFragment() != null
+                    || port == 0
+                    || port > 65_535) {
+                throw new IllegalArgumentException(
+                        "Unsafe transaction-write CORS origin");
+            }
+        } catch (URISyntaxException exception) {
+            throw new IllegalArgumentException(
+                    "Unsafe transaction-write CORS origin",
+                    exception);
+        }
     }
 }
