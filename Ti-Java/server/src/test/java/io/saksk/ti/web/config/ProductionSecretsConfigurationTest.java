@@ -37,6 +37,8 @@ class ProductionSecretsConfigurationTest {
                     "ti.learning.write-idempotency.key-secret="
                             + "production-learning-idempotency-key-secret-0001",
                     "ti.security.login-rate-limit.key-secret=production-login-rate-key-secret-0001",
+                    "ti.security.transaction-write-rate-limit.key-secret="
+                            + "production-transaction-write-rate-key-secret-0001",
                     "ti.security.session.cookie-name=__Host-ti_session",
                     "ti.security.session.csrf-cookie-name=__Host-ti_csrf",
                     "ti.security.session.secure-cookie=true"
@@ -65,6 +67,8 @@ class ProductionSecretsConfigurationTest {
                     "ti.learning.write-idempotency.key-secret="
                             + "production-learning-idempotency-key-secret-0001",
                     "ti.security.login-rate-limit.key-secret=production-login-rate-key-secret-0001",
+                    "ti.security.transaction-write-rate-limit.key-secret="
+                            + "production-transaction-write-rate-key-secret-0001",
                     "ti.security.session.cookie-name=__Host-ti_session",
                     "ti.security.session.csrf-cookie-name=__Host-ti_csrf",
                     "ti.security.session.secure-cookie=true",

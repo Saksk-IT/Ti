@@ -16,7 +16,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
         ClientAddressProperties.class,
         SubjectReadRateLimitProperties.class,
         PublicBankReadRateLimitProperties.class,
-        PersonalBankUserCountsReadRateLimitProperties.class
+        PersonalBankUserCountsReadRateLimitProperties.class,
+        TransactionWriteRateLimitProperties.class
 })
 class LoginRateLimitConfiguration {
 
@@ -106,5 +107,26 @@ class LoginRateLimitConfiguration {
                     "User-counts and login rate limits require independent key material");
         }
         return new RedisPersonalBankUserCountsReadRateLimiter(redis, properties, clock);
+    }
+
+    @Bean
+    TransactionWriteRateLimiter transactionWriteRateLimiter(
+            StringRedisTemplate redis,
+            TransactionWriteRateLimitProperties properties,
+            PersonalBankUserCountsReadRateLimitProperties userCountsProperties,
+            LoginRateLimitProperties loginProperties,
+            Clock clock
+    ) {
+        if (properties.namespace().equals(userCountsProperties.namespace())) {
+            throw new IllegalStateException(
+                    "Transaction-write and user-counts limits require independent namespaces");
+        }
+        if (MessageDigest.isEqual(
+                properties.keySecretBytes(),
+                loginProperties.keySecretBytes())) {
+            throw new IllegalStateException(
+                    "Transaction-write and login limits require independent key material");
+        }
+        return new RedisTransactionWriteRateLimiter(redis, properties, clock);
     }
 }

@@ -19,6 +19,7 @@ public class ProductionSecretsConfiguration {
         requireNonBlank(environment, "ti.catalog.question-edit-idempotency.key-secret");
         requireNonBlank(environment, "ti.learning.write-idempotency.key-secret");
         requireNonBlank(environment, "ti.security.login-rate-limit.key-secret");
+        requireNonBlank(environment, "ti.security.transaction-write-rate-limit.key-secret");
         requireSecureHostCookie(environment, "ti.security.session.cookie-name");
         requireSecureHostCookie(environment, "ti.security.session.csrf-cookie-name");
         if (!environment.getProperty("ti.security.session.secure-cookie", Boolean.class, false)) {

@@ -5,6 +5,7 @@ import io.saksk.ti.web.error.SafeSecurityErrorWriter;
 import io.saksk.ti.web.compat.LegacyPublicBankSecurityErrorWriter;
 import io.saksk.ti.web.compat.LegacyPersonalBankUserCountsSecurityErrorWriter;
 import io.saksk.ti.web.compat.LegacySubjectSecurityErrorWriter;
+import io.saksk.ti.web.compat.LegacyTransactionWriteSecurityErrorWriter;
 import io.saksk.ti.web.security.SessionBoundCsrfTokens;
 import io.saksk.ti.web.security.ClientAddressResolver;
 import io.saksk.ti.web.security.CsrfIssuanceRateLimitFilter;
@@ -20,6 +21,11 @@ import io.saksk.ti.web.security.PersonalBankUserCountsReadRateLimiter;
 import io.saksk.ti.web.security.PersonalBankUserCountsReadRequestResolver;
 import io.saksk.ti.web.security.TargetSessionProperties;
 import io.saksk.ti.web.security.TargetSessionAuthenticationFilter;
+import io.saksk.ti.web.security.TransactionWriteRateLimitFilter;
+import io.saksk.ti.web.security.TransactionWriteRateLimiter;
+import io.saksk.ti.web.security.TransactionWriteRequestResolver;
+import io.saksk.ti.web.security.TransactionWriteSafetyHeaderFilter;
+import io.saksk.ti.web.security.TransactionWriteCorsFilter;
 import io.saksk.ti.web.security.SubjectReadRateLimitFilter;
 import io.saksk.ti.web.security.SubjectReadRateLimiter;
 import io.saksk.ti.web.security.SubjectReadRequestResolver;
@@ -79,6 +85,8 @@ public class SecurityConfiguration {
             ObjectMapper objectMapper,
             ObjectProvider<PersonalBankUserCountsReadRequestResolver> userCountsRoutes,
             ObjectProvider<LegacyPersonalBankUserCountsSecurityErrorWriter> userCountsErrors,
+            ObjectProvider<TransactionWriteRequestResolver> transactionWriteRoutes,
+            ObjectProvider<LegacyTransactionWriteSecurityErrorWriter> transactionWriteErrors,
             Clock clock
     ) {
         return new SafeSecurityErrorWriter(objectMapper) {
@@ -92,6 +100,23 @@ public class SecurityConfiguration {
                         userCountsRoutes.getIfAvailable();
                 LegacyPersonalBankUserCountsSecurityErrorWriter errors =
                         userCountsErrors.getIfAvailable();
+                TransactionWriteRequestResolver writeRoutes =
+                        transactionWriteRoutes.getIfAvailable();
+                LegacyTransactionWriteSecurityErrorWriter writeErrors =
+                        transactionWriteErrors.getIfAvailable();
+                if ((errorCode == ErrorCode.SERVICE_UNAVAILABLE
+                                || errorCode == ErrorCode.RATE_LIMITED)
+                        && writeRoutes != null
+                        && writeErrors != null
+                        && writeRoutes.resolve(request).isPresent()) {
+                    if (errorCode == ErrorCode.SERVICE_UNAVAILABLE) {
+                        writeErrors.writeServiceUnavailable(request, response);
+                    } else {
+                        addAuthenticationRateLimitReset(response, clock);
+                        writeErrors.writeAuthenticationRateLimited(request, response);
+                    }
+                    return;
+                }
                 if ((errorCode == ErrorCode.SERVICE_UNAVAILABLE
                                 || errorCode == ErrorCode.RATE_LIMITED)
                         && routes != null
@@ -167,6 +192,10 @@ public class SecurityConfiguration {
                     personalBankUserCountsReadRateLimiter,
             ObjectProvider<LegacyPersonalBankUserCountsSecurityErrorWriter>
                     legacyPersonalBankUserCountsErrorWriter,
+            ObjectProvider<TransactionWriteRequestResolver> transactionWriteRequestResolver,
+            ObjectProvider<TransactionWriteRateLimiter> transactionWriteRateLimiter,
+            ObjectProvider<LegacyTransactionWriteSecurityErrorWriter>
+                    legacyTransactionWriteErrorWriter,
             Environment environment
     ) throws Exception {
         LegacySubjectSecurityErrorWriter legacySubjectErrors =
@@ -199,19 +228,32 @@ public class SecurityConfiguration {
                                         == PersonalBankUserCountsReadRequestResolver.Alias.WEB)
                                 .isPresent()
                         && hasAnyAuthorizationHeader(request);
+        TransactionWriteRequestResolver writeRoutes =
+                transactionWriteRequestResolver.getIfAvailable();
+        TransactionWriteRateLimiter writeLimiter =
+                transactionWriteRateLimiter.getIfAvailable();
+        LegacyTransactionWriteSecurityErrorWriter writeErrors =
+                legacyTransactionWriteErrorWriter.getIfAvailable();
+        RequestMatcher transactionWriteMatcher = request ->
+                writeRoutes != null && writeRoutes.matches(request);
         RequestMatcher legacyCompatibilityReads = request ->
                 LEGACY_LOGIN_METHODS_READ.matches(request)
                         || subjectReadMatcher.matches(request)
                         || publicBankReadMatcher.matches(request)
                         || userCountsCandidateMatcher.matches(request);
-        RequestMatcher otherRequests = new NegatedRequestMatcher(legacyCompatibilityReads);
+        RequestMatcher legacyCompatibilityRequests = request ->
+                legacyCompatibilityReads.matches(request)
+                        || transactionWriteMatcher.matches(request);
+        RequestMatcher otherRequests = new NegatedRequestMatcher(legacyCompatibilityRequests);
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokens)
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers(request -> Boolean.TRUE.equals(request.getAttribute(
-                                TargetSessionAuthenticationFilter
-                                        .LEGACY_BEARER_AUTHENTICATED_ATTRIBUTE))))
+                        .ignoringRequestMatchers(request ->
+                                transactionWriteMatcher.matches(request)
+                                        || Boolean.TRUE.equals(request.getAttribute(
+                                                TargetSessionAuthenticationFilter
+                                                        .LEGACY_BEARER_AUTHENTICATED_ATTRIBUTE))))
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(
@@ -229,9 +271,20 @@ public class SecurityConfiguration {
                         .requestMatchers(userCountsProtectedReadMatcher).authenticated()
                         .requestMatchers(userCountsCandidateMatcher).permitAll()
                         .requestMatchers(subjectReadMatcher).authenticated()
+                        .requestMatchers(transactionWriteMatcher).authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) -> {
+                            if (writeRoutes != null && writeErrors != null) {
+                                var transactionWrite = writeRoutes.resolve(request);
+                                if (transactionWrite.isPresent()) {
+                                    writeErrors.writeAuthenticationRequired(
+                                            request,
+                                            response,
+                                            transactionWrite.orElseThrow().route());
+                                    return;
+                                }
+                            }
                             if (userCountsReadRoutes != null && userCountsErrors != null) {
                                 var userCounts = userCountsReadRoutes
                                         .resolveRateLimitedRoute(request);
@@ -254,6 +307,12 @@ public class SecurityConfiguration {
                                     ErrorCode.AUTHENTICATION_REQUIRED);
                         })
                         .accessDeniedHandler((request, response, exception) -> {
+                            if (writeRoutes != null
+                                    && writeErrors != null
+                                    && writeRoutes.resolve(request).isPresent()) {
+                                writeErrors.writeMissingSafetyHeader(request, response);
+                                return;
+                            }
                             if (userCountsReadRoutes != null && userCountsErrors != null) {
                                 var userCounts = userCountsReadRoutes
                                         .resolveRateLimitedRoute(request);
@@ -274,10 +333,14 @@ public class SecurityConfiguration {
                                 otherRequests,
                                 new CacheControlHeadersWriter()))
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                legacyCompatibilityReads,
+                                legacyCompatibilityRequests,
                                 new XFrameOptionsHeaderWriter(XFrameOptionsMode.SAMEORIGIN)))
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
                                 userCountsCandidateMatcher,
+                                new ReferrerPolicyHeaderWriter(
+                                        ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                transactionWriteMatcher,
                                 new ReferrerPolicyHeaderWriter(
                                         ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
@@ -311,7 +374,11 @@ public class SecurityConfiguration {
                     CorsFilter.class);
             userCountsBoundaryInstalled = true;
         }
-
+        if (writeRoutes != null) {
+            http.addFilterAfter(
+                    new TransactionWriteCorsFilter(writeRoutes, environment),
+                    CorsFilter.class);
+        }
         TargetSessionAuthenticationFilter authenticationFilter = sessionAuthentication.getIfAvailable();
         if (authenticationFilter != null) {
             if (userCountsBoundaryInstalled) {
@@ -319,6 +386,28 @@ public class SecurityConfiguration {
             } else {
                 http.addFilterAfter(authenticationFilter, SecurityContextHolderFilter.class);
             }
+        }
+        if (writeRoutes != null) {
+            if (writeLimiter == null || writeErrors == null || addressResolver == null) {
+                throw new IllegalStateException(
+                        "Transaction-write routes require limiter, address resolver, and writer");
+            }
+            TransactionWriteRateLimitFilter writeRateFilter =
+                    new TransactionWriteRateLimitFilter(
+                            writeLimiter,
+                            writeRoutes,
+                            addressResolver,
+                            writeErrors);
+            TransactionWriteSafetyHeaderFilter writeSafetyFilter =
+                    new TransactionWriteSafetyHeaderFilter(writeRoutes, writeErrors);
+            if (authenticationFilter != null) {
+                http.addFilterAfter(
+                        writeRateFilter,
+                        TargetSessionAuthenticationFilter.class);
+            } else {
+                http.addFilterAfter(writeRateFilter, SecurityContextHolderFilter.class);
+            }
+            http.addFilterAfter(writeSafetyFilter, TransactionWriteRateLimitFilter.class);
         }
         SubjectReadRateLimiter subjectLimiter = subjectReadRateLimiter.getIfAvailable();
         if (subjectLimiter != null) {
