@@ -1,0 +1,2 @@
+resource_kind,resource_name,base_resource,phase4c_owner,persistence_role,lifecycle,evidence,production_cutover
+redis_key,ti-java:web:transaction-write-rate:<operation_id>:<identity|ip>:v1:<hmac_sha256>,false,web,runtime_rate_limit,route-isolated fixed-minute window; HMAC pseudonym only; integer counter with bounded PTTL,RedisTransactionWriteRateLimiter + RedisTransactionWriteRateLimiterTest + LegacyTransactionWriteHttpTest,false

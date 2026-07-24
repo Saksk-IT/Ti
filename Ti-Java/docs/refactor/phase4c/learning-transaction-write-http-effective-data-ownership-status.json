@@ -1,0 +1,33 @@
+{
+  "contract_id": "ti.phase4c.learning-transaction-write-http-effective-data-ownership-status",
+  "schema_version": 1,
+  "captured_at": "2026-07-24",
+  "predecessor": {
+    "source": "personal-bank-user-counts-http-effective-data-ownership-status.json",
+    "sha256": "9f29ee2e27695a1d36a0ca0e5a8ffbe76172b1d3583ca6ee3cf3099e43d758b2",
+    "resource_count": 160,
+    "canonical_owner_manifest_sha256": "9767e2c6d6619be0db5f7b3f78335b23ff2020a9d756a2d6a3bf36eccc78908e",
+    "immutable": true
+  },
+  "delta": {
+    "source": "learning-transaction-write-http-data-ownership-delta.csv",
+    "sha256": "cdabd86588bc46ed88965da5ac9128b56bc3908ad4b3ea96bda188a4e0dedc13",
+    "new_resource_count": 1
+  },
+  "effective": {
+    "resource_count": 161,
+    "resources_with_exactly_one_owner": 161,
+    "canonical_owner_manifest_sha256": "3afa53c877c6a7a22d51f27669792abb4ff99b9bb729f3a937bdb96bdb741890",
+    "new_resources": [
+      {
+        "resource_kind": "redis_key",
+        "resource_name": "ti-java:web:transaction-write-rate:<operation_id>:<identity|ip>:v1:<hmac_sha256>",
+        "owner": "web",
+        "persistence_role": "runtime_rate_limit",
+        "business_fact": false,
+        "production_cutover": false
+      }
+    ]
+  },
+  "document_payload_sha256": "e5b77653eeb899ad131919e0c967c451ecfb6ed4cad4943e17c2d4b8dbad632a"
+}
