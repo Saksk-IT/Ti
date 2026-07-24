@@ -6,6 +6,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
+import importlib
 import json
 from pathlib import Path
 import subprocess
@@ -35,6 +36,13 @@ CONTRACT_PAYLOAD_SHA256: str | None = (
 )
 CONTRACT_BYTE_COUNT: int | None = 44_336
 BUILD_CONTEXT_SCRIPT_RELATIVE = builder.BUILD_CONTEXT_SCRIPT_RELATIVE
+TRANSACTION_WRITE_SUCCESSOR_MODULE = (
+    "tools."
+    "phase4c_learning_transaction_write_http_full_parity_successor_acceptance"
+)
+TRANSACTION_WRITE_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_learning_transaction_write_http_full_parity_successor_acceptance"
+)
 _CachedValue = TypeVar("_CachedValue")
 _VALIDATION_SESSION: ContextVar[dict[tuple[str, str], Any] | None] = (
     ContextVar("phase4c_acceptance_validation_session", default=None)
@@ -102,6 +110,22 @@ def _require_contract_envelope() -> tuple[str, str, int]:
             "execution-protocol contract envelope requires final mechanical refresh"
         )
     return CONTRACT_SHA256, CONTRACT_PAYLOAD_SHA256, CONTRACT_BYTE_COUNT
+
+
+def _load_transaction_write_successor() -> object:
+    try:
+        return importlib.import_module(TRANSACTION_WRITE_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name not in {"tools", TRANSACTION_WRITE_SUCCESSOR_MODULE}:
+            raise
+    try:
+        return importlib.import_module(TRANSACTION_WRITE_SUCCESSOR_DIRECT_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name != TRANSACTION_WRITE_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError(
+            "execution-protocol transaction-write successor is required"
+        ) from error
 
 
 def _load_contract_envelope(root: Path) -> dict[str, Any]:
@@ -296,8 +320,27 @@ def validate(document: dict[str, Any], root: Path = ROOT) -> None:
 def _load_uncached(root: Path) -> dict[str, Any]:
     resolved_root = root.resolve(strict=True)
     document = _load_contract_envelope(resolved_root)
-    validate(document, resolved_root)
-    return document
+    try:
+        validate(document, resolved_root)
+        return document
+    except AssertionError as predecessor_error:
+        successor = _load_transaction_write_successor()
+        loader = getattr(successor, "load_node_d_predecessor", None)
+        if not callable(loader):
+            raise AssertionError(
+                "execution-protocol transaction-write predecessor API is absent"
+            ) from predecessor_error
+        try:
+            successor_document = loader(resolved_root)
+        except AssertionError as successor_error:
+            raise AssertionError(
+                "execution-protocol current source bytes or successor authority drifted"
+            ) from successor_error
+        if successor_document != document:
+            raise AssertionError(
+                "execution-protocol successor returned a different predecessor"
+            ) from predecessor_error
+        return document
 
 
 def load(root: Path = ROOT) -> dict[str, Any]:
@@ -334,9 +377,43 @@ def source_transition_from_validated_document(
         len(payload) != transition["successor_byte_count"]
         or builder.sha256_bytes(payload) != transition["successor_sha256"]
     ):
-        raise AssertionError(
-            f"execution-protocol transition bytes drifted: {relative}"
+        successor = _load_transaction_write_successor()
+        transition_from_node_d = getattr(
+            successor, "transition_from_node_d", None
         )
+        if not callable(transition_from_node_d):
+            raise AssertionError(
+                "execution-protocol transaction-write transition API is absent"
+            )
+        try:
+            current = transition_from_node_d(
+                resolved_root,
+                relative,
+                str(transition["successor_sha256"]),
+                int(transition["successor_byte_count"]),
+            )
+        except AssertionError as error:
+            raise AssertionError(
+                f"execution-protocol transition bytes drifted: {relative}"
+            ) from error
+        physical_sha256 = builder.sha256_bytes(payload)
+        if current != {
+            "source": relative,
+            "accepted_sha256": transition["successor_sha256"],
+            "accepted_byte_count": transition["successor_byte_count"],
+            "successor_sha256": physical_sha256,
+            "successor_byte_count": len(payload),
+        }:
+            raise AssertionError(
+                f"execution-protocol transaction-write transition drifted: {relative}"
+            )
+        return {
+            "source": relative,
+            "accepted_sha256": transition["accepted_sha256"],
+            "accepted_byte_count": transition["accepted_byte_count"],
+            "successor_sha256": physical_sha256,
+            "successor_byte_count": len(payload),
+        }
     return dict(transition)
 
 
@@ -468,6 +545,14 @@ def validate_worm_successor(
 
 
 def minimal_fixture_paths() -> tuple[str, ...]:
+    transaction_successor = _load_transaction_write_successor()
+    successor_fixture_paths = getattr(
+        transaction_successor, "minimal_fixture_paths", None
+    )
+    if not callable(successor_fixture_paths):
+        raise AssertionError(
+            "execution-protocol transaction-write fixture API is absent"
+        )
     node_c_runtime_paths = (
         *builder.node_c.PRODUCTION_RUNTIME_ADDITIONS,
         *builder.node_c.PRODUCTION_RUNTIME_CHANGES,
@@ -483,6 +568,7 @@ def minimal_fixture_paths() -> tuple[str, ...]:
                 BUILD_CONTEXT_SCRIPT_RELATIVE,
                 *node_c_runtime_paths,
                 *builder.SOURCE_FILES,
+                *successor_fixture_paths(),
             )
         )
     )

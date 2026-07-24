@@ -351,13 +351,35 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
         Path physical = fixedRegularFile(root, relative);
         require(relative.equals(transition.source())
                         && transition.acceptedSha256().equals(
-                        ACCEPTED_TRANSITION_SHA256.get(relative))
+                        ACCEPTED_TRANSITION_SHA256.get(relative)),
+                "execution-protocol transition descriptor drifted: "
+                        + relative);
+        if (Files.size(physical) == transition.successorByteCount()
+                && sha256(physical).equals(transition.successorSha256())) {
+            return transition;
+        }
+        Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                .SourceTransition current =
+                Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                        .transitionFromNodeD(
+                                root,
+                                relative,
+                                transition.successorSha256(),
+                                transition.successorByteCount());
+        require(current != null
+                        && relative.equals(current.source())
                         && Files.size(physical)
-                        == transition.successorByteCount()
+                        == current.successorByteCount()
                         && sha256(physical).equals(
-                        transition.successorSha256()),
-                "execution-protocol transition bytes drifted: " + relative);
-        return transition;
+                        current.successorSha256()),
+                "execution-protocol transaction-write transition drifted: "
+                        + relative);
+        return new SourceTransition(
+                relative,
+                transition.acceptedSha256(),
+                transition.acceptedByteCount(),
+                current.successorSha256(),
+                current.successorByteCount());
     }
 
     static String acceptedSha256(String relative) {
@@ -437,15 +459,18 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
                         && worm.path("accepted_chain_node_count").asInt() == 8,
                 "execution-protocol rejected accepted WORM authority");
         String physicalBuildContext = javaBuildContextSha256(root);
-        require(physicalBuildContext.equals(
-                        worm.path("current_build_context_sha256").asString()),
-                "execution-protocol physical build-context successor drifted");
+        String nodeDCurrentBuildContext =
+                worm.path("current_build_context_sha256").asString();
+        if (!physicalBuildContext.equals(nodeDCurrentBuildContext)) {
+            Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                    .validateCurrentBuildContext(root, physicalBuildContext);
+        }
         return new WormSuccessor(
                 acceptedReportSha256,
                 acceptedBuildContextSha256,
                 worm.path("accepted_chain_node_count").asInt(),
                 worm.path("current_report").path("sha256").asString(),
-                physicalBuildContext,
+                nodeDCurrentBuildContext,
                 worm.path("current_chain_node_count").asInt());
     }
 
@@ -458,14 +483,26 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
         paths.add("server/Dockerfile");
         paths.addAll(IMPLEMENTATION_SOURCE_PATHS);
         paths.addAll(SOURCE_TRANSITION_PATHS);
+        paths.addAll(
+                Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                        .minimalFixturePaths());
         return Set.copyOf(paths);
     }
 
     static JsonNode load(Path tiJavaRoot) throws IOException {
         Path root = tiJavaRoot.toRealPath();
         JsonNode contract = loadContractEnvelope(root);
-        validate(contract, root);
-        return contract;
+        try {
+            validate(contract, root);
+            return contract;
+        } catch (AssertionError predecessorError) {
+            JsonNode successorPredecessor =
+                    Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                            .loadNodeDPredecessor(root);
+            require(successorPredecessor.equals(contract),
+                    "execution-protocol successor returned a different predecessor");
+            return contract;
+        }
     }
 
     static void validate(JsonNode contract, Path tiJavaRoot)
