@@ -38,7 +38,7 @@
 
 ### 2026-07-24 签到事务写检查点
 
-- **当前绿色候选：** `POST /api/user/checkin` 的 HTTP-neutral 应用、learning-owned JDBC 与双 PostgreSQL 事务证据已闭合；本节随实现提交固定后追加完整 SHA。该 operation 仍为 pending，九条写路由统一晋级前权威状态保持 **13/598/0**。
+- **最近通过的签到实现提交：** `7ecbd8a64b6924615e4d2d18663132d73a6f1396`（`feat(java): implement phase4c checkin transaction`）。`POST /api/user/checkin` 的 HTTP-neutral 应用、learning-owned JDBC 与双 PostgreSQL 事务证据已闭合；该 operation 仍为 pending，九条写路由统一晋级前权威状态保持 **13/598/0**。
 - **本轮完成：** 以 `(user_id, Asia/Shanghai local date)` 既有唯一约束作为自然幂等键，首个无 header 请求插入并返回 `just_checked_in=true`，同日后续无 header 请求返回原始 `created_at` 与 `just_checked_in=false`；显式 `Idempotency-Key` 仍只持久化 HMAC，并逐字义回放首个已提交响应。
 - **事务与响应语义：** 本日插入、原始签到时刻、累计天数、最多 100 个日期的旧连续天数算法、本月有序签到日期及 durable receipt 在一个 learning 事务中完成；北京时间日期被纳入请求指纹，避免跨自然日错误回放。旧数据中的无效日期使 streak fail closed 为 0，nullable `created_at` 保持 null。
 - **验证命令与结果：** checkin API/应用/事务/架构、learning standalone 与 Modulith 共 17 tests 全绿；`Phase4cCheckinWriteTransactionIT` 在 PostgreSQL 16.14 与 18.4 为 2/2 通过，覆盖首签/自然重复、月/总数/连续天数、显式 replay/conflict、业务与回执共同回滚后重试、无 header 并发一真一假、同键并发一次提交、畸形旧日期、nullable 时间和事务外 fail closed。
