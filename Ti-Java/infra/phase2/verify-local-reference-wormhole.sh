@@ -246,6 +246,9 @@ read_password_file="$work_dir/ti.db.password"
 redis_password_file="$work_dir/ti.redis.password"
 login_rate_limit_key_secret_file="$work_dir/ti.login-rate-limit.key-secret"
 user_counts_rate_limit_key_secret_file="$work_dir/ti.personal-bank-user-counts-read-rate-limit.key-secret"
+catalog_question_edit_key_secret_file="$work_dir/ti.catalog-question-edit-idempotency.key-secret"
+learning_write_key_secret_file="$work_dir/ti.learning-write-idempotency.key-secret"
+transaction_write_rate_limit_key_secret_file="$work_dir/ti.transaction-write-rate-limit.key-secret"
 redis_config_file="$work_dir/redis.conf"
 sql_error_file="$work_dir/read-role-error.log"
 
@@ -254,16 +257,26 @@ read_password="phase2-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
 redis_password="phase2-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
 login_rate_limit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 user_counts_rate_limit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+catalog_question_edit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+learning_write_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+transaction_write_rate_limit_key_secret="phase2-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 printf '%s\n' "$owner_password" > "$owner_password_file"
 printf '%s\n' "$read_password" > "$read_password_file"
 printf '%s\n' "$redis_password" > "$redis_password_file"
 printf '%s\n' "$login_rate_limit_key_secret" > "$login_rate_limit_key_secret_file"
 printf '%s\n' "$user_counts_rate_limit_key_secret" > "$user_counts_rate_limit_key_secret_file"
+printf '%s\n' "$catalog_question_edit_key_secret" > "$catalog_question_edit_key_secret_file"
+printf '%s\n' "$learning_write_key_secret" > "$learning_write_key_secret_file"
+printf '%s\n' "$transaction_write_rate_limit_key_secret" \
+    > "$transaction_write_rate_limit_key_secret_file"
 printf 'bind 0.0.0.0\nprotected-mode no\nrequirepass %s\nappendonly no\nsave ""\n' \
     "$redis_password" > "$redis_config_file"
 chmod 0444 "$owner_password_file" "$read_password_file" \
     "$redis_password_file" "$login_rate_limit_key_secret_file" \
     "$user_counts_rate_limit_key_secret_file" \
+    "$catalog_question_edit_key_secret_file" \
+    "$learning_write_key_secret_file" \
+    "$transaction_write_rate_limit_key_secret_file" \
     "$redis_config_file"
 
 expected_legacy_commit=$(sed -n 's/.*"legacySourceCommit": "\([^"]*\)".*/\1/p' \
@@ -490,6 +503,9 @@ java_container_id=$(docker run --detach \
     --mount "type=bind,source=$redis_password_file,target=/run/secrets/ti.redis.password,readonly" \
     --mount "type=bind,source=$login_rate_limit_key_secret_file,target=/run/secrets/ti.login-rate-limit.key-secret,readonly" \
     --mount "type=bind,source=$user_counts_rate_limit_key_secret_file,target=/run/secrets/ti.personal-bank-user-counts-read-rate-limit.key-secret,readonly" \
+    --mount "type=bind,source=$catalog_question_edit_key_secret_file,target=/run/secrets/ti.catalog-question-edit-idempotency.key-secret,readonly" \
+    --mount "type=bind,source=$learning_write_key_secret_file,target=/run/secrets/ti.learning-write-idempotency.key-secret,readonly" \
+    --mount "type=bind,source=$transaction_write_rate_limit_key_secret_file,target=/run/secrets/ti.transaction-write-rate-limit.key-secret,readonly" \
     --env SPRING_PROFILES_ACTIVE=prod \
     --env TI_DB_URL=jdbc:postgresql://postgres:5432/ti_phase2_wormhole \
     --env TI_DB_USERNAME=ti_phase2_read \

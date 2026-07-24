@@ -135,6 +135,7 @@ fi
 CONTAINER_IMAGES_FILE="$TI_JAVA_DIR/server/src/test/java/io/saksk/ti/support/Phase2ContainerImages.java"
 WORMHOLE_FILE="$TI_JAVA_DIR/infra/phase2/verify-local-reference-wormhole.sh"
 WORMHOLE_SUCCESSOR_VALIDATOR="$TI_JAVA_DIR/tools/phase2_wormhole_successor_acceptance.py"
+WORMHOLE_TRANSACTION_WRITE_SUCCESSOR_VALIDATOR="$TI_JAVA_DIR/tools/phase4c_transaction_write_worm_successor_acceptance.py"
 READ_ONLY_INIT="$TI_JAVA_DIR/infra/phase2/postgres/020-create-readonly-role.sh"
 REFERENCE_ASSERTIONS="$TI_JAVA_DIR/server/src/test/java/io/saksk/ti/support/ReferenceSchemaAssertions.java"
 DRIFT_MANIFEST="$TI_JAVA_DIR/infra/phase2/reference-drift-manifest.json"
@@ -334,6 +335,15 @@ assert_file_contains "Fixed Phase 4C tag execution-protocol successor module" \
 assert_file_contains "Fixed Phase 4C tag execution-protocol successor contract" \
     'load_tag_execution_protocol_successor(ti_java_root)' \
     "$WORMHOLE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C transaction-write WORM successor" \
+    'dd165106d7b3a73512acdbf89924b352e3f1ad027132b8a8519af957a47de599' \
+    "$WORMHOLE_TRANSACTION_WRITE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C transaction-write build-context" \
+    '5e4247d0a43405661cef27b91b4169273e8ad096bfa750b4ba4488ca6c247224' \
+    "$WORMHOLE_TRANSACTION_WRITE_SUCCESSOR_VALIDATOR"
+assert_file_contains "Fixed Phase 4C transaction-write WORM predecessor" \
+    'predecessor_sha256=predecessor.PHASE4C_TAG_EXECUTION_PROTOCOL_REPORT_SHA256' \
+    "$WORMHOLE_TRANSACTION_WRITE_SUCCESSOR_VALIDATOR"
 
 assert_file_contains "Observed FK delete rule" "ON DELETE SET NULL" "$SCHEMA_FILE"
 assert_file_contains "JDBC FK delete-rule assertion" "importedKeySetNull" "$REFERENCE_ASSERTIONS"
@@ -347,7 +357,7 @@ assert_file_contains "Read-role ACL override assertion" \
 
 current_dockerfile_sha=$(sha256_file "$TI_JAVA_DIR/server/Dockerfile")
 current_build_context_sha=$("$BUILD_CONTEXT_HASHER")
-python3 "$WORMHOLE_SUCCESSOR_VALIDATOR" \
+python3 "$WORMHOLE_TRANSACTION_WRITE_SUCCESSOR_VALIDATOR" \
     --ti-java-root "$TI_JAVA_DIR" \
     --drift-manifest "$DRIFT_MANIFEST" \
     --dockerfile-sha256 "$current_dockerfile_sha" \
