@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import os
 import sys
+import argparse
 import json
 import math
 import struct
@@ -1109,10 +1110,25 @@ def _seed_interaction_notifications(users: Dict[str, m.User]) -> None:
     db.session.flush()
 
 
-def _run_reset_and_seed() -> Dict[str, object]:
+def _run_reset_and_seed(*, empty_only: bool = False) -> Dict[str, object]:
     """执行清库与造数的主流程，并返回简单统计信息。"""
 
-    deleted = _clear_user_related_data()
+    marker_key = "local_demo_seed_v1"
+    if empty_only:
+        marker = m.SystemConfig.query.filter_by(config_key=marker_key).first()
+        if marker is not None:
+            return json.loads(marker.config_value)
+        if m.User.query.first() is not None:
+            raise RuntimeError("数据库已有用户，拒绝初始化演示数据；请使用独立的空数据库。")
+        deleted = {}
+        if m.Subject.query.first() is None:
+            db.session.add_all([
+                m.Subject(name="数据结构", description="线性结构、树与缓存算法演示题库"),
+                m.Subject(name="计算机网络", description="HTTP 与网络协议演示题库"),
+            ])
+            db.session.flush()
+    else:
+        deleted = _clear_user_related_data()
 
     users = _seed_users()
     admin = users.get("admin")
@@ -1135,10 +1151,22 @@ def _run_reset_and_seed() -> Dict[str, object]:
         "subject_count": len(subjects),
         "question_count": len(questions),
     }
+    if empty_only:
+        db.session.add(m.SystemConfig(
+            config_key=marker_key,
+            config_value=json.dumps(summary),
+            description="本机演示数据已初始化，重复执行时跳过造数",
+        ))
     return summary
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--empty-only", action="store_true",
+        help="仅在无用户的数据库初始化演示数据，重复执行自动跳过，不清空已有数据。",
+    )
+    args = parser.parse_args()
     print("=" * 60)
     print("开发环境用户数据重置 + 种子数据构造工具")
     print("=" * 60)
@@ -1155,7 +1183,7 @@ def main() -> int:
         try:
             summary: Dict[str, object]
             # 单事务执行：任一步骤抛错则整体回滚
-            summary = _run_reset_and_seed()
+            summary = _run_reset_and_seed(empty_only=args.empty_only)
             db.session.commit()
         except Exception as exc:  # noqa: BLE001
             db.session.rollback()
@@ -1178,7 +1206,8 @@ def main() -> int:
 
     print("\n提示：")
     print("  - 所有种子用户统一密码为: DevPass123!")
-    print("  - 你可以使用 admin / student_a / student_b 等账号进行登录调试。")
+    print("  - 管理员登录邮箱：admin@example.dev；手机号：13900000001。")
+    print("  - 学生登录邮箱：student_a@example.dev / student_b@example.dev。")
 
     print("\n完成。")
     return 0
