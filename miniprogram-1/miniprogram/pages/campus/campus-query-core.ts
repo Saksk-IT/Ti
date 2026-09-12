@@ -441,7 +441,8 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
     });
   });
   const tableRows = Object.keys(sectionMap).sort((a, b) => {
-    const rankDiff = sectionRank(a) - sectionRank(b);
+    const rank = (value: string) => Number(/^\d+/.exec(value)?.[0] || 999);
+    const rankDiff = rank(a) - rank(b);
     return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
   }).map((section) => ({
     key: section,

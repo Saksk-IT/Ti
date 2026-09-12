@@ -423,9 +423,9 @@ function buildScheduleTable(rows, weekInput) {
         });
     });
     var tableRows = Object.keys(sectionMap).sort(function (a, b) {
-        var rankA = Number(/^\d+/.exec(a) ? /^\d+/.exec(a)[0] : 999);
-        var rankB = Number(/^\d+/.exec(b) ? /^\d+/.exec(b)[0] : 999);
-        return rankA !== rankB ? rankA - rankB : a.localeCompare(b, 'zh-Hans-CN');
+        var rank = function (value) { var _a; return Number(((_a = /^\d+/.exec(value)) === null || _a === void 0 ? void 0 : _a[0]) || 999); };
+        var rankDiff = rank(a) - rank(b);
+        return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
     }).map(function (section) { return ({
         key: section,
         section: section,
