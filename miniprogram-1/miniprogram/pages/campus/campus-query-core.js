@@ -453,6 +453,8 @@ function taskRowsSource(task, data) {
         : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
             ? { academic_year_averages: task.academic_year_averages }
             : {}));
+    if (fixedMode === 'schedule' && Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
+        return { results: task.snapshots, credential: credential, ...gradeMetadata };
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.results) && task.results.length)
         return __assign({ results: task.results, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)

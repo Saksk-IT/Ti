@@ -474,6 +474,7 @@ function taskRowsSource(task: any, data: any): any {
         ? { academic_year_averages: task.academic_year_averages }
         : {}),
   };
+  if (fixedMode === 'schedule' && Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential, ...gradeMetadata };
   if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   return data || {};
