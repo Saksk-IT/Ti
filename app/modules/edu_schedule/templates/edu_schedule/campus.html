@@ -1,0 +1,72 @@
+{% extends "main/shared/app_shell.html" %}
+
+{% block title %}校园 - SAK{% endblock %}
+{% block page_title %}校园{% endblock %}
+
+{% block content %}
+<main class="campus-home" aria-labelledby="campusTitle">
+  <header class="campus-hero">
+    <div>
+      <p class="campus-eyebrow">CAMPUS</p>
+      <h1 id="campusTitle">校园助手</h1>
+      <p class="campus-subtitle">课表、成绩与教务查询集中在这里，一键查看最近状态。</p>
+    </div>
+    <a class="campus-account" href="/settings/account/bindings">管理教务账号 <span aria-hidden="true">→</span></a>
+  </header>
+
+  <section class="campus-status" aria-label="校园数据概览">
+    <article class="campus-stat-card">
+      <div class="campus-stat-icon schedule-icon" aria-hidden="true">▦</div>
+      <div><p class="campus-stat-label">最近课表</p><strong id="campusScheduleValue">读取中</strong><p id="campusScheduleMeta">正在同步状态</p></div>
+    </article>
+    <article class="campus-stat-card">
+      <div class="campus-stat-icon grade-icon" aria-hidden="true">↗</div>
+      <div><p class="campus-stat-label">成绩概览</p><strong id="campusGradeValue">读取中</strong><p id="campusGradeMeta">正在同步状态</p></div>
+    </article>
+    <article class="campus-stat-card">
+      <div class="campus-stat-icon account-icon" aria-hidden="true">✓</div>
+      <div><p class="campus-stat-label">教务账号</p><strong id="campusAccountValue">读取中</strong><p id="campusAccountMeta">安全状态</p></div>
+    </article>
+  </section>
+
+  <section class="campus-actions" aria-label="教务查询">
+    <a class="campus-action-card" href="/edu-schedule">
+      <span class="campus-action-mark">▦</span><span><strong>查询教务课表</strong><small>按学年学期查看课程安排</small></span><span class="campus-arrow" aria-hidden="true">→</span>
+    </a>
+    <a class="campus-action-card" href="/edu-grades">
+      <span class="campus-action-mark">↗</span><span><strong>查询成绩</strong><small>刷新成绩并查看学年平均分</small></span><span class="campus-arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+  <p class="campus-feedback" id="campusFeedback" role="status"></p>
+</main>
+<style>
+  .campus-home{width:min(1120px,100%);margin:0 auto;padding:28px 0 56px;display:grid;gap:22px}
+  .campus-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:4px 2px}
+  .campus-eyebrow{margin:0 0 8px;color:var(--app-primary);font-size:11px;font-weight:900;letter-spacing:1.6px}
+  .campus-hero h1{margin:0;font-size:clamp(28px,4vw,42px);letter-spacing:-.5px}.campus-subtitle{margin:9px 0 0;color:var(--app-muted);font-size:14px}.campus-account{color:var(--app-primary);font-size:13px;font-weight:800;text-decoration:none;white-space:nowrap}
+  .campus-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.campus-stat-card,.campus-action-card{border:1px solid var(--app-border);background:var(--app-surface);border-radius:10px;box-shadow:var(--app-shadow-soft)}.campus-stat-card{display:flex;align-items:center;gap:13px;padding:18px}.campus-stat-icon,.campus-action-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;font-size:21px;font-weight:900}.schedule-icon{background:#e8f1ff;color:#2563eb}.grade-icon{background:#e8f8f0;color:#059669}.account-icon{background:#fff4df;color:#d97706}.campus-stat-label{margin:0 0 5px;color:var(--app-muted);font-size:12px;font-weight:800}.campus-stat-card strong{font-size:20px}.campus-stat-card p:last-child{margin:4px 0 0;color:var(--app-muted);font-size:12px}.campus-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.campus-action-card{display:flex;align-items:center;gap:14px;padding:20px;text-decoration:none;color:var(--app-text);transition:transform .16s ease,border-color .16s ease}.campus-action-card:hover{transform:translateY(-2px);border-color:var(--app-primary)}.campus-action-mark{background:var(--app-primary);color:var(--app-primary-contrast)}.campus-action-card span:nth-child(2){display:grid;gap:5px}.campus-action-card strong{font-size:16px}.campus-action-card small{color:var(--app-muted);font-size:12px}.campus-arrow{margin-left:auto;color:var(--app-primary);font-size:22px}.campus-feedback{min-height:20px;margin:0;color:var(--app-muted);font-size:13px}@media(max-width:700px){.campus-home{padding:20px 0 40px}.campus-hero{align-items:flex-start;flex-direction:column}.campus-status,.campus-actions{grid-template-columns:1fr}.campus-account{font-size:12px}}
+</style>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const set = (id, value) => { const el = $(id); if (el) el.textContent = value; };
+  fetch('/edu-schedule/api/edu-schedule/status', {headers: {'Accept': 'application/json'}})
+    .then((r) => r.ok ? r.json() : Promise.reject(new Error('status')))
+    .then((payload) => {
+      const d = payload.data || {};
+      const schedules = Array.isArray(d.snapshots) ? d.snapshots : [];
+      const overview = d.grade_overview || {};
+      const hasAccount = !!(d.credential && d.credential.has_credentials);
+      set('campusScheduleValue', schedules.length ? '已缓存' : '暂无数据');
+      set('campusScheduleMeta', schedules.length ? `最近 ${schedules.length} 份课表快照` : '点击查询教务课表');
+      const average = overview.average_score ?? overview.gpa ?? overview.average;
+      set('campusGradeValue', average == null ? '暂无数据' : String(average));
+      set('campusGradeMeta', average == null ? '点击查询成绩' : '当前成绩平均分');
+      set('campusAccountValue', hasAccount ? '已绑定' : '未绑定');
+      set('campusAccountMeta', hasAccount ? '凭据已加密保存' : '绑定后可一键查询');
+    })
+    .catch(() => { set('campusFeedback', '暂时无法读取校园数据，请进入查询页面重试。'); });
+})();
+</script>
+{% endblock %}
