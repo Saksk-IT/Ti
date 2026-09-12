@@ -442,7 +442,7 @@ function buildScheduleTable(rows, weekInput) {
     }); });
     return { days: days, tableRows: tableRows };
 }
-function taskRowsSource(task, data) {
+function taskRowsSource(task, data, mode) {
     var credential = (data === null || data === void 0 ? void 0 : data.credential) || (task === null || task === void 0 ? void 0 : task.credential) || {};
     var gradeMetadata = __assign(__assign({}, (Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
         ? { grade_overview: data.grade_overview }
@@ -453,8 +453,8 @@ function taskRowsSource(task, data) {
         : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
             ? { academic_year_averages: task.academic_year_averages }
             : {}));
-    if (fixedMode === 'schedule' && Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
-        return { results: task.snapshots, credential: credential, ...gradeMetadata };
+    if (mode === 'schedule' && Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
+        return __assign({ results: task.snapshots, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.results) && task.results.length)
         return __assign({ results: task.results, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
@@ -905,7 +905,7 @@ function createCampusQueryPage(config) {
                 this.setActiveCampusTask(mode, null);
                 this.clearTaskPolling(mode);
             }
-            var rows = this.applyQueryRows(taskRowsSource(task, data), mode);
+            var rows = this.applyQueryRows(taskRowsSource(task, data, mode), mode);
             if (status === 'cancelled') {
                 if (this.data.mode === mode)
                     this.setData({ statusMsg: task.message || '查询已停止' });

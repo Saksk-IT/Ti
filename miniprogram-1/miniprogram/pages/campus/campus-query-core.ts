@@ -460,7 +460,7 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
   return { days, tableRows };
 }
 
-function taskRowsSource(task: any, data: any): any {
+function taskRowsSource(task: any, data: any, mode: CampusMode): any {
   const credential = data?.credential || task?.credential || {};
   const gradeMetadata = {
     ...(Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
@@ -474,7 +474,7 @@ function taskRowsSource(task: any, data: any): any {
         ? { academic_year_averages: task.academic_year_averages }
         : {}),
   };
-  if (fixedMode === 'schedule' && Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
+  if (mode === 'schedule' && Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential, ...gradeMetadata };
   if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   return data || {};
@@ -920,7 +920,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
       this.clearTaskPolling(mode);
     }
 
-    const rows = this.applyQueryRows(taskRowsSource(task, data), mode);
+    const rows = this.applyQueryRows(taskRowsSource(task, data, mode), mode);
     if (status === 'cancelled') {
       if (this.data.mode === mode) this.setData({ statusMsg: task.message || '查询已停止' });
       return true;

@@ -31,6 +31,40 @@ function createPageHarness(config) {
   };
 }
 
+test('schedule task states keep polling and render each semester from snapshots', () => {
+  const page = createPageHarness({ mode: 'schedule', pageTitle: '课表查询' });
+  const payload = { terms: [{ xnm: '2025', xqm: '12' }, { xnm: '2026', xqm: '3' }] };
+  for (const status of ['pending', 'running', 'retrying']) {
+    assert.equal(page.handleTaskState({ task_id: 'schedule-task', status }, payload, 'schedule'), false);
+    assert.equal(page.getActiveCampusTask('schedule').status, status);
+  }
+  const snapshots = payload.terms.map((term) => ({
+    payload: {
+      term,
+      week_table: { 星期一: { '1-2节': [{ course_name: `course-${term.xnm}` }] } },
+    },
+  }));
+  assert.equal(page.handleTaskState({
+    task_id: 'schedule-task', status: 'succeeded', snapshots,
+    results: [{ term: { xnm: '2026', xqm: '3' }, practice_courses: [{ course_name: 'fallback' }] }],
+  }, payload, 'schedule'), true);
+  assert.equal(page.getActiveCampusTask('schedule'), null);
+  for (const term of payload.terms) {
+    page.onSnapshotTermTap({ currentTarget: { dataset: { value: `${term.xnm}-${term.xqm}` } } });
+    assert.equal(page.data.scheduleTableRows[0].cells[0].courses[0].course_name, `course-${term.xnm}`);
+  }
+});
+
+test('grade tasks retain results priority when snapshots are also present', () => {
+  const page = createPageHarness({ mode: 'grades', pageTitle: '成绩查询' });
+  const row = (courseName) => ({ term: { xnm: '2025', xqm: '3' }, grades: [{ course_name: courseName }] });
+  assert.equal(page.handleTaskState({
+    task_id: 'grade-task', status: 'succeeded',
+    results: [row('fresh')], snapshots: [{ payload: row('cached') }],
+  }, {}, 'grades'), true);
+  assert.equal(page.data.gradeResults[0].grades[0].course_name, 'fresh');
+});
+
 test('buildCampusTerms builds all semesters for a year range', () => {
   assert.deepEqual(buildCampusTerms(2024, 2025, 'all'), [
     { xnm: '2024', xqm: '3' },
