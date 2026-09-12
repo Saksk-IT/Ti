@@ -834,7 +834,7 @@ function createCampusQueryPage(config) {
                 queryProgressStatus: taskStatusLabel(status),
                 queryProgressPercent: taskProgressPercent(task),
                 queryProgressDetail: String((task === null || task === void 0 ? void 0 : task.message) || (mode === 'grades' ? '正在刷新全部成绩' : '正在后台查询课表')),
-                queryProgressMeta: formatTaskMeta(mode, Array.isArray(task === null || task === void 0 ? void 0 : task.terms) ? task.terms : []),
+                queryProgressMeta: '',
             };
             var self = ensureRuntimeState(this);
             self.__lastCampusProgress[mode] = progress;

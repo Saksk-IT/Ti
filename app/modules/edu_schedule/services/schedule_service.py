@@ -200,6 +200,9 @@ class EduScheduleService:
                 **(normalized.get("term") or {}),
                 "xnm": xnm,
                 "xqm": xqm,
+                "year_name": f"{xnm}~{int(xnm) + 1}" if xnm.isdigit() else xnm,
+                "term_name": "第一" if xqm == "3" else "第二",
+                "label": f"{xnm}~{int(xnm) + 1} {'第一' if xqm == '3' else '第二'}学期" if xnm.isdigit() else f"{xnm} {'第一' if xqm == '3' else '第二'}学期",
             }
             EduScheduleService._save_snapshot(
                 int(user_id),
