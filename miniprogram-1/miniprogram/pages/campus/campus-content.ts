@@ -286,7 +286,7 @@ export function normalizeScheduleSnapshots(rows: unknown[]): any[] {
         practice_courses: normalizeList(payload.practice_courses).map(normalizeCourse),
       };
     })
-    .filter((item) => item.weekRows.length > 0 || item.practice_courses.length > 0 || item.title !== '课表');
+    .filter((item) => item.weekRows.length > 0 || item.practice_courses.length > 0);
 }
 
 export function normalizeGradeSnapshots(rows: unknown[]): any[] {

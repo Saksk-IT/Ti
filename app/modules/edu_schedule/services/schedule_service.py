@@ -185,13 +185,22 @@ class EduScheduleService:
             account, secret = EduScheduleService._load_credentials(user_id)
 
         results: List[Dict[str, Any]] = []
+        cohort_year = int(account[:2]) + 2000 if account[:2].isdigit() else None
         for term in terms:
             xnm = str(term["xnm"])
             xqm = str(term["xqm"])
+            if cohort_year is not None and xnm.isdigit() and int(xnm) < cohort_year:
+                continue
             raw_payload = EduScheduleService._fetch_first_success(
                 lambda xnm=xnm, xqm=xqm: JWXTClient(cfg).fetch_schedule(account, secret, xnm, xqm)
             )
             normalized = normalize_schedule_payload(raw_payload)
+            # 教务接口返回的学生信息有时携带当前学期元数据，必须以本次请求的学年学期为准。
+            normalized["term"] = {
+                **(normalized.get("term") or {}),
+                "xnm": xnm,
+                "xqm": xqm,
+            }
             EduScheduleService._save_snapshot(
                 int(user_id),
                 xnm,
