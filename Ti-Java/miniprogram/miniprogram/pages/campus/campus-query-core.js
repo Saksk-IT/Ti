@@ -249,6 +249,10 @@ function buildSelectedTerm(yearInput, semesterIndexInput) {
     var semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
     return (0, campus_content_1.buildCampusTerms)(String(xnm), String(xnm), semester);
 }
+function buildAllScheduleTerms() {
+    var endYear = defaultAcademicYear();
+    return (0, campus_content_1.buildCampusTerms)(String(endYear - 5), String(endYear), 'all');
+}
 function termKeyFromSelection(yearInput, semesterIndexInput) {
     var year = String(yearInput || '').trim();
     var semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
@@ -418,7 +422,11 @@ function buildScheduleTable(rows, weekInput) {
             };
         });
     });
-    var tableRows = Object.keys(sectionMap).map(function (section) { return ({
+    var tableRows = Object.keys(sectionMap).sort(function (a, b) {
+        var rankA = Number(/^\d+/.exec(a) ? /^\d+/.exec(a)[0] : 999);
+        var rankB = Number(/^\d+/.exec(b) ? /^\d+/.exec(b)[0] : 999);
+        return rankA !== rankB ? rankA - rankB : a.localeCompare(b, 'zh-Hans-CN');
+    }).map(function (section) { return ({
         key: section,
         section: section,
         cells: days.map(function (day) {
@@ -1125,7 +1133,9 @@ function createCampusQueryPage(config) {
                             }
                             mode = fixedMode;
                             try {
-                                terms = buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
+                                terms = mode === 'schedule'
+                                    ? buildAllScheduleTerms()
+                                    : buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
                             }
                             catch (e) {
                                 this.setData({ errorMsg: (e === null || e === void 0 ? void 0 : e.message) || '学年或学期不正确' });
@@ -1154,10 +1164,6 @@ function createCampusQueryPage(config) {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (fixedMode === 'schedule') {
-                                this.onOpenScheduleQuerySheetTap();
-                                return [2 /*return*/];
-                            }
                             return [4 /*yield*/, this.executeCampusQuery()];
                         case 1:
                             _a.sent();
