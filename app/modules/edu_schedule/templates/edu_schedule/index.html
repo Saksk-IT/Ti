@@ -14,9 +14,14 @@
       <form id="scheduleForm" class="schedule-form" autocomplete="off">
         <div class="field-group term-fields">
           <div class="one-tap-query-copy">
-            <strong>一键查询本学年课表</strong>
-            <span>自动同步第一、二学期，结果会保留在校园首页</span>
+            <strong>一键查询近 6 个学年课表</strong>
+            <span>自动同步近 6 个学年，按学号过滤入学前学期和无课学期</span>
           </div>
+          <select id="scheduleAcademicYear" class="campus-hidden-year" aria-hidden="true" tabindex="-1" disabled>
+            {% for option in academic_year_options %}
+            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
         </div>
 
         <div class="schedule-actions">
@@ -80,6 +85,7 @@
   .one-tap-query-copy { display:grid; gap:5px; }
   .one-tap-query-copy strong { color:var(--app-text); font-size:16px; }
   .one-tap-query-copy span { color:var(--app-muted); font-size:12px; }
+  .campus-hidden-year { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
   .schedule-toolbar {
     border: 1px solid var(--app-border);
     background: var(--app-surface);
@@ -460,11 +466,18 @@
   }
 
   function buildTerms() {
-    const academicYear = Number({{ (academic_year_options | selectattr('selected') | map(attribute='value') | first) | tojson }} || 0);
-    if (!Number.isInteger(academicYear) || academicYear < 2000 || academicYear > 2100) {
+    const endYear = Number({{ (academic_year_options | selectattr('selected') | map(attribute='value') | first) | tojson }} || 0);
+    if (!Number.isInteger(endYear) || endYear < 2000 || endYear > 2100) {
       throw new Error('学年不正确');
     }
-    return ['3', '12'].map(function (xqm) { return { xnm: String(academicYear), xqm: xqm }; });
+    const startYear = Math.max(2000, endYear - 5);
+    const terms = [];
+    for (let year = startYear; year <= endYear; year += 1) {
+      ['3', '12'].forEach(function (xqm) {
+        terms.push({ xnm: String(year), xqm: xqm });
+      });
+    }
+    return terms;
   }
 
   function appendText(parent, className, text) {

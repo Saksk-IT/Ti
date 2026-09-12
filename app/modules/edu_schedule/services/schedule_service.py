@@ -204,6 +204,9 @@ class EduScheduleService:
                 "term_name": "第一" if xqm == "3" else "第二",
                 "label": f"{xnm}~{int(xnm) + 1} {'第一' if xqm == '3' else '第二'}学期" if xnm.isdigit() else f"{xnm} {'第一' if xqm == '3' else '第二'}学期",
             }
+            # 教务系统对无课学期通常返回空列表；空学期不形成快照，避免页面显示不存在的课表。
+            if not normalized.get("courses") and not normalized.get("practice_courses"):
+                continue
             EduScheduleService._save_snapshot(
                 int(user_id),
                 xnm,
@@ -460,17 +463,22 @@ class EduScheduleService:
 
     @staticmethod
     def _snapshot_rows_to_dicts(rows) -> List[Dict[str, Any]]:
-        return [
-            {
-                "id": row.id,
-                "xnm": row.xnm,
-                "xqm": row.xqm,
-                "term_label": row.term_label,
-                "fetched_at": row.fetched_at.isoformat() if row.fetched_at else None,
-                "payload": json.loads(row.payload_json or "{}"),
-            }
-            for row in rows
-        ]
+        items = []
+        for row in rows:
+            payload = json.loads(row.payload_json or "{}")
+            if not payload.get("courses") and not payload.get("practice_courses"):
+                continue
+            items.append(
+                {
+                    "id": row.id,
+                    "xnm": row.xnm,
+                    "xqm": row.xqm,
+                    "term_label": row.term_label,
+                    "fetched_at": row.fetched_at.isoformat() if row.fetched_at else None,
+                    "payload": payload,
+                }
+            )
+        return items
 
     @staticmethod
     def _save_grade_snapshot(
