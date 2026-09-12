@@ -1,60 +1,66 @@
-# 生产快照本机恢复记录
+# 生产快照覆盖本机 8000 环境
 
-2026-09-12 已将生产导出完整恢复为独立 Docker Compose 环境 `ti-production-restore`。
-
-访问地址：<http://127.0.0.1:18080>。使用原生产账号的邮箱或手机号与密码登录，账号密码没有重置。
-原有 `ti-local-demo` 环境继续使用原数据卷和端口。
+2026-09-12 已把生产快照直接恢复到现有 `ti-local-demo` 环境，覆盖原演示数据。
+访问地址：<http://127.0.0.1:8000>。选择密码登录，使用原生产账号的邮箱或手机号与密码。
+用于验证的 `ti-production-restore` 环境已关闭并移除容器，不再提供 `18080` 入口。
 
 ## 恢复内容
 
 | 项目 | 本机位置或结果 |
 | --- | --- |
-| PostgreSQL | `ti-production-restore_postgres` 数据卷；已恢复全局角色及 `ti_db`、`postgres` 数据库 |
-| Redis | `ti-production-restore_redis` 数据卷；RDB 已载入并转换为 AOF |
-| 完整项目 | `ti-production-restore_project` 数据卷内 `/opt/ti`；含源码、Git 历史、配置、静态资源、上传文件、日志和历史备份 |
-| Linux 主机配置与证书 | `ti-production-restore_host-config` 数据卷，保留原目录结构供迁移使用 |
-| 本地新生成的自动备份 | `ti-production-restore_local-backups` 数据卷；与导出的历史备份分别存放 |
-| 运行镜像 | 使用归档中生产实际运行的四个镜像 ID，不自动拉取 `latest` |
-| 本地配置及验证报告 | `D:\GitHub\Ti\backups\production-migration-20260912\local-restore\` |
+| PostgreSQL | 原 `ti-local-demo_local-postgres` 数据卷内的 `ti_demo` 数据库 |
+| Redis | 原 `ti-local-demo_local-redis` 数据卷，快照已转换为 AOF |
+| 上传文件、实例数据和日志 | 原 `ti-local-demo_local-data` 数据卷，应用挂载到 `/data` |
+| 私有启动配置 | `D:\GitHub\Ti\.env.local-restored`，Git 已忽略并限制本机文件访问权限 |
+| 生产源码、历史备份、证书和系统配置 | 仍完整保存在 `backups/production-migration-20260912/` 的导出归档中 |
 
-六个服务均已启动：Nginx、Web、Worker、PostgreSQL、Redis、Backup。
+现有五个服务均已启动：Web、Worker、PostgreSQL、Redis、Backup。
 Docker Desktop 运行时，容器按 `unless-stopped` 策略自动重启；持久数据不依赖临时容器。
+保留当前本地代码、原数据卷名称和 Web 8000、PostgreSQL 55432 端口。
 
 ## 验证结果
 
-- 数据库恢复后、启动应用前逐表核对：67 张业务表、35,233 条记录与备份快照一致。
-- 上传文件：219 个文件的大小及 SHA256 与备份完全一致；全部通过本地 HTTP 下载校验。
+- 覆盖后、迁移前逐表核对：67 张表、35,233 条记录与生产快照一致。
+- 已执行当前本地代码需要的四步迁移，数据库版本为 `f5b6c7d8e9f0`，当前共 70 张表。
+- 219 个生产上传文件大小和 SHA256 全部一致；215 个通过登录后 HTTP 下载校验，4 个聊天附件按会话成员权限返回 403，文件本体完整。
 - 深度健康检查：数据库、Redis 均正常。
-- 使用备份配置中的原管理员凭据完成真实密码登录，登录后首页返回 HTTP 200。
-- Redis 载入 122 个有效键；8 个带绝对到期时间的键已自然过期。未改写快照中的到期时间。
-- Worker 正常监听本地队列，Backup 已成功生成一份本地备份。
+- 保留 41 个生产用户；使用原管理员凭据完成真实密码登录，登录后首页返回 HTTP 200。
+- Redis 载入 122 个有效键并启用 AOF，已过期的键按原时间戳自然失效。
 
-验证报告：`backups/production-migration-20260912/local-restore/LOCAL-RESTORE-VERIFIED.json`。
+验证报告：`backups/production-migration-20260912/LOCAL-8000-VERIFIED.json`。
 
 ## 本机配置差异
 
-仅在 `127.0.0.1:18080` 提供 HTTP，保留原生产 HTTPS 证书归档，不接管生产域名或 Windows 系统配置。
-本地 HTTP 会话的 `SESSION_COOKIE_SECURE` 设为 `false`。
+本地数据库继续使用原 `studyuser` 角色和本地连接密码；业务用户密码、应用签名密钥来自生产备份。
+本地仍禁用短信和邮件，没有导入生产外部服务凭据。生产归档中的完整配置保留，未覆盖 Windows 系统配置。
 
-Web、Worker、数据库、Redis 和 Backup 位于禁止外网访问的 Docker 内部网络；Nginx 同时连接本机入口网络。
-本地副本禁用邮件、短信和 Sentry 上报，因此依赖微信、短信、邮件或其他外部服务的功能不会向生产服务发送请求。
-业务数据库内的原设置、账户信息及应用密钥保留在恢复数据和原始归档中。
+## 覆盖前备份
 
-初始化 PostgreSQL 使用的本地 `migration_restore_admin` 角色是系统对象所有者，恢复完成后已设为 `NOLOGIN`；应用使用原生产数据库账号。
+原本地数据备份位于 `backups/production-migration-20260912/before-overwrite-8000/`：
+
+- `ti_demo.dump`、`globals.sql`：覆盖前数据库及全局角色。
+- `data.tar.gz`、`postgres.tar.gz`、`redis.tar.gz`：停止服务后三个原数据卷的完整备份。
+- `containers.private.json`、`SHA256SUMS`：原容器配置及文件校验清单。
+
+冷备压缩包已完成完整性检查，可用于回退覆盖操作。
 
 ## 启动与停止
 
-在 PowerShell 中执行：
+原启动脚本自动优先读取 `.env.local-restored`，在该配置存在时跳过演示数据填充和演示账号验证：
 
 ```powershell
 Set-Location D:\GitHub\Ti
-$restoreCompose = 'backups/production-migration-20260912/local-restore/compose.restore.json'
-docker compose -p ti-production-restore -f $restoreCompose ps
-docker compose -p ti-production-restore -f $restoreCompose up -d --pull never
-docker compose -p ti-production-restore -f $restoreCompose stop
+.\scripts\start-local-demo.ps1
 ```
 
-以上命令只管理本次恢复环境。不要删除 `ti-production-restore_*` 数据卷。
-配置文件与归档含生产密钥，保存在 Git 忽略且限制访问权限的 `backups` 目录中。
+无需重新构建时，可以直接管理现有服务：
+
+```powershell
+docker compose --env-file .env.local-restored -f compose.dev.yml -f compose.local.yml up -d --wait
+docker compose --env-file .env.local-restored -f compose.dev.yml -f compose.local.yml ps
+docker compose --env-file .env.local-restored -f compose.dev.yml -f compose.local.yml stop
+```
+
+配置文件与归档含生产密钥，不提交至 Git。不要删除现有 `ti-local-demo_local-*` 数据卷。
 
 本机恢复的是导出时的在线快照，不会自动同步旧服务器后续新增的数据。
