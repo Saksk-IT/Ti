@@ -110,7 +110,18 @@ code {
   border-right: 1px solid var(--app-border);
   background: color-mix(in srgb, var(--app-surface) 78%, transparent);
   backdrop-filter: blur(22px) saturate(180%);
+  overflow-x: hidden;
+  overflow-y: auto;
   transition: width 180ms ease, transform 180ms ease;
+}
+
+.app-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-muted) 45%, transparent);
 }
 
 .app-body {
@@ -240,11 +251,11 @@ code {
 
 .app-nav {
   display: grid;
-  flex: 1;
+  min-height: 0;
+  flex: 0 0 auto;
   align-content: start;
   gap: 12px;
   margin-top: 6px;
-  overflow-y: auto;
 }
 
 .app-nav-section {
