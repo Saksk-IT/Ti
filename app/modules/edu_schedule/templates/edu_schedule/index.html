@@ -13,10 +13,6 @@
     <div class="schedule-toolbar">
       <form id="scheduleForm" class="schedule-form" autocomplete="off">
         <div class="field-group term-fields">
-          <div class="one-tap-query-copy">
-            <strong>一键查询近 6 个学年课表</strong>
-            <span>自动同步近 6 个学年，按学号过滤入学前学期和无课学期</span>
-          </div>
           <select id="scheduleAcademicYear" class="campus-hidden-year" aria-hidden="true" tabindex="-1" disabled>
             {% for option in academic_year_options %}
             <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
@@ -25,7 +21,7 @@
         </div>
 
         <div class="schedule-actions">
-          <button class="primary-btn" type="submit" id="scheduleSubmit">一键查询课表</button>
+          <button class="primary-btn" type="submit" id="scheduleSubmit">一键查询所有课表</button>
           <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
         </div>
       </form>
@@ -84,8 +80,8 @@
   .campus-subpage-label { color:var(--app-muted); font-size:12px; }
   .one-tap-query-copy { display:grid; gap:5px; }
   .one-tap-query-copy strong { color:var(--app-text); font-size:16px; }
-  .one-tap-query-copy span { color:var(--app-muted); font-size:12px; }
   .campus-hidden-year { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+  .query-progress { display:none !important; }
   .schedule-toolbar {
     border: 1px solid var(--app-border);
     background: var(--app-surface);
@@ -644,7 +640,7 @@
     }
     const hasFallback = renderTaskFallback(task);
     const suffix = hasFallback ? '，当前显示上次成功结果' : '';
-    setState((task.message || '正在后台查询课表') + suffix, '');
+    setState('', '');
     return false;
   }
 
@@ -793,13 +789,13 @@
       submitBtn.disabled = true;
       submitBtn.textContent = '提交中';
       hideTaskProgress();
-      setState('正在提交后台查询任务...', '');
+      setState('', '');
       await submitQueryAfterWebvpnRefresh(payload);
     } catch (error) {
       setState(error.message || '查询失败', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = '一键查询课表';
+      submitBtn.textContent = '一键查询所有课表';
     }
   });
 
@@ -837,7 +833,7 @@
     } finally {
       submitWebvpnCaptcha.disabled = false;
       submitBtn.disabled = false;
-      submitBtn.textContent = '一键查询课表';
+      submitBtn.textContent = '一键查询所有课表';
     }
   });
 
