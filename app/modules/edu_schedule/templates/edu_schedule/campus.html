@@ -1,72 +1,21 @@
 {% extends "main/shared/app_shell.html" %}
-
 {% block title %}校园 - SAK{% endblock %}
 {% block page_title %}校园{% endblock %}
-
 {% block content %}
-<main class="campus-home" aria-labelledby="campusTitle">
-  <header class="campus-hero">
-    <div>
-      <p class="campus-eyebrow">CAMPUS</p>
-      <h1 id="campusTitle">校园助手</h1>
-      <p class="campus-subtitle">课表、成绩与教务查询集中在这里，一键查看最近状态。</p>
-    </div>
-    <a class="campus-account" href="/settings/account/bindings">管理教务账号 <span aria-hidden="true">→</span></a>
-  </header>
-
-  <section class="campus-status" aria-label="校园数据概览">
-    <article class="campus-stat-card">
-      <div class="campus-stat-icon schedule-icon" aria-hidden="true">▦</div>
-      <div><p class="campus-stat-label">最近课表</p><strong id="campusScheduleValue">读取中</strong><p id="campusScheduleMeta">正在同步状态</p></div>
-    </article>
-    <article class="campus-stat-card">
-      <div class="campus-stat-icon grade-icon" aria-hidden="true">↗</div>
-      <div><p class="campus-stat-label">成绩概览</p><strong id="campusGradeValue">读取中</strong><p id="campusGradeMeta">正在同步状态</p></div>
-    </article>
-    <article class="campus-stat-card">
-      <div class="campus-stat-icon account-icon" aria-hidden="true">✓</div>
-      <div><p class="campus-stat-label">教务账号</p><strong id="campusAccountValue">读取中</strong><p id="campusAccountMeta">安全状态</p></div>
-    </article>
-  </section>
-
-  <section class="campus-actions" aria-label="教务查询">
-    <a class="campus-action-card" href="/edu-schedule">
-      <span class="campus-action-mark">▦</span><span><strong>查询教务课表</strong><small>按学年学期查看课程安排</small></span><span class="campus-arrow" aria-hidden="true">→</span>
-    </a>
-    <a class="campus-action-card" href="/edu-grades">
-      <span class="campus-action-mark">↗</span><span><strong>查询成绩</strong><small>刷新成绩并查看学年平均分</small></span><span class="campus-arrow" aria-hidden="true">→</span>
-    </a>
-  </section>
-
-  <p class="campus-feedback" id="campusFeedback" role="status"></p>
+<main class="campus-app" id="campusApp">
+  <header class="campus-hero"><div class="campus-hero-copy"><div class="campus-mark">校</div><div><p class="campus-kicker">CAMPUS</p><h1>校园</h1><p id="campusStatus">正在同步教务状态...</p><div class="campus-pills"><span id="bindingPill">读取中</span><span>课表 · 成绩</span></div></div></div><a class="campus-hero-action" href="/settings/account/bindings" id="bindingAction">绑定教务账号</a></header>
+  <section class="campus-metrics"><article><span>今日课程</span><strong id="todayCount">-</strong><small id="todayMeta">正在读取</small></article><article><span>总绩点</span><strong id="gpaValue">-</strong><small id="gpaMeta">最近成绩</small></article><article><span>教务账号</span><strong id="accountValue">-</strong><small id="accountMeta">安全状态</small></article></section>
+  <section class="campus-grid"><article class="campus-panel"><div class="panel-head"><div><h2>今天要上的课</h2><p id="todaySubtitle">暂无课表快照</p></div><a href="/edu-schedule">查看完整课表 →</a></div><div id="todayCourses" class="course-list"><div class="empty">正在加载课表...</div></div></article><article class="campus-panel"><div class="panel-head"><div><h2>最近成绩</h2><p id="gradeSubtitle">暂无成绩快照</p></div><a href="/edu-grades">查看全部成绩 →</a></div><div class="grade-summary"><div><strong id="semesterGpa">-</strong><small>最新学期绩点</small></div><div><strong id="weightedAverage">-</strong><small>学年加权平均分</small></div></div><div id="recentGrades" class="grade-list"><div class="empty">正在加载成绩...</div></div></article></section>
+  <section class="campus-query"><div><p class="campus-kicker">QUICK ACTION</p><h2>教务查询</h2><p>复用小程序同一套接口，绑定账号后可直接刷新最近学期数据。</p></div><div class="query-actions"><button class="query-btn primary" data-kind="schedule">刷新课表</button><button class="query-btn" data-kind="grades">刷新成绩</button></div></section>
+  <div class="campus-progress" id="campusProgress" hidden><div><strong id="progressTitle">正在查询</strong><span id="progressText">任务已提交</span></div><div class="progress-track"><i id="progressBar"></i></div></div><p class="campus-feedback" id="campusFeedback" role="status"></p>
 </main>
 <style>
-  .campus-home{width:min(1120px,100%);margin:0 auto;padding:28px 0 56px;display:grid;gap:22px}
-  .campus-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:4px 2px}
-  .campus-eyebrow{margin:0 0 8px;color:var(--app-primary);font-size:11px;font-weight:900;letter-spacing:1.6px}
-  .campus-hero h1{margin:0;font-size:clamp(28px,4vw,42px);letter-spacing:-.5px}.campus-subtitle{margin:9px 0 0;color:var(--app-muted);font-size:14px}.campus-account{color:var(--app-primary);font-size:13px;font-weight:800;text-decoration:none;white-space:nowrap}
-  .campus-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.campus-stat-card,.campus-action-card{border:1px solid var(--app-border);background:var(--app-surface);border-radius:10px;box-shadow:var(--app-shadow-soft)}.campus-stat-card{display:flex;align-items:center;gap:13px;padding:18px}.campus-stat-icon,.campus-action-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;font-size:21px;font-weight:900}.schedule-icon{background:#e8f1ff;color:#2563eb}.grade-icon{background:#e8f8f0;color:#059669}.account-icon{background:#fff4df;color:#d97706}.campus-stat-label{margin:0 0 5px;color:var(--app-muted);font-size:12px;font-weight:800}.campus-stat-card strong{font-size:20px}.campus-stat-card p:last-child{margin:4px 0 0;color:var(--app-muted);font-size:12px}.campus-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.campus-action-card{display:flex;align-items:center;gap:14px;padding:20px;text-decoration:none;color:var(--app-text);transition:transform .16s ease,border-color .16s ease}.campus-action-card:hover{transform:translateY(-2px);border-color:var(--app-primary)}.campus-action-mark{background:var(--app-primary);color:var(--app-primary-contrast)}.campus-action-card span:nth-child(2){display:grid;gap:5px}.campus-action-card strong{font-size:16px}.campus-action-card small{color:var(--app-muted);font-size:12px}.campus-arrow{margin-left:auto;color:var(--app-primary);font-size:22px}.campus-feedback{min-height:20px;margin:0;color:var(--app-muted);font-size:13px}@media(max-width:700px){.campus-home{padding:20px 0 40px}.campus-hero{align-items:flex-start;flex-direction:column}.campus-status,.campus-actions{grid-template-columns:1fr}.campus-account{font-size:12px}}
+.campus-app{width:min(1120px,100%);margin:0 auto;padding:26px 0 56px;display:grid;gap:16px}.campus-hero,.campus-panel,.campus-query,.campus-progress,.campus-metrics article{border:1px solid var(--app-border);background:var(--app-surface);border-radius:12px;box-shadow:var(--app-shadow-soft)}.campus-hero{padding:26px;display:flex;align-items:center;justify-content:space-between;gap:20px;background:linear-gradient(135deg,var(--app-surface),var(--app-primary-soft))}.campus-hero-copy{display:flex;gap:16px;align-items:center}.campus-mark{width:58px;height:58px;display:grid;place-items:center;border-radius:16px;background:var(--app-primary);color:var(--app-primary-contrast);font-size:25px;font-weight:950}.campus-kicker{margin:0 0 6px;color:var(--app-primary);font-size:11px;font-weight:900;letter-spacing:1.8px}.campus-hero h1,.campus-query h2{margin:0;font-size:30px}.campus-hero p:not(.campus-kicker){margin:6px 0;color:var(--app-muted);font-size:13px}.campus-pills{display:flex;gap:7px}.campus-pills span{padding:5px 9px;border:1px solid var(--app-border);border-radius:7px;color:var(--app-muted);font-size:11px;font-weight:800}.campus-pills span:first-child{color:#047857;background:#ecfdf5}.campus-hero-action,.query-btn{border:0;border-radius:8px;padding:11px 16px;background:var(--app-text);color:var(--app-bg);font-weight:850;text-decoration:none;cursor:pointer}.campus-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.campus-metrics article{padding:17px 18px;display:grid;gap:5px}.campus-metrics span,.campus-metrics small,.grade-summary small{color:var(--app-muted);font-size:12px}.campus-metrics strong{font-size:25px}.campus-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.campus-panel{padding:20px;min-height:260px}.panel-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.panel-head h2{margin:0;font-size:18px}.panel-head p{margin:5px 0 0;color:var(--app-muted);font-size:12px}.panel-head a{font-size:12px;color:var(--app-primary);font-weight:850;text-decoration:none;white-space:nowrap}.course-list,.grade-list{display:grid;gap:10px;margin-top:18px}.course-row,.grade-row{display:grid;gap:3px;padding:10px 0;border-top:1px solid var(--app-border)}.course-row{grid-template-columns:52px 1fr}.course-time{color:var(--app-primary);font-size:12px;font-weight:900}.course-row strong,.grade-row strong{font-size:13px}.course-row small,.grade-row small{color:var(--app-muted);font-size:11px}.grade-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.grade-summary>div{padding:12px;background:var(--app-surface-2);border-radius:9px;display:grid;gap:4px;text-align:center}.grade-summary strong{font-size:23px}.grade-list{margin-top:12px}.grade-row{grid-template-columns:1fr auto}.grade-row span{font-weight:900;color:var(--app-primary)}.empty{padding:20px 0;color:var(--app-muted);font-size:13px}.campus-query{padding:20px;display:flex;justify-content:space-between;align-items:center;gap:16px}.campus-query h2{font-size:21px}.campus-query p:not(.campus-kicker){margin:7px 0 0;color:var(--app-muted);font-size:12px}.query-actions{display:flex;gap:9px}.query-btn.primary{background:var(--app-primary);color:var(--app-primary-contrast)}.query-btn:disabled{opacity:.55;cursor:wait}.campus-progress{padding:14px 17px}.campus-progress>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:12px}.campus-progress span{color:var(--app-muted)}.progress-track{height:6px;background:var(--app-surface-2);border-radius:9px;margin-top:10px;overflow:hidden}.progress-track i{display:block;height:100%;width:20%;background:var(--app-primary);transition:width .3s}.campus-feedback{margin:0;color:#b91c1c;font-size:13px;min-height:18px}@media(max-width:760px){.campus-hero,.campus-query{align-items:flex-start;flex-direction:column}.campus-grid,.campus-metrics{grid-template-columns:1fr}.query-actions{width:100%}.query-btn{flex:1}.campus-app{padding:18px 0 40px}}
 </style>
 <script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const set = (id, value) => { const el = $(id); if (el) el.textContent = value; };
-  fetch('/edu-schedule/api/edu-schedule/status', {headers: {'Accept': 'application/json'}})
-    .then((r) => r.ok ? r.json() : Promise.reject(new Error('status')))
-    .then((payload) => {
-      const d = payload.data || {};
-      const schedules = Array.isArray(d.snapshots) ? d.snapshots : [];
-      const overview = d.grade_overview || {};
-      const hasAccount = !!(d.credential && d.credential.has_credentials);
-      set('campusScheduleValue', schedules.length ? '已缓存' : '暂无数据');
-      set('campusScheduleMeta', schedules.length ? `最近 ${schedules.length} 份课表快照` : '点击查询教务课表');
-      const average = overview.average_score ?? overview.gpa ?? overview.average;
-      set('campusGradeValue', average == null ? '暂无数据' : String(average));
-      set('campusGradeMeta', average == null ? '点击查询成绩' : '当前成绩平均分');
-      set('campusAccountValue', hasAccount ? '已绑定' : '未绑定');
-      set('campusAccountMeta', hasAccount ? '凭据已加密保存' : '绑定后可一键查询');
-    })
-    .catch(() => { set('campusFeedback', '暂时无法读取校园数据，请进入查询页面重试。'); });
-})();
+(() => { const $=id=>document.getElementById(id), text=(id,v)=>{if($(id))$(id).textContent=v}; const clean=(v,f='-')=>String(v??'').trim()||f; const payload=r=>r&&r.payload&&typeof r.payload==='object'?r.payload:(r||{}); const label=r=>{const t=payload(r).term||{},y=clean(t.xnm,'');const s=t.xqm==='3'?'第一学期':t.xqm==='12'?'第二学期':'';return clean(t.label,y?`${y}~${Number(y)+1} ${s}`:'最近')}; let busy=false;
+  function render(d){const c=d.credential||{},bound=!!c.has_credentials,s=(d.snapshots||[]),g=(d.grade_snapshots||[]);text('bindingPill',bound?'已绑定':'待绑定');text('accountValue',bound?'已绑定':'未绑定');text('accountMeta',bound?'凭据已加密':'绑定后可查询');text('campusStatus',bound?'教务系统账号已就绪，可直接刷新数据':'绑定教务账号后即可查询课表和成绩');$('bindingAction').textContent=bound?'管理教务账号':'去绑定';const names=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'],today=names[new Date().getDay()],w=payload(s[0]).week_table||{},list=[];Object.keys(w[today]||{}).forEach(sec=>(w[today][sec]||[]).forEach(x=>list.push({sec,n:clean(x.course_name),d:[x.teacher,x.location,x.weeks].filter(Boolean).join(' / ')})));text('todayCount',list.length);text('todayMeta',list.length?today:'待刷新');text('todaySubtitle',s.length?`${today} · ${label(s[0])}`:'暂无课表快照');$('todayCourses').innerHTML=list.length?list.slice(0,5).map(x=>`<div class="course-row"><span class="course-time">${x.sec}</span><div><strong>${x.n}</strong><small>${clean(x.d,'暂无教师和地点信息')}</small></div></div>`).join(''):'<div class="empty">今天暂无匹配课程，点击“刷新课表”同步。</div>';const z=payload(g[0]),sum=z.summary||{},ov=d.grade_overview||{},avg=ov.display_gpa??sum.gpa;text('gpaValue',clean(avg));text('gpaMeta',g.length?'全部课程概览':'待同步成绩');text('semesterGpa',clean(sum.gpa));text('weightedAverage',clean((d.academic_year_averages||[])[0]?.weighted_average));text('gradeSubtitle',g.length?label(g[0]):'暂无成绩快照');const rows=z.grades||[];$('recentGrades').innerHTML=rows.length?rows.slice(0,5).map(x=>`<div class="grade-row"><strong>${clean(x.course_name)}</strong><span>${clean(x.score)}</span></div>`).join(''):'<div class="empty">还没有成绩记录，点击“刷新成绩”同步。</div>';}
+  async function status(){try{const r=await fetch('/edu-schedule/api/edu-schedule/status'),j=await r.json();if(!r.ok)throw Error(j.message||'状态读取失败');render(j.data||{})}catch(e){text('campusFeedback',e.message||'校园数据读取失败')}} function show(t,m){$('campusProgress').hidden=false;text('progressTitle',t.status==='succeeded'?'查询完成':'正在查询');text('progressText',m||t.message||'任务处理中');$('progressBar').style.width=(t.status==='succeeded'?100:Math.min(90,24+Number(t.attempt||0)*8))+'%'}
+  async function query(kind){if(busy)return;busy=true;document.querySelectorAll('.query-btn').forEach(b=>b.disabled=true);text('campusFeedback','');try{const year={{ academic_year_options|selectattr('selected')|map(attribute='value')|first|tojson }},terms=[{xnm:String(year),xqm:'3'},{xnm:String(year),xqm:'12'}],r=await fetch(kind==='grades'?'/edu-schedule/api/edu-schedule/grades/query':'/edu-schedule/api/edu-schedule/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({terms})}),j=await r.json();if(!r.ok)throw Error(j.message||'查询提交失败');let t=(j.data||{}).task||{};show(t,j.message);for(let i=0;i<60&&t.task_id&&t.status!=='succeeded';i++){await new Promise(x=>setTimeout(x,1500));const q=await fetch('/edu-schedule/api/edu-schedule/query-tasks/'+encodeURIComponent(t.task_id)),x=await q.json();t=(x.data||{}).task||{};show(t,x.message);if(['failed','cancelled'].includes(t.status))throw Error(t.message||'查询失败')}await status()}catch(e){text('campusFeedback',e.message||'查询失败，请稍后重试')}finally{busy=false;document.querySelectorAll('.query-btn').forEach(b=>b.disabled=false)}}document.querySelectorAll('.query-btn').forEach(b=>b.addEventListener('click',()=>query(b.dataset.kind)));status()})()
 </script>
 {% endblock %}
