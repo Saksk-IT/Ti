@@ -151,6 +151,7 @@
                   <view class="schedule-table-cell course-table-cell {{cell.hasCourses ? 'has-course' : ''}} {{cell.hasCurrentWeek ? 'has-current-course' : ''}}" wx:for="{{row.cells}}" wx:for-item="cell" wx:key="key">
                     <view class="table-course {{course.isCurrentWeek === false ? 'inactive-week' : ''}}" wx:for="{{cell.courses}}" wx:for-item="course" wx:key="course_name">
                       <text class="table-course-name">{{course.course_name}}</text>
+                      <text class="table-course-detail" wx:if="{{course.tableSection}}">{{course.tableSection}}</text>
                       <text class="table-course-detail">{{course.location || '-'}}</text>
                     </view>
                   </view>

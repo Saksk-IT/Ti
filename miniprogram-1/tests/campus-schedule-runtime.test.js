@@ -45,7 +45,9 @@ if (process.env.SCHEDULE_LIVE_USER_ID) {
       page.onSnapshotTermTap({ currentTarget: { dataset: { value: termKey } } });
       const expected = Object.values(payload.week_table).flatMap((day) => Object.values(day).flat()).map((course) => course.course_name).sort();
       const rendered = page.data.scheduleTableRows.flatMap((row) => row.cells.flatMap((cell) => cell.courses)).map((course) => course.course_name).sort();
-      assert.deepEqual(rendered, expected, termKey);
+      assert.deepEqual([...new Set(rendered)], [...new Set(expected)], termKey);
+      const listCourses = page.data.visibleScheduleResults[0].weekRows.flatMap((day) => day.sections.flatMap((section) => section.courses)).map((course) => course.course_name).sort();
+      assert.deepEqual(listCourses, expected, termKey);
       assert.deepEqual(page.data.visibleScheduleResults[0].practice_courses.map((course) => course.course_name), payload.practice_courses.map((course) => course.course_name));
       console.log(`${termKey}: rendered ${rendered.length} course rows`);
     }
@@ -65,6 +67,36 @@ const snapshots = [
 ];
 
 for (const [runtime, { createCampusQueryPage }] of Object.entries(runtimes)) {
+  test(`${runtime}: overlapping sections share chronological two-period rows without losing courses`, () => {
+    const definition = createCampusQueryPage({ mode: 'schedule', pageTitle: 'Schedule' });
+    const page = { ...definition, data: { ...definition.data }, setData(patch, callback) {
+      Object.assign(this.data, patch);
+      if (callback) callback.call(this);
+    } };
+    const course = (course_name, section, weeks = '1-16周') => ({ course_name, section, weeks });
+    page.applyEduStatus({ credential: { has_credentials: true }, snapshots: [{ payload: {
+      term: { xnm: '2024', xqm: '3' }, week_table: {
+        星期一: {
+          '9-10节': [course('Last', '9-10节')],
+          '1-4节': [course('Long morning', '1-4节', '2-16周')],
+          '1-2节': [course('Short morning', '1-2节')],
+        },
+        星期二: { '5-8节': [course('Long afternoon', '5-8节')], '3-4节': [course('Second', '3-4节')] },
+      },
+    } }] });
+    const rows = page.data.scheduleTableRows;
+    assert.deepEqual(rows.map((row) => row.section), ['1-2节', '3-4节', '5-6节', '7-8节', '9-10节']);
+    assert.deepEqual(rows[0].cells[0].courses.map((c) => c.course_name).sort(), ['Long morning', 'Short morning']);
+    assert.equal(rows[1].cells[0].courses[0].course_name, 'Long morning');
+    assert.equal(rows[0].cells[0].courses.find((c) => c.course_name === 'Long morning').isCurrentWeek, false);
+    assert.equal(rows[1].cells[0].courses[0].tableSection, '1-4节');
+    assert.equal(rows[2].cells[1].courses[0].course_name, 'Long afternoon');
+    assert.equal(rows[3].cells[1].courses[0].course_name, 'Long afternoon');
+    const listCourses = page.data.visibleScheduleResults[0].weekRows.flatMap((day) => day.sections.flatMap((section) => section.courses));
+    assert.equal(listCourses.filter((c) => c.course_name === 'Long morning').length, 1);
+    assert.equal(listCourses.find((c) => c.course_name === 'Long morning').section, '1-4节');
+  });
+
   test(`${runtime}: switching from a single-section term refreshes all historical sections and practice`, () => {
     const definition = createCampusQueryPage({ mode: 'schedule', pageTitle: 'Schedule' });
     const page = { ...definition, data: { ...definition.data }, setData(patch, callback) {

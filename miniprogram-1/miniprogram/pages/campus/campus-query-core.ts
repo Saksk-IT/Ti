@@ -421,6 +421,19 @@ export function filterScheduleRowsByWeek(rows: any[], weekInput: unknown): any[]
   }).filter((term) => (term.weekRows || []).length || (term.practice_courses || []).length);
 }
 
+function scheduleTableSections(section: string): string[] {
+  const matched = /^(?:第)?(\d+)(?:\s*[-~至]\s*(\d+))?节?$/.exec(section);
+  if (!matched) return [section];
+  const start = Number(matched[1]);
+  const end = Number(matched[2] || matched[1]);
+  if (start < 1 || end < start || end > 100) return [section];
+  const sections: string[] = [];
+  for (let first = start - (start - 1) % 2; first <= end; first += 2) {
+    sections.push(`${first}-${first + 1}节`);
+  }
+  return sections;
+}
+
 function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; tableRows: ScheduleTableRow[] } {
   const firstTerm = (Array.isArray(rows) ? rows : [])[0] || {};
   const days = (Array.isArray(firstTerm.weekRows) ? firstTerm.weekRows : []).map((dayRow: any) => String(dayRow.day || '').trim()).filter(Boolean);
@@ -430,14 +443,16 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
     (dayRow.sections || []).forEach((sectionRow: any) => {
       const section = String(sectionRow.section || '').trim();
       if (!section) return;
-      const current = sectionMap[section] || { section, dayCourses: {} };
-      sectionMap[section] = {
-        section,
-        dayCourses: {
-          ...current.dayCourses,
-          [day]: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map((course: any) => markCourseWeekStatus(course, weekInput)),
-        },
-      };
+      // A four-period course occupies two standard rows, not a separate overlapping row.
+      scheduleTableSections(section).forEach((tableSection) => {
+        const current = sectionMap[tableSection] || { section: tableSection, dayCourses: {} };
+        const courses = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map((course: any) => ({
+          ...markCourseWeekStatus(course, weekInput),
+          tableSection: tableSection === section ? '' : section,
+        }));
+        current.dayCourses[day] = (current.dayCourses[day] || []).concat(courses);
+        sectionMap[tableSection] = current;
+      });
     });
   });
   const tableRows = Object.keys(sectionMap).sort((a, b) => {

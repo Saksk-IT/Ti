@@ -404,6 +404,20 @@ function filterScheduleRowsByWeek(rows, weekInput) {
         return __assign(__assign({}, term), { weekRows: weekRows, practice_courses: practiceCourses });
     }).filter(function (term) { return (term.weekRows || []).length || (term.practice_courses || []).length; });
 }
+function scheduleTableSections(section) {
+    var matched = /^(?:第)?(\d+)(?:\s*[-~至]\s*(\d+))?节?$/.exec(section);
+    if (!matched)
+        return [section];
+    var start = Number(matched[1]);
+    var end = Number(matched[2] || matched[1]);
+    if (start < 1 || end < start || end > 100)
+        return [section];
+    var sections = [];
+    for (var first = start - (start - 1) % 2; first <= end; first += 2) {
+        sections.push("".concat(first, "-").concat(first + 1, "节"));
+    }
+    return sections;
+}
 function buildScheduleTable(rows, weekInput) {
     var firstTerm = (Array.isArray(rows) ? rows : [])[0] || {};
     var days = (Array.isArray(firstTerm.weekRows) ? firstTerm.weekRows : []).map(function (dayRow) { return String(dayRow.day || '').trim(); }).filter(Boolean);
@@ -411,15 +425,16 @@ function buildScheduleTable(rows, weekInput) {
     (firstTerm.weekRows || []).forEach(function (dayRow) {
         var day = String(dayRow.day || '').trim();
         (dayRow.sections || []).forEach(function (sectionRow) {
-            var _a;
             var section = String(sectionRow.section || '').trim();
             if (!section)
                 return;
-            var current = sectionMap[section] || { section: section, dayCourses: {} };
-            sectionMap[section] = {
-                section: section,
-                dayCourses: __assign(__assign({}, current.dayCourses), (_a = {}, _a[day] = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map(function (course) { return markCourseWeekStatus(course, weekInput); }), _a)),
-            };
+            // A four-period course occupies two standard rows, not a separate overlapping row.
+            scheduleTableSections(section).forEach(function (tableSection) {
+                var current = sectionMap[tableSection] || { section: tableSection, dayCourses: {} };
+                var courses = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map(function (course) { return (__assign(__assign({}, markCourseWeekStatus(course, weekInput)), { tableSection: tableSection === section ? '' : section })); });
+                current.dayCourses[day] = (current.dayCourses[day] || []).concat(courses);
+                sectionMap[tableSection] = current;
+            });
         });
     });
     var tableRows = Object.keys(sectionMap).sort(function (a, b) {
