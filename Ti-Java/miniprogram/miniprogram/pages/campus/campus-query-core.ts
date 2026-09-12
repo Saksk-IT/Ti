@@ -255,11 +255,6 @@ function buildSelectedTerm(yearInput: unknown, semesterIndexInput: unknown): Arr
   return buildCampusTerms(String(xnm), String(xnm), semester);
 }
 
-function buildAllScheduleTerms(): Array<{ xnm: string; xqm: string }> {
-  const endYear = defaultAcademicYear();
-  return buildCampusTerms(String(endYear - 5), String(endYear), 'all');
-}
-
 function termKeyFromSelection(yearInput: unknown, semesterIndexInput: unknown): string {
   const year = String(yearInput || '').trim();
   const semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
@@ -441,10 +436,7 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
       };
     });
   });
-  const tableRows = Object.keys(sectionMap).sort((a, b) => {
-    const rankDiff = sectionRank(a) - sectionRank(b);
-    return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
-  }).map((section) => ({
+  const tableRows = Object.keys(sectionMap).map((section) => ({
     key: section,
     section,
     cells: days.map((day) => {
@@ -1090,9 +1082,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
     const mode = fixedMode;
     let terms;
     try {
-      terms = mode === 'schedule'
-        ? buildAllScheduleTerms()
-        : buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
+      terms = buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
     } catch (e: any) {
       this.setData({ errorMsg: e?.message || '学年或学期不正确' });
       return;
@@ -1108,7 +1098,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
 
   async onQueryTap() {
     if (fixedMode === 'schedule') {
-      await this.executeCampusQuery();
+      this.onOpenScheduleQuerySheetTap();
       return;
     }
     await this.executeCampusQuery();
