@@ -5,30 +5,22 @@
 
 {% block content %}
 <section class="schedule-page">
+  <div class="campus-subpage-nav">
+    <a class="campus-back-link" href="/campus" aria-label="返回校园首页">← <span>返回校园</span></a>
+    <span class="campus-subpage-label">校园 / 课表查询</span>
+  </div>
   <div class="schedule-content">
     <div class="schedule-toolbar">
       <form id="scheduleForm" class="schedule-form" autocomplete="off">
         <div class="field-group term-fields">
-          <label>
-            <span>学年</span>
-            <select id="scheduleAcademicYear">
-              {% for option in academic_year_options %}
-              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label>
-            <span>学期</span>
-            <select id="scheduleSemester">
-              <option value="all">第一、二学期</option>
-              <option value="3">第一学期</option>
-              <option value="12" selected>第二学期</option>
-            </select>
-          </label>
+          <div class="one-tap-query-copy">
+            <strong>一键查询本学年课表</strong>
+            <span>自动同步第一、二学期，结果会保留在校园首页</span>
+          </div>
         </div>
 
         <div class="schedule-actions">
-          <button class="primary-btn" type="submit" id="scheduleSubmit">查询</button>
+          <button class="primary-btn" type="submit" id="scheduleSubmit">一键查询课表</button>
           <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
         </div>
       </form>
@@ -82,6 +74,12 @@
     display: grid;
     gap: 18px;
   }
+  .campus-subpage-nav { display:flex; align-items:center; gap:12px; min-height:28px; }
+  .campus-back-link { color:var(--app-primary); font-size:13px; font-weight:850; text-decoration:none; }
+  .campus-subpage-label { color:var(--app-muted); font-size:12px; }
+  .one-tap-query-copy { display:grid; gap:5px; }
+  .one-tap-query-copy strong { color:var(--app-text); font-size:16px; }
+  .one-tap-query-copy span { color:var(--app-muted); font-size:12px; }
   .schedule-toolbar {
     border: 1px solid var(--app-border);
     background: var(--app-surface);
@@ -462,18 +460,11 @@
   }
 
   function buildTerms() {
-    const academicYear = Number(document.getElementById('scheduleAcademicYear').value || 0);
-    const semester = document.getElementById('scheduleSemester').value;
-    const terms = [];
+    const academicYear = Number({{ (academic_year_options | selectattr('selected') | map(attribute='value') | first) | tojson }} || 0);
     if (!Number.isInteger(academicYear) || academicYear < 2000 || academicYear > 2100) {
       throw new Error('学年不正确');
     }
-    const semesters = semester === 'all' ? ['3', '12'] : [semester];
-    semesters.forEach(function (xqm) { terms.push({ xnm: String(academicYear), xqm: xqm }); });
-    if (terms.length > 12) {
-      throw new Error('一次最多查询 12 个学期');
-    }
-    return terms;
+    return ['3', '12'].map(function (xqm) { return { xnm: String(academicYear), xqm: xqm }; });
   }
 
   function appendText(parent, className, text) {
@@ -795,7 +786,7 @@
       setState(error.message || '查询失败', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = '查询';
+      submitBtn.textContent = '一键查询课表';
     }
   });
 
@@ -833,7 +824,7 @@
     } finally {
       submitWebvpnCaptcha.disabled = false;
       submitBtn.disabled = false;
-      submitBtn.textContent = '查询';
+      submitBtn.textContent = '一键查询课表';
     }
   });
 
