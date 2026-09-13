@@ -377,7 +377,7 @@
     // 1. UI 样式表
     GM_addStyle(`
         #menu-trigger {
-            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            position: fixed; top: 18%; right: 0; width: 48px; height: 112px;
             background: #fff; border: 2px solid #ff9a9e; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; box-shadow: 0 8px 24px rgba(255,154,158,0.25); z-index: 10002;
@@ -385,15 +385,17 @@
         }
         #menu-trigger:hover { transform: scale(1.15) rotate(10deg); }
         #menu-trigger:active { transform: scale(0.9); }
-        #menu-trigger .icon { font-size: 28px; }
+        #menu-trigger .icon { font-size: 22px; writing-mode: vertical-rl; }
 
         #export-panel {
-            position: fixed; bottom: 105px; right: 30px; width: 280px;
+            position: fixed; top: 18%; right: 58px; width: 320px; max-height: 78vh; overflow:auto;
             background: #fff; border-radius: 26px; box-shadow: 0 20px 60px rgba(0,0,0,0.12);
             z-index: 10001; padding: 24px; display: none; border: 1px solid #fdf2f2;
             transform-origin: bottom right; overflow: hidden;
         }
         .panel-show { display: block !important; animation: dropletIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        #export-panel .auth-state { padding:10px; margin-bottom:12px; border-radius:12px; background:#fff1f2; color:#9f1239; font-size:12px; line-height:1.6; }
+        #export-panel .auth-state a { color:#be123c; font-weight:700; text-decoration:none; }
 
         @keyframes dropletIn {
             0% { transform: scale(0.3) translateY(60px); opacity: 0; }
@@ -1328,6 +1330,7 @@
     panel.id = 'export-panel';
     panel.innerHTML = `
         <h3 style="text-align:center;margin:0 0 10px 0;color:#666;font-size:15px">学习通作业导出助手</h3>
+        <div class="auth-state" id="auth-state"></div>
         <div id="log-area">等待指令...</div>
         <div style="text-align:center;margin-bottom:12px;font-size:12px;color:#888">
             <input type="checkbox" id="c-ans" checked> <label for="c-ans" style="cursor:pointer">包含答案</label>
@@ -1345,6 +1348,12 @@
         <div id="pdf-render-area"></div>
     `;
     document.body.appendChild(panel);
+
+    const authState = document.getElementById('auth-state');
+    const authBase = getSakSiteUrl().replace(/\/+$/, '');
+    const loggedIn = /(?:token|session|auth|user)/i.test(Object.keys(localStorage || {}).join(',')) || /(?:session|token|auth)/i.test(document.cookie || '');
+    authState.innerHTML = loggedIn ? '已检测到题库登录状态，可直接使用。' : `请先登录题库后使用导出功能。<a href="${authBase}/login?redirect=${encodeURIComponent(location.href)}" target="_blank" rel="noopener">登录</a>　<a href="${authBase}/register" target="_blank" rel="noopener">注册</a>`;
+    if (!loggedIn) document.querySelectorAll('#export-panel button').forEach((el) => { if (el.id !== 'goto-top') el.disabled = true; });
 
     // 交互事件
     trigger.onclick = () => {

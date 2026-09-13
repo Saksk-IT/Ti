@@ -2245,6 +2245,11 @@
         --ptaexp-shadow-fab: 0 10px 30px rgba(0,0,0,0.14);
         --ptaexp-ring: rgba(var(--ptaexp-accent), 0.34);
       }
+      #${TOOL_ID} { right: 0; top: 18%; bottom: auto; }
+      #${TOOL_ID} .ptaexp-fab { border-radius: 16px 0 0 16px; min-width: 48px; writing-mode: vertical-rl; padding: 14px 10px; }
+      #${TOOL_ID} .ptaexp-panel { right: 58px; top: 0; bottom: auto; max-height: 82vh; overflow:auto; }
+      #${TOOL_ID} .ptaexp-auth { padding: 12px; border-radius: 14px; background: rgba(79,70,229,.08); margin-bottom: 10px; }
+      #${TOOL_ID} .ptaexp-auth a { color:#4f46e5; font-weight:700; text-decoration:none; }
       #${TOOL_ID} * { box-sizing: border-box; }
 
       .ptaexp-fab {
@@ -2587,6 +2592,7 @@
           </button>
         </div>
 
+        <div class="ptaexp-auth" data-el="auth"></div>
         <div class="ptaexp-actions">
           <button class="ptaexp-action" data-act="parse" data-primary="1" type="button">${pageSupportState.parseLabel}</button>
           <button class="ptaexp-action" data-act="download" type="button" disabled>下载 JSON</button>
@@ -2636,6 +2642,12 @@
       </div>
     `;
     document.body.appendChild(root);
+
+    const authEl = root.querySelector('[data-el="auth"]');
+    const siteBase = getSakSiteUrl().replace(/\/+$/, '');
+    const loggedIn = /(?:token|session|auth|user)/i.test(Object.keys(localStorage || {}).join(',')) || /(?:session|token|auth)/i.test(document.cookie || '');
+    authEl.innerHTML = loggedIn ? '已检测到题库登录状态，可直接使用。' : `请先登录题库后使用导出功能。<a href="${siteBase}/login?redirect=${encodeURIComponent(location.href)}" target="_blank" rel="noopener">登录</a>　<a href="${siteBase}/register" target="_blank" rel="noopener">注册</a>`;
+    if (!loggedIn) root.querySelectorAll('.ptaexp-action').forEach((el) => { if (el.dataset.act !== 'open-sak') el.disabled = true; });
 
     const btn = root.querySelector('[data-el=\"fab\"]');
     const panel = root.querySelector('.ptaexp-panel');
