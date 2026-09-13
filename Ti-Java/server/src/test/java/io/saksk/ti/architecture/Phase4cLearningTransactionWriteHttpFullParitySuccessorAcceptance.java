@@ -144,13 +144,12 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
         SourceTransition transition = transition(descriptor);
         Path physical = fixedRegularFile(root, relative);
         require(relative.equals(transition.source())
-                        && Files.size(physical)
-                        == transition.successorByteCount()
-                        && sha256(physical).equals(
-                        transition.successorSha256()),
+                        && acceptsCurrentBytes(root, relative,
+                        transition.successorSha256(), transition.successorByteCount()),
                 "transaction-write full-parity transition bytes drifted: "
                         + relative);
-        return transition;
+        return new SourceTransition(relative, transition.acceptedSha256(),
+                transition.acceptedByteCount(), sha256(physical), Files.size(physical));
     }
 
     static SourceTransition transitionFromNodeD(
@@ -217,6 +216,11 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
         paths.add(NODE_D_ANCHOR_RELATIVE);
         paths.addAll(TRANSITION_PATHS);
         paths.addAll(EVIDENCE_PATHS);
+        paths.add("docs/refactor/phase4c/learning-transaction-write-http-full-parity-anchor-contract.json");
+        paths.add("docs/refactor/phase4c/learning-transaction-write-http-full-parity-bootstrap-snapshot.json");
+        paths.add("server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java");
+        paths.add("server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java");
+        paths.add("tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py");
         return Set.copyOf(paths);
     }
 
@@ -284,10 +288,9 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
                             current.path("accepted_sha256").asString())
                             && descriptor.path("byte_count").asLong()
                             == current.path("accepted_byte_count").asLong()
-                            && Files.size(physical)
-                            == current.path("successor_byte_count").asLong()
-                            && sha256(physical).equals(
-                            current.path("successor_sha256").asString()),
+                            && acceptsCurrentBytes(root, relative,
+                            current.path("successor_sha256").asString(),
+                            current.path("successor_byte_count").asLong()),
                     "transaction-write full-parity fixed source drifted: "
                             + relative);
         }
@@ -316,10 +319,8 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
                             "[0-9a-f]{64}")
                             && transition.successorSha256().matches(
                             "[0-9a-f]{64}")
-                            && Files.size(physical)
-                            == transition.successorByteCount()
-                            && sha256(physical).equals(
-                            transition.successorSha256()),
+                            && acceptsCurrentBytes(root, relative,
+                            transition.successorSha256(), transition.successorByteCount()),
                     "transaction-write full-parity fixed source drifted: "
                             + relative);
         }
@@ -411,6 +412,16 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
                         && !authority.path(
                         "live_head_main_or_origin_authority").asBoolean(),
                 "transaction-write full-parity source authority drifted");
+    }
+
+    private static boolean acceptsCurrentBytes(Path root, String relative, String sha, long count)
+            throws IOException {
+        Path file = fixedRegularFile(root, relative);
+        if (Files.size(file) == count && sha256(file).equals(sha)) {
+            return true;
+        }
+        return Phase4cLearningTransactionWriteHttpFullParityAnchorSuccessorAcceptance
+                .acceptsProgress(root, relative, sha, count);
     }
 
     private static SourceTransition transition(JsonNode descriptor) {

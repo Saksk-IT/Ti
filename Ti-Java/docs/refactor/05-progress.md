@@ -4,6 +4,16 @@
 
 ## 当前阶段
 
+### 2026-09-13 事务写 full-parity 固定提交恢复点
+
+- 已补记已提交的 bootstrap `6ed81347467a4155887300b7e4ae36589204af79`：父提交 `b635d1d`，八个控制源（6 A + 2 M）的完整差集、修改前后 blob、SHA-256 与字节数由追加式 anchor/snapshot 固定。快照来自固定 Git 对象，普通构建及独立副本验收不读取父仓库或 Git。
+- 本节点只收口 bootstrap 外锚与本进度文档的精确 successor；历史 JSON、WORM、route delta 保持原字节。当前 bridge/anchor 控制源仍明确自排除，不能自证外锚。`route_migration_eligible=false`，九条事务写仍 pending，权威状态保持 **13 migrated / 598 pending / 0 cutover**。
+- 本机 WSL 使用 `/home/administrator/.codex/coordination/ti-java/` 作为原 macOS 本机锁命名空间的等价位置；INT 按 main-write → authority-chain → heavy-verify 顺序串行验证。Java 25、Maven 3.9.16、Node 24 与 libasound2t64 可用。
+- **本轮验收：** 固定 Git replay、Python 新旧合同 **15/15**、独立 Gitless 副本中的 Java 定向回归 **35/35**、真实 PostgreSQL 16.14/18.4 + 随机端口 Tomcat + Redis 7.4.7 **8/8** 全部通过，零失败/错误/跳过。原 Web foundation 既有 E2E 3/3；本轮未改 Web，未新增全站视觉等价验收。
+- **全量阻断已对照确认：** 从未修改的 `79680e0` 提交抽取独立副本，`ModuleContractParityTest` 也因 `application.yml` 无精确 HTTP implementation → transaction-write successor 而失败；本轮工作区同类首个断点为 `SecurityConfiguration.java`（集合遍历顺序不同）。本节点只完成 bootstrap 外锚和进度承接，后续必须补旧 HTTP/production-runtime 到事务写检查点的完整追加式承接；不得把定向绿色视为全量 `verify` 通过。
+- 下一项：当前树完整 Maven verify（含真实 PostgreSQL/Redis/Tomcat）及独立验收全部绿色后，追加九 route 的 promotion delta。Phase 4C 完全闭合前不继续集成 Web；既有 Web foundation 只覆盖题库广场/只读详情，不能宣称全站 UI 等价。
+
+
 - **阶段 4C：九个事务写 HTTP operation 的真实认证、网络、双 PostgreSQL、OpenAPI 与第十 WORM 节点已闭合，successor/晋级门禁尚未闭合。** 通用 learning/catalog 幂等回执、五组 owner-local 事务与统一 HTTP 实现已固定；Redis 7.4.7 的九 route/actor 隔离、双客户端原子收敛、TTL、真实拒绝/中断/恢复和严格 CORS 由 `18deb29` 固定。随机端口 Tomcat 使用真实 Flask Session exchange、Target Session、Bearer、Redis 及 PostgreSQL 18.4 执行九个成功写事务和 45 个认证/安全 disposition；PostgreSQL 16.14 再由完整过滤链执行九个写事务，两版均通过触发器证明 `users` UPDATE=0 并保持 `last_active` 不变，执行证据由 `dad308e` 固定。真实执行同时发现并修复 `jsonb` 字段重排导致的 review 幂等回执 500，畸形 JSON 与超长 `Idempotency-Key` 也固定为安全 400。独立 OpenAPI 3.1.2 overlay 精确冻结九个 operation、九个派生 OPTIONS、三类认证、逐 route 限额、幂等、CORS 与成功/错误信封。第十 WORM `dd165106…de599` 绑定 build-context `5e4247d0…7224`，70 表/617 列、只读 ACL、Hibernate `validate` 与 readiness 全绿；九条路由仍未创建 route delta，必须继续闭合完整 fixed source successor、当前树全量验证和追加式 route promotion，才允许从 pending 晋级，权威状态继续保持 **13/598/0**。
 - **阶段 4C：personal-bank legacy tag execution protocol Node D 三段已外锚。** Node C 功能、独立验收和 post-push anchor 后，Node D 的 D0 实现、D1 独立副本验收及 D2 外锚均已完成并推送；canonical candidate、Ed25519 四 purpose verifier、逐阶段 `prepare/freeze/apply/recover` 协议与 test-only 078/079 双 PostgreSQL 本地备份恢复演练闭合。这里只关闭 `migration_execution_protocol_implemented`、`cryptographic_evidence_verifier_implemented`、`local_test_backup_restore_execution_rehearsal_closed`；生产 schema/index/Flyway、真实 writer freeze/connection drain、生产 trust root、真实备份恢复/apply、legacy 永久下线、gateway/cutover 等安全 gate 全部保持关闭，路由保持 **13/598/0**。
 - **Phase 6 Web foundation 已完成固定 SHA 集成，但 Phase 6 整体未完成。** INT 以 `cherry-pick -n` 审查并集成 Worker `c7fd40dad2340c320c31281e29608f33d0ee26fe`；其唯一父提交为 BASE `765e4470f1ddb60f0ce6f23227d6303961f47fcf`，102 个新增文件全部位于 `Ti-Java/web/**`，handoff `528ccb759d269fb1a2655e9c14838dc1b621c863` 没有合入 main。公共题库列表/只读名片只调用五个已迁移 Phase 4A GET；OpenAPI/生成漂移、lint、strict typecheck、unit 7/7、Vite 160 modules、Playwright 3/3 与 high-level npm audit 全绿。加入、练习、个人题库、user-counts、写操作、跨域搜索和科目页仍未迁移；四条 Phase 6 旧页面 operation 保持 pending，未创建 route delta，13/598/0 与生产 owner 均不变。

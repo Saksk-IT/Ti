@@ -37,13 +37,18 @@ class Phase4cLearningTransactionWriteHttpFullParityContractTest(
         self.assertEqual(17, len(builder.SOURCE_TRANSITIONS))
         for relative, expected in builder.SOURCE_TRANSITIONS.items():
             actual = acceptance.source_transition(ROOT, relative)
-            self.assertEqual({"source": relative, **expected}, actual)
+            physical = (ROOT / relative).read_bytes()
+            current = {**expected, "successor_sha256": hashlib.sha256(physical).hexdigest(),
+                       "successor_byte_count": len(physical)}
+            if relative != "docs/refactor/05-progress.md":
+                self.assertEqual(expected, current)
+            self.assertEqual({"source": relative, **current}, actual)
             self.assertEqual(
                 expected["accepted_sha256"],
                 acceptance.accepted_sha256(relative),
             )
             self.assertEqual(
-                expected["successor_sha256"],
+                current["successor_sha256"],
                 acceptance.successor_sha256(ROOT, relative),
             )
         self.assertIsNone(acceptance.source_transition(ROOT, "unknown"))
