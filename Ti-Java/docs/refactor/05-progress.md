@@ -4,6 +4,15 @@
 
 ## 当前阶段
 
+### 2026-09-13 全量验收首个阻断
+
+- 已启动 `./infra/phase2/verify-in-maven-container.sh clean verify`，固定 Maven 3.9.16/JDK 25 容器成功拉取并开始执行。
+- 首个新增结构边界失败为 `CatalogPublicBoundaryNeutralityTest`：`LegacyQuestionEditNormalizer.java` 含固定中文显示字符串；该问题需要通过保持运行时文案等价、移除应用边界源码中的字面量并补充 successor 合同来修复。
+- 合同链随后在 `ModuleContractParityTest` 及 personalbank/user-counts parity 测试中一致阻断：`SecurityConfiguration.java` 未被 tag-preflight successor 接受；user-counts HTTP implementation 固定源 `infra/phase2/verify-local-reference-wormhole.sh` 及 target-execution 固定源 `server/pom.xml` 也未被当前 successor 接受；另有应用 shape 期望 23 但当前为 24。
+- 本轮没有修改生产代码或历史合同；全量 Maven 进程在重复确认同一 successor 阻断后停止。路由与 cutover 状态保持 **13 migrated / 598 pending / 0 cutover**。
+- 下一项：先为 `SecurityConfiguration.java`、固定 phase2 runner、`server/pom.xml` 建立追加式 successor 外锚，再处理 catalog 边界文案和 23/24 shape 差异，最后重跑完整 Maven 与独立验收。
+
+
 ### 2026-09-13 事务写 full-parity 固定提交恢复点
 
 - 已补记已提交的 bootstrap `6ed81347467a4155887300b7e4ae36589204af79`：父提交 `b635d1d`，八个控制源（6 A + 2 M）的完整差集、修改前后 blob、SHA-256 与字节数由追加式 anchor/snapshot 固定。快照来自固定 Git 对象，普通构建及独立副本验收不读取父仓库或 Git。
