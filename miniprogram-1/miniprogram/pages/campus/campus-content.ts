@@ -1,6 +1,6 @@
 export type CampusMode = 'schedule' | 'grades';
 export type CampusSemesterValue = 'all' | '3' | '12';
-export type CampusActionKey = 'schedule' | 'grades' | 'binding' | 'evaluation' | 'more';
+export type CampusActionKey = 'schedule' | 'grades' | 'binding' | 'more';
 
 export interface CampusTerm {
   xnm: string;
@@ -453,14 +453,6 @@ export function buildCampusActions(eduBound: boolean, statusFailed: boolean): Ca
       icon: '/images/icons/settings.svg',
       tone: 'normal',
       disabled: false,
-    },
-    {
-      key: 'evaluation',
-      title: '一键教评',
-      subtitle: '功能建设中',
-      icon: '/images/icons/clipboard-check.svg',
-      tone: 'muted',
-      disabled: true,
     },
     {
       key: 'more',

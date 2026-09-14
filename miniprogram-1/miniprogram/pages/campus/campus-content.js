@@ -367,14 +367,6 @@ function buildCampusActions(eduBound, statusFailed) {
             disabled: false,
         },
         {
-            key: 'evaluation',
-            title: '一键教评',
-            subtitle: '功能建设中',
-            icon: '/images/icons/clipboard-check.svg',
-            tone: 'muted',
-            disabled: true,
-        },
-        {
             key: 'more',
             title: '更多校园',
             subtitle: '考试安排等后续接入',

@@ -474,8 +474,8 @@ test('campus actions and highlights stay useful without data', () => {
   const actions = buildCampusActions(false, false);
   const highlights = buildCampusHighlights(today, gradeMetrics, false);
 
-  assert.deepEqual(actions.map((item) => item.key), ['schedule', 'grades', 'binding', 'evaluation', 'more']);
-  assert.equal(actions.find((item) => item.key === 'evaluation').disabled, true);
+  assert.deepEqual(actions.map((item) => item.key), ['schedule', 'grades', 'binding', 'more']);
+  assert.equal(actions.some((item) => item.key === 'evaluation'), false);
   assert.deepEqual(highlights.map((item) => item.value), ['0', '-', '待绑定']);
 });
 
