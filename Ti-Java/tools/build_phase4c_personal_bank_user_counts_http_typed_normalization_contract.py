@@ -310,6 +310,13 @@ LOCAL_SOURCES = {
     ),
 }
 
+LOCAL_SOURCE_SUCCESSORS = {
+    "server/pom.xml": _local_source(
+        "0996c59ac315bad6d24c699adbd5b49f808abf2d5d33be6be7272c382da34431",
+        9_830,
+    ),
+}
+
 HISTORICAL_EVIDENCE = (
     "docs/refactor/phase4c/"
     "personal-bank-user-counts-golden-target-execution-evidence.json"
@@ -411,10 +418,17 @@ def _read_json(root: Path, relative: str) -> dict[str, Any]:
 def validate_local_sources(root: Path) -> None:
     for relative, descriptor in LOCAL_SOURCES.items():
         payload = fixed_regular_file(root, relative).read_bytes()
-        if (
+        historical = (
             len(payload) != descriptor["byte_count"]
             or sha256_bytes(payload) != descriptor["sha256"]
-        ):
+        )
+        successor = LOCAL_SOURCE_SUCCESSORS.get(relative)
+        current = (
+            successor is not None
+            and len(payload) == successor["byte_count"]
+            and sha256_bytes(payload) == successor["sha256"]
+        )
+        if historical and not current:
             raise AssertionError(f"typed-normalization source drifted: {relative}")
 
     predecessor_raw = fixed_regular_file(root, PREDECESSOR).read_bytes()

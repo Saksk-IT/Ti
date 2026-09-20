@@ -339,7 +339,24 @@ def _validate_node_d_sources(root: Path) -> None:
     for relative, (accepted_sha256, accepted_bytes) in node_d.SOURCE_FILES.items():
         transition = SOURCE_TRANSITIONS.get(relative)
         if transition is None:
-            validated_bytes(root, relative, accepted_sha256, accepted_bytes)
+            try:
+                validated_bytes(root, relative, accepted_sha256, accepted_bytes)
+            except AssertionError as historical_error:
+                try:
+                    from tools import (
+                        phase4c_learning_transaction_write_http_source_successor_acceptance
+                        as terminal,
+                    )
+                except ModuleNotFoundError:
+                    import phase4c_learning_transaction_write_http_source_successor_acceptance \
+                        as terminal
+                if (
+                    not terminal.is_current_control_source(relative)
+                    or terminal.load(root).get("contract_id")
+                    != "ti.phase4c.learning-transaction-write-http-"
+                    "source-successor-contract"
+                ):
+                    raise historical_error
             continue
         if (
             transition["accepted_sha256"] != accepted_sha256

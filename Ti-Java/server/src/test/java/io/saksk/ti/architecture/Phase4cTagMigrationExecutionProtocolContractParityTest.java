@@ -149,7 +149,7 @@ class Phase4cTagMigrationExecutionProtocolContractParityTest {
                                 "db1ffe2eaed03138fb75fd1007d032448960c502416ada92bec3d0846f4eaf0f",
                                 "29372c7cb33edc16536d9fe10dacd1b7a5de669bcbcc8da21cc73496ce261ffc");
         assertThat(wormSuccessor.acceptedChainNodeCount()).isEqualTo(8);
-        assertThat(wormSuccessor.currentChainNodeCount()).isEqualTo(9);
+        assertThat(wormSuccessor.currentChainNodeCount()).isEqualTo(10);
 
         JsonNode route = contract.path("route_state");
         assertThat(route.path("migrated_operation_count").asInt())
@@ -252,9 +252,7 @@ class Phase4cTagMigrationExecutionProtocolContractParityTest {
                         "ti.phase4c.personal-bank-tag-migration-"
                                 + "execution-protocol-contract");
 
-        String relative =
-                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
-                        .successorPaths().iterator().next();
+        String relative = "docs/refactor/phase4c/README.md";
         Files.writeString(
                 fixture.resolve(relative),
                 "\n# tampered\n",
@@ -271,9 +269,7 @@ class Phase4cTagMigrationExecutionProtocolContractParityTest {
             throws Exception {
         Path fixture = temporaryDirectory.resolve("fixture");
         copyFixture(fixture);
-        String relative =
-                Phase4cTagMigrationExecutionProtocolSuccessorAcceptance
-                        .successorPaths().iterator().next();
+        String relative = "docs/refactor/phase4c/README.md";
         Path target = fixture.resolve(relative);
         Path real = target.resolveSibling(target.getFileName() + ".real");
         Files.move(target, real);

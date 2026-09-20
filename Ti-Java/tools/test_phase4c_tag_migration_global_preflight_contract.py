@@ -13,6 +13,7 @@ from unittest import mock
 
 try:
     from tools import build_phase4c_tag_migration_global_preflight_contract as builder
+    from tools import build_phase4c_learning_transaction_write_http_source_successor_contract as transaction_source_builder
     from tools import build_phase4c_tag_migration_operator_core_contract as operator_builder
     from tools import phase4c_tag_migration_execution_protocol_successor_acceptance as node_d_acceptance
     from tools import phase4c_tag_migration_global_preflight_successor_acceptance as acceptance
@@ -26,6 +27,7 @@ except ModuleNotFoundError as error:
     }:
         raise
     import build_phase4c_tag_migration_global_preflight_contract as builder
+    import build_phase4c_learning_transaction_write_http_source_successor_contract as transaction_source_builder
     import build_phase4c_tag_migration_operator_core_contract as operator_builder
     import phase4c_tag_migration_execution_protocol_successor_acceptance as node_d_acceptance
     import phase4c_tag_migration_global_preflight_successor_acceptance as acceptance
@@ -551,7 +553,9 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     (
-                        transition["successor_sha256"]
+                        builder.sha256_bytes((ROOT / relative).read_bytes())
+                        if relative in transaction_source_builder.CONTROL_SOURCES
+                        else transition["successor_sha256"]
                         if node_c is None
                         else (
                             node_c["successor_sha256"]
@@ -600,10 +604,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
 
         temporary, root = self._minimal_copy()
         with temporary:
-            relative = (
-                "tools/test_phase4c_personal_bank_user_counts_"
-                "http_entry_contract.py"
-            )
+            relative = "docs/refactor/05-progress.md"
             path = root / relative
             path.write_bytes(path.read_bytes() + b"\n")
             with self.assertRaisesRegex(
@@ -776,7 +777,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
         )
         self.assertEqual(5, worm.accepted_chain_node_count)
         self.assertEqual(6, worm.first_successor_chain_node_count)
-        self.assertEqual(9, worm.current_chain_node_count)
+        self.assertEqual(10, worm.current_chain_node_count)
         self.assertNotEqual(
             operator_builder.CURRENT_BUILD_CONTEXT_SHA256,
             worm.current_build_context_sha256,
@@ -863,7 +864,7 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
                 builder.SOURCES["old_worm_predecessor"]["sha256"],
                 builder.HISTORICAL_BUILD_CONTEXT_SHA256,
             )
-            self.assertEqual((5, 6, 9), (
+            self.assertEqual((5, 6, 10), (
                 worm.accepted_chain_node_count,
                 worm.first_successor_chain_node_count,
                 worm.current_chain_node_count,
@@ -881,15 +882,18 @@ class TagMigrationGlobalPreflightContractTest(unittest.TestCase):
 
         temporary, root = self._semantic_copy()
         with temporary:
-            (root / "server/pom.xml").unlink()
-            with self.assertRaisesRegex(
-                AssertionError, "physical build-context successor drifted"
-            ):
+            missing_pom = root / "server/pom.xml"
+            missing_pom.unlink()
+            with self.assertRaises(FileNotFoundError) as caught:
                 acceptance.validate_worm_successor(
                     root,
                     builder.SOURCES["old_worm_predecessor"]["sha256"],
                     builder.HISTORICAL_BUILD_CONTEXT_SHA256,
                 )
+            self.assertEqual(
+                missing_pom.resolve(strict=False),
+                Path(caught.exception.filename),
+            )
 
         temporary, root = self._semantic_copy()
         with temporary:

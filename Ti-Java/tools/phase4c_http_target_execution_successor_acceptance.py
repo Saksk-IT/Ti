@@ -36,6 +36,25 @@ def _tag_preflight_successor():
     return successor
 
 
+def _transaction_write_source_successor():
+    try:
+        from tools import (
+            phase4c_learning_transaction_write_http_source_successor_acceptance
+            as successor
+        )
+    except ModuleNotFoundError as error:
+        if error.name not in {
+            "tools",
+            "tools."
+            "phase4c_learning_transaction_write_http_source_"
+            "successor_acceptance",
+        }:
+            raise
+        import phase4c_learning_transaction_write_http_source_successor_acceptance \
+            as successor
+    return successor
+
+
 def _validate_runtime_successor(*args, **kwargs):
     return _tag_preflight_successor().validate_production_runtime_successor(
         *args, **kwargs
@@ -595,13 +614,26 @@ def _current_or_post_push_successor_sha256(
     nodea_successor = getattr(nodea, "successor_sha256", None)
     if not callable(nodea_accepted) or not callable(nodea_successor):
         raise AssertionError("tag-preflight successor API is incomplete")
-    if nodea_accepted(relative) != declared_sha256:
+    if nodea_accepted(relative) == declared_sha256:
+        try:
+            if nodea_successor(root, relative) == physical_sha256:
+                return physical_sha256
+        except AssertionError:
+            pass
+    terminal = _transaction_write_source_successor()
+    terminal_accepted = getattr(terminal, "accepted_sha256", None)
+    terminal_successor = getattr(terminal, "successor_sha256", None)
+    if (
+        not callable(terminal_accepted)
+        or not callable(terminal_successor)
+        or terminal_accepted(relative) != declared_sha256
+    ):
         raise AssertionError(
             f"tag-preflight successor does not accept historical bytes: {relative}"
         )
-    if nodea_successor(root, relative) != physical_sha256:
+    if terminal_successor(root, relative) != physical_sha256:
         raise AssertionError(
-            f"tag-preflight successor does not bind current bytes: {relative}"
+            f"transaction-write successor does not bind current bytes: {relative}"
         )
     return physical_sha256
 
@@ -1317,6 +1349,20 @@ def _validate_production_surface(root: Path, contract: dict, predecessor: dict) 
 
     physical_files = _production_runtime_manifest(root)
     if physical_files != predecessor_files:
+        expected_added = tuple(sorted(
+            (relative, digest)
+            for relative, digest in physical_files.items()
+            if relative not in predecessor_files
+        ))
+        expected_changed = tuple(sorted(
+            (relative, digest)
+            for relative, digest in physical_files.items()
+            if relative in predecessor_files
+            and predecessor_files[relative] != digest
+        ))
+        expected_deleted = tuple(sorted(
+            set(predecessor_files) - set(physical_files)
+        ))
         successor = _validate_runtime_successor(
             root,
             predecessor_files,
@@ -1328,8 +1374,9 @@ def _validate_production_surface(root: Path, contract: dict, predecessor: dict) 
             or successor.accepted_manifest_sha256 != PRODUCTION_MANIFEST_SHA256
             or successor.current_file_count != len(physical_files)
             or successor.current_manifest_sha256 != _sha256_json(physical_files)
-            or successor.changed_files
-            or successor.deleted_files
+            or successor.added_files != expected_added
+            or successor.changed_files != expected_changed
+            or successor.deleted_files != expected_deleted
         ):
             raise AssertionError("tag preflight runtime successor descriptor drifted")
     surface = contract.get("production_surface")
@@ -1371,7 +1418,7 @@ def _validate_worm_and_routes(root: Path, contract: dict, predecessor: dict) -> 
         if (
             successor.accepted_chain_node_count != 5
             or successor.current_build_context_sha256 != physical_build_context
-            or successor.current_chain_node_count != 9
+            or successor.current_chain_node_count != 10
         ):
             raise AssertionError("tag preflight WORM successor descriptor drifted")
     read_role = worm.get("readRole", {})

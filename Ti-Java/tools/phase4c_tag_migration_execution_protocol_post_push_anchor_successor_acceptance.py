@@ -368,7 +368,30 @@ def accepted_sha256(root: Path, relative: str) -> str | None:
         len(payload) != descriptor["byte_count"]
         or _sha256_bytes(payload) != descriptor["sha256"]
     ):
-        return None
+        try:
+            from tools import (
+                phase4c_learning_transaction_write_http_source_successor_acceptance
+                as terminal,
+            )
+        except ModuleNotFoundError as error:
+            if error.name not in {
+                "tools",
+                "tools."
+                "phase4c_learning_transaction_write_http_source_"
+                "successor_acceptance",
+            }:
+                raise
+            import phase4c_learning_transaction_write_http_source_successor_acceptance \
+                as terminal
+        current = terminal.successor_sha256(root, relative)
+        anchored_control = terminal.anchored_bootstrap_sha256(relative)
+        if (
+            current != _sha256_bytes(payload)
+            and anchored_control is None
+            and not terminal.is_current_control_source(relative)
+        ):
+            return None
+        terminal.load(root)
     return str(descriptor["sha256"])
 
 

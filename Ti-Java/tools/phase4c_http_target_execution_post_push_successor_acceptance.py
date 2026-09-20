@@ -735,6 +735,83 @@ def load(
     return document
 
 
+def _load_successor_envelope(ti_java_root: Path) -> dict[str, Any]:
+    """Validate the fixed envelope used by one source-hash lookup.
+
+    Full checkpoint, JUnit, WORM, and every-source validation remains in
+    :func:`load`. A historical bridge invokes this lookup once per source, so
+    replaying the complete contract for every path would multiply identical
+    work. The exact contract bytes, payload, transition allowlist, and closed
+    authorization boundary are still checked on every lookup.
+    """
+    root = ti_java_root.resolve(strict=True)
+    payload = _fixed_regular_file(root, CONTRACT_RELATIVE).read_bytes()
+    if _sha256_bytes(payload) != CONTRACT_SHA256:
+        raise AssertionError("post-push contract physical SHA-256 drifted")
+    try:
+        document = json.loads(payload)
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise AssertionError("post-push contract is unreadable") from error
+    if (
+        not isinstance(document, dict)
+        or set(document) != {
+            "contract_id", "schema_version", "captured_at", "status",
+            "scope", "predecessor", "git_checkpoint", "checkpoint_anchor",
+            "historical_source_successors", "junit_execution",
+            "worm_evidence", "authorization", "acceptance",
+            "document_payload_sha256",
+        }
+        or {
+            "contract_id": document.get("contract_id"),
+            "schema_version": document.get("schema_version"),
+            "captured_at": document.get("captured_at"),
+            "status": document.get("status"),
+            "scope": document.get("scope"),
+        } != {
+            "contract_id": CONTRACT_ID,
+            "schema_version": 1,
+            "captured_at": CONTRACT_CAPTURED_AT,
+            "status": CONTRACT_STATUS,
+            "scope": CONTRACT_SCOPE,
+        }
+        or document.get("document_payload_sha256")
+        != CONTRACT_PAYLOAD_SHA256
+        or _payload_sha256(document) != CONTRACT_PAYLOAD_SHA256
+    ):
+        raise AssertionError("post-push successor envelope drifted")
+    if document.get("historical_source_successors") != {
+        "accepted_checkpoint_commit_oid": GIT_COMMIT_OID,
+        "successor_allowlist": sorted(SUCCESSOR_SOURCES),
+        "successor_allowlist_exact": True,
+        "arbitrary_source_lookup_forbidden": True,
+        "accepted_hashes_from_fixed_git_blobs": True,
+        "overrides": _expected_overrides(),
+        "current_post_push_sources": sorted(CURRENT_POST_PUSH_SOURCES),
+        "current_post_push_sources_excluded_from_self_authority": True,
+        "current_successor_bytes_external_git_anchor_complete": False,
+    }:
+        raise AssertionError(
+            "post-push successor transition authority drifted"
+        )
+    authorization = document.get("authorization", {})
+    for field in (
+        "current_handoff_successor_bytes_external_git_anchor_complete",
+        "typed_parity_review_complete",
+        "full_target_parity_closed",
+        "route_migration_eligible",
+        "two_legacy_get_routes_migrated",
+        "operator_migration_implementation",
+        "production_schema_or_index",
+        "real_data_migration_execution",
+        "production_cutover",
+    ):
+        if authorization.get(field) is not False:
+            raise AssertionError(
+                f"post-push successor envelope overclaims {field}"
+            )
+    return document
+
+
 def accepted_sha256(relative: str) -> str | None:
     values = SUCCESSOR_SOURCES.get(relative)
     return None if values is None else values[1]
@@ -744,7 +821,7 @@ def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     values = SUCCESSOR_SOURCES.get(relative)
     if values is None:
         return None
-    document = load(ti_java_root)
+    document = _load_successor_envelope(ti_java_root)
     override = document["historical_source_successors"]["overrides"].get(relative)
     if override != _expected_overrides()[relative]:
         raise AssertionError(f"post-push successor override drifted: {relative}")

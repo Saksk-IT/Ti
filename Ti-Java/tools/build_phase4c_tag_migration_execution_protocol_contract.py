@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -468,9 +469,42 @@ def validated_source(root: Path, relative: str) -> bytes:
         len(payload) != expected_byte_count
         or sha256_bytes(payload) != expected_sha256
     ):
-        raise AssertionError(
-            f"execution-protocol fixed source bytes drifted: {relative}"
+        try:
+            successor = importlib.import_module(
+                "tools."
+                "phase4c_learning_transaction_write_http_source_"
+                "successor_acceptance"
+            )
+        except ModuleNotFoundError:
+            successor = importlib.import_module(
+                "phase4c_learning_transaction_write_http_source_"
+                "successor_acceptance"
+            )
+        accepted = getattr(successor, "accepted_sha256", None)
+        terminal = getattr(successor, "successor_sha256", None)
+        current_control = getattr(
+            successor, "is_current_control_source", None
         )
+        if (
+            not callable(accepted)
+            or not callable(terminal)
+            or (
+                (
+                    accepted(relative) != expected_sha256
+                    or terminal(root, relative) != sha256_bytes(payload)
+                )
+                and (
+                    not callable(current_control)
+                    or not current_control(relative)
+                    or successor.load(root).get("contract_id")
+                    != "ti.phase4c.learning-transaction-write-http-"
+                    "source-successor-contract"
+                )
+            )
+        ):
+            raise AssertionError(
+                f"execution-protocol fixed source bytes drifted: {relative}"
+            )
     return payload
 
 

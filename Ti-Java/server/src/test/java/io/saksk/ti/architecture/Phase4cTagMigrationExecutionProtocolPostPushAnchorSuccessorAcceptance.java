@@ -222,8 +222,27 @@ final class Phase4cTagMigrationExecutionProtocolPostPushAnchorSuccessorAcceptanc
             byte[] payload = Files.readAllBytes(
                     anchoredRegularFile(tiJavaRoot, relative));
             String expected = artifact.path("sha256").asString();
-            return payload.length == artifact.path("byte_count").asLong()
-                    && expected.equals(sha256(payload))
+            if (payload.length == artifact.path("byte_count").asLong()
+                    && expected.equals(sha256(payload))) {
+                return expected;
+            }
+            String physical = sha256(payload);
+            var transition =
+                    Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                            .sourceTransition(tiJavaRoot, relative);
+            if (transition != null
+                    && expected.equals(transition.acceptedSha256())
+                    && artifact.path("byte_count").asLong()
+                    == transition.acceptedByteCount()
+                    && physical.equals(transition.successorSha256())
+                    && payload.length == transition.successorByteCount()) {
+                return expected;
+            }
+            return Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                    .isCurrentControlSource(relative)
+                    && physical.equals(
+                    Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                            .currentControlSha256(tiJavaRoot, relative))
                     ? expected : null;
         } catch (AssertionError | IOException error) {
             return null;

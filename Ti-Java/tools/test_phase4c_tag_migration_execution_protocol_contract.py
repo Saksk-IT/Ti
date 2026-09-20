@@ -12,15 +12,18 @@ from unittest import mock
 
 try:
     from tools import build_phase4c_tag_migration_execution_protocol_contract as builder
+    from tools import phase4c_learning_transaction_write_http_source_successor_acceptance as terminal
     from tools import phase4c_tag_migration_execution_protocol_successor_acceptance as successor
 except ModuleNotFoundError as error:
     if error.name not in {
         "tools",
         "tools.build_phase4c_tag_migration_execution_protocol_contract",
+        "tools.phase4c_learning_transaction_write_http_source_successor_acceptance",
         "tools.phase4c_tag_migration_execution_protocol_successor_acceptance",
     }:
         raise
     import build_phase4c_tag_migration_execution_protocol_contract as builder
+    import phase4c_learning_transaction_write_http_source_successor_acceptance as terminal
     import phase4c_tag_migration_execution_protocol_successor_acceptance as successor
 
 
@@ -176,7 +179,23 @@ class Phase4cTagMigrationExecutionProtocolContractTest(unittest.TestCase):
     def test_python_successor_api_propagates_exact_transition(self) -> None:
         relative = builder.SOURCE_TRANSITION_PATHS[0]
         transition = successor.source_transition(builder.ROOT, relative)
-        self.assertEqual(builder.SOURCE_TRANSITIONS[relative], transition)
+        historical = builder.SOURCE_TRANSITIONS[relative]
+        self.assertEqual(relative, transition["source"])
+        self.assertEqual(
+            historical["accepted_sha256"], transition["accepted_sha256"]
+        )
+        self.assertEqual(
+            historical["accepted_byte_count"],
+            transition["accepted_byte_count"],
+        )
+        self.assertEqual(
+            terminal.successor_sha256(builder.ROOT, relative),
+            transition["successor_sha256"],
+        )
+        self.assertEqual(
+            (builder.ROOT / relative).stat().st_size,
+            transition["successor_byte_count"],
+        )
         document = successor.load(builder.ROOT)
         self.assertEqual(
             transition,
@@ -266,10 +285,13 @@ class Phase4cTagMigrationExecutionProtocolContractTest(unittest.TestCase):
             builder.ACCEPTED_BUILD_CONTEXT_SHA256,
         )
         self.assertEqual(8, result.accepted_chain_node_count)
-        self.assertEqual(9, result.current_chain_node_count)
-        self.assertEqual(builder.WORM_SHA256, result.current_report_sha256)
+        self.assertEqual(10, result.current_chain_node_count)
         self.assertEqual(
-            builder.CURRENT_BUILD_CONTEXT_SHA256,
+            terminal.builder.WORM["current_report_sha256"],
+            result.current_report_sha256,
+        )
+        self.assertEqual(
+            terminal.builder.WORM["current_build_context_sha256"],
             result.current_build_context_sha256,
         )
         with self.assertRaisesRegex(

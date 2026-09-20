@@ -271,7 +271,7 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, main_successor.accepted_file_count)
-            self.assertEqual(54, main_successor.current_file_count)
+            self.assertEqual(105, main_successor.current_file_count)
             self.assertEqual([], list(main_successor.changed_files))
             self.assertEqual([], list(main_successor.deleted_files))
         self.assertEqual(
@@ -300,9 +300,26 @@ class Phase4cPersonalBankUserCountsReadContractTest(unittest.TestCase):
                 view="full_runtime",
             )
             self.assertEqual(297, runtime_successor.accepted_file_count)
-            self.assertEqual(311, runtime_successor.current_file_count)
-            self.assertEqual([], list(runtime_successor.changed_files))
-            self.assertEqual([], list(runtime_successor.deleted_files))
+            self.assertEqual(395, runtime_successor.current_file_count)
+            expected_added = tuple(sorted(
+                (relative, digest)
+                for relative, digest in current_runtime.items()
+                if relative not in accepted_runtime
+            ))
+            expected_changed = tuple(sorted(
+                (relative, digest)
+                for relative, digest in current_runtime.items()
+                if relative in accepted_runtime
+                and accepted_runtime[relative] != digest
+            ))
+            expected_deleted = tuple(sorted(
+                set(accepted_runtime) - set(current_runtime)
+            ))
+            self.assertEqual(98, len(expected_added))
+            self.assertEqual(10, len(expected_changed))
+            self.assertEqual(expected_added, runtime_successor.added_files)
+            self.assertEqual(expected_changed, runtime_successor.changed_files)
+            self.assertEqual(expected_deleted, runtime_successor.deleted_files)
 
     def test_03_exact_twenty_seven_method_shape_and_http_neutral_apis_close(self):
         methods = self.contract["implementation"]["public_application_methods"]

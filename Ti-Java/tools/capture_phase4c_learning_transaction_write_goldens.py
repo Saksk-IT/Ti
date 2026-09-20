@@ -767,7 +767,7 @@ def request_headers(
         live["Authorization"] = "Bearer " + tokens[actor]
         recorded["Authorization"] = "Bearer <redacted-valid-synthetic-jwt>"
     elif credential == "invalid-bearer":
-        live["Authorization"] = "Bearer fixed-invalid-token"
+        live["Authorization"] = "Bearer synthetic-invalid-token"
         recorded["Authorization"] = "Bearer <redacted-invalid-synthetic-jwt>"
     return live, recorded
 

@@ -311,9 +311,15 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
             String relative = entry.getKey();
             var nodeC = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
                     .sourceTransition(root(), relative);
-            String expectedCurrent = nodeC == null
-                    ? entry.getValue().successor()
-                    : nodeC.successorSha256();
+            String expectedCurrent;
+            if (nodeC != null) {
+                expectedCurrent = nodeC.successorSha256();
+            } else if (Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                    .isCurrentControlSource(relative)) {
+                expectedCurrent = sha256(root().resolve(relative));
+            } else {
+                expectedCurrent = entry.getValue().successor();
+            }
             if (nodeC != null) {
                 assertThat(nodeC.acceptedSha256()).as(relative)
                         .isEqualTo(entry.getValue().successor());
@@ -378,7 +384,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                 Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
                         .load(tampered))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("physical bytes");
+                .hasMessageContaining("composed source bridge drifted");
 
         Path symlinked = temporary.resolve("symlinked");
         copyMinimalFixture(symlinked);
@@ -409,7 +415,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                                 "tools/test_phase4c_personal_bank_user_counts_"
                                         + "http_entry_contract.py"))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("physical bytes drifted");
+                .hasMessageContaining("composed source bridge drifted");
     }
 
     @Test
@@ -563,7 +569,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3");
         assertThat(worm.acceptedChainNodeCount()).isEqualTo(5);
         assertThat(worm.firstSuccessorChainNodeCount()).isEqualTo(6);
-        assertThat(worm.currentChainNodeCount()).isEqualTo(9);
+        assertThat(worm.currentChainNodeCount()).isEqualTo(10);
         assertThat(worm.currentBuildContextSha256()).isNotEqualTo(
                 "29372c7cb33edc16536d9fe10dacd1b7a5de669bcbcc8da21cc73496ce261ffc");
         assertThat(Phase4cTagMigrationGlobalPreflightSuccessorAcceptance
@@ -685,7 +691,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                         valid,
                         "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
                         "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3");
-        assertThat(worm.currentChainNodeCount()).isEqualTo(9);
+        assertThat(worm.currentChainNodeCount()).isEqualTo(10);
 
         Path missingHasher = temporary.resolve("missing-hasher");
         copySemanticFixture(missingHasher);
@@ -710,7 +716,7 @@ class Phase4cTagMigrationGlobalPreflightContractParityTest {
                                 "7b863dd3b3bc94cbbfbd623d39495fed01c45dcb816598a759474d4372fbca39",
                                 "273227979fe0ef2efd1724e7f2e6b31b11ce19ebdcf0c262a1ff698dd8f158a3"))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("physical build-context successor");
+                .hasMessageContaining("composed source bridge drifted");
 
         Path tampered = temporary.resolve("tampered-main");
         copySemanticFixture(tampered);

@@ -512,7 +512,12 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
                             && nodeD.acceptedBuildContextSha256().equals(
                             nodeCBuildContext)
                             && nodeD.acceptedChainNodeCount() == 8
-                            && nodeD.currentChainNodeCount() == 9
+                            && (nodeD.currentChainNodeCount() == 9
+                            || nodeD.currentChainNodeCount() == 10)
+                            && (nodeD.currentChainNodeCount() != 10
+                            || nodeD.currentReportSha256().equals(
+                            "dd165106d7b3a73512acdbf89924b352"
+                                    + "e3f1ad027132b8a8519af957a47de599"))
                             && nodeD.currentBuildContextSha256().equals(
                             physicalBuildContext),
                     "operator-core Node D WORM bridge drifted");
@@ -571,6 +576,9 @@ final class Phase4cTagMigrationOperatorCoreSuccessorAcceptance {
                 });
         paths.addAll(PRODUCTION_ADDITION_PATHS);
         paths.addAll(NODE_A_PRODUCTION_ADDITION_PATHS);
+        paths.addAll(
+                Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                        .minimalFixturePaths(root));
         return Set.copyOf(paths);
     }
 

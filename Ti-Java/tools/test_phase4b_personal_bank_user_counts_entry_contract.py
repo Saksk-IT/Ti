@@ -415,8 +415,8 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, runtime.accepted_file_count)
-            self.assertEqual(54, runtime.current_file_count)
-            self.assertEqual(14, len(runtime.added_files))
+            self.assertEqual(105, runtime.current_file_count)
+            self.assertEqual(65, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
             self.assertEqual(
@@ -487,10 +487,26 @@ class Phase4bPersonalBankUserCountsEntryContractTest(unittest.TestCase):
                 view="full_runtime",
             )
             self.assertEqual(297, full_runtime.accepted_file_count)
-            self.assertEqual(311, full_runtime.current_file_count)
-            self.assertEqual(14, len(full_runtime.added_files))
-            self.assertEqual((), full_runtime.changed_files)
-            self.assertEqual((), full_runtime.deleted_files)
+            self.assertEqual(395, full_runtime.current_file_count)
+            expected_added = tuple(sorted(
+                (relative, digest)
+                for relative, digest in current_surface.items()
+                if relative not in accepted_surface
+            ))
+            expected_changed = tuple(sorted(
+                (relative, digest)
+                for relative, digest in current_surface.items()
+                if relative in accepted_surface
+                and accepted_surface[relative] != digest
+            ))
+            expected_deleted = tuple(sorted(
+                set(accepted_surface) - set(current_surface)
+            ))
+            self.assertEqual(98, len(expected_added))
+            self.assertEqual(10, len(expected_changed))
+            self.assertEqual(expected_added, full_runtime.added_files)
+            self.assertEqual(expected_changed, full_runtime.changed_files)
+            self.assertEqual(expected_deleted, full_runtime.deleted_files)
             self.assertEqual(9, transition["exact_delta"]["added_file_count"])
             self.assertEqual(6, transition["exact_delta"]["changed_file_count"])
             self.assertEqual(0, transition["exact_delta"]["deleted_file_count"])

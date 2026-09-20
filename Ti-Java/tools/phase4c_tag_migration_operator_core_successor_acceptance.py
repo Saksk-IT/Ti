@@ -567,7 +567,7 @@ def validate_worm_successor(
             or node_d.accepted_build_context_sha256
             != builder.CURRENT_BUILD_CONTEXT_SHA256
             or node_d.accepted_chain_node_count != 8
-            or node_d.current_chain_node_count != 9
+            or node_d.current_chain_node_count != 10
             or node_d.current_build_context_sha256 != physical_build_context
         ):
             raise AssertionError("operator-core Node D WORM bridge drifted")

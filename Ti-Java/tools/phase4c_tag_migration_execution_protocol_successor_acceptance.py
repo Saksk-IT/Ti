@@ -43,6 +43,13 @@ TRANSACTION_WRITE_SUCCESSOR_MODULE = (
 TRANSACTION_WRITE_SUCCESSOR_DIRECT_MODULE = (
     "phase4c_learning_transaction_write_http_full_parity_successor_acceptance"
 )
+TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE = (
+    "tools."
+    "phase4c_learning_transaction_write_http_source_successor_acceptance"
+)
+TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_learning_transaction_write_http_source_successor_acceptance"
+)
 _CachedValue = TypeVar("_CachedValue")
 _VALIDATION_SESSION: ContextVar[dict[tuple[str, str], Any] | None] = (
     ContextVar("phase4c_acceptance_validation_session", default=None)
@@ -125,6 +132,27 @@ def _load_transaction_write_successor() -> object:
             raise
         raise AssertionError(
             "execution-protocol transaction-write successor is required"
+        ) from error
+
+
+def _load_transaction_write_source_successor() -> object:
+    try:
+        return importlib.import_module(TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE)
+    except ModuleNotFoundError as error:
+        if error.name not in {
+            "tools",
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE,
+        }:
+            raise
+    try:
+        return importlib.import_module(
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE
+        )
+    except ModuleNotFoundError as error:
+        if error.name != TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError(
+            "execution-protocol transaction-write source successor is required"
         ) from error
 
 
@@ -324,18 +352,25 @@ def _load_uncached(root: Path) -> dict[str, Any]:
         validate(document, resolved_root)
         return document
     except AssertionError as predecessor_error:
-        successor = _load_transaction_write_successor()
-        loader = getattr(successor, "load_node_d_predecessor", None)
-        if not callable(loader):
+        successors = (
+            _load_transaction_write_source_successor(),
+            _load_transaction_write_successor(),
+        )
+        last_error: AssertionError | None = None
+        successor_document: dict[str, Any] | None = None
+        for successor in successors:
+            loader = getattr(successor, "load_node_d_predecessor", None)
+            if not callable(loader):
+                continue
+            try:
+                successor_document = loader(resolved_root)
+                break
+            except AssertionError as successor_error:
+                last_error = successor_error
+        if successor_document is None:
             raise AssertionError(
                 "execution-protocol transaction-write predecessor API is absent"
-            ) from predecessor_error
-        try:
-            successor_document = loader(resolved_root)
-        except AssertionError as successor_error:
-            raise AssertionError(
-                "execution-protocol current source bytes or successor authority drifted"
-            ) from successor_error
+            ) from last_error or predecessor_error
         if successor_document != document:
             raise AssertionError(
                 "execution-protocol successor returned a different predecessor"
@@ -377,25 +412,31 @@ def source_transition_from_validated_document(
         len(payload) != transition["successor_byte_count"]
         or builder.sha256_bytes(payload) != transition["successor_sha256"]
     ):
-        successor = _load_transaction_write_successor()
-        transition_from_node_d = getattr(
-            successor, "transition_from_node_d", None
-        )
-        if not callable(transition_from_node_d):
-            raise AssertionError(
-                "execution-protocol transaction-write transition API is absent"
+        current = None
+        last_error: AssertionError | None = None
+        for successor in (
+            _load_transaction_write_source_successor(),
+            _load_transaction_write_successor(),
+        ):
+            transition_from_node_d = getattr(
+                successor, "transition_from_node_d", None
             )
-        try:
-            current = transition_from_node_d(
-                resolved_root,
-                relative,
-                str(transition["successor_sha256"]),
-                int(transition["successor_byte_count"]),
-            )
-        except AssertionError as error:
+            if not callable(transition_from_node_d):
+                continue
+            try:
+                current = transition_from_node_d(
+                    resolved_root,
+                    relative,
+                    str(transition["successor_sha256"]),
+                    int(transition["successor_byte_count"]),
+                )
+                break
+            except AssertionError as error:
+                last_error = error
+        if current is None:
             raise AssertionError(
                 f"execution-protocol transition bytes drifted: {relative}"
-            ) from error
+            ) from last_error
         physical_sha256 = builder.sha256_bytes(payload)
         if current != {
             "source": relative,
@@ -481,12 +522,53 @@ def validate_production_runtime_successor(
         != semantic["accepted_manifest_sha256"]
     ):
         raise AssertionError("execution-protocol rejected accepted runtime")
-    if (
-        current != expected_current
-        or len(current) != semantic["current_file_count"]
-        or builder.sha256_json(current) != semantic["current_manifest_sha256"]
-    ):
-        raise AssertionError("execution-protocol rejected current runtime")
+    current_matches_node_d = (
+        current == expected_current
+        and len(current) == semantic["current_file_count"]
+        and builder.sha256_json(current) == semantic["current_manifest_sha256"]
+    )
+    if not current_matches_node_d:
+        terminal = _load_transaction_write_source_successor()
+        validate_terminal = getattr(
+            terminal, "validate_production_runtime_successor", None
+        )
+        if not callable(validate_terminal):
+            raise AssertionError(
+                "execution-protocol transaction-write runtime bridge is absent"
+            )
+        try:
+            successor = validate_terminal(
+                resolved_root,
+                expected_current,
+                current,
+                view=view,
+            )
+        except AssertionError as error:
+            raise AssertionError(
+                "execution-protocol rejected current runtime"
+            ) from error
+        added = dict(semantic["added_files"])
+        changed = dict(semantic["changed_files"])
+        for path, digest in successor.added_files:
+            if path in accepted:
+                changed[path] = digest
+            else:
+                added[path] = digest
+        for path, digest in successor.changed_files:
+            if path in added:
+                added[path] = digest
+            else:
+                changed[path] = digest
+        return ProductionRuntimeSuccessor(
+            view=view,
+            accepted_file_count=int(semantic["accepted_file_count"]),
+            accepted_manifest_sha256=str(semantic["accepted_manifest_sha256"]),
+            current_file_count=int(successor.current_file_count),
+            current_manifest_sha256=str(successor.current_manifest_sha256),
+            added_files=tuple(sorted(added.items())),
+            changed_files=tuple(sorted(changed.items())),
+            deleted_files=tuple(successor.deleted_files),
+        )
     return ProductionRuntimeSuccessor(
         view=view,
         accepted_file_count=int(semantic["accepted_file_count"]),
@@ -526,13 +608,45 @@ def validate_worm_successor(
         text=True,
     )
     physical = completed.stdout.strip()
-    if (
-        completed.returncode != 0
-        or physical != builder.CURRENT_BUILD_CONTEXT_SHA256
-        or physical != worm["current_build_context_sha256"]
-    ):
+    if completed.returncode != 0:
         raise AssertionError(
             "execution-protocol physical build-context successor drifted"
+        )
+    if (
+        physical != builder.CURRENT_BUILD_CONTEXT_SHA256
+        or physical != worm["current_build_context_sha256"]
+    ):
+        terminal = _load_transaction_write_source_successor()
+        validate_terminal = getattr(terminal, "validate_worm_successor", None)
+        if not callable(validate_terminal):
+            raise AssertionError(
+                "execution-protocol transaction-write WORM bridge is absent"
+            )
+        try:
+            successor = validate_terminal(
+                resolved_root,
+                str(worm["current_report"]["sha256"]),
+                str(worm["current_build_context_sha256"]),
+            )
+        except AssertionError as error:
+            raise AssertionError(
+                "execution-protocol physical build-context successor drifted"
+            ) from error
+        if (
+            successor.accepted_chain_node_count != 9
+            or successor.current_chain_node_count != 10
+            or successor.current_build_context_sha256 != physical
+        ):
+            raise AssertionError(
+                "execution-protocol transaction-write WORM bridge drifted"
+            )
+        return WormSuccessor(
+            accepted_report_sha256=accepted_report_sha256,
+            accepted_build_context_sha256=accepted_build_context_sha256,
+            accepted_chain_node_count=int(worm["accepted_chain_node_count"]),
+            current_report_sha256=str(successor.current_report_sha256),
+            current_build_context_sha256=physical,
+            current_chain_node_count=int(successor.current_chain_node_count),
         )
     return WormSuccessor(
         accepted_report_sha256=accepted_report_sha256,
@@ -553,6 +667,14 @@ def minimal_fixture_paths() -> tuple[str, ...]:
         raise AssertionError(
             "execution-protocol transaction-write fixture API is absent"
         )
+    terminal_successor = _load_transaction_write_source_successor()
+    terminal_fixture_paths = getattr(
+        terminal_successor, "minimal_fixture_paths", None
+    )
+    if not callable(terminal_fixture_paths):
+        raise AssertionError(
+            "execution-protocol transaction-write source fixture API is absent"
+        )
     node_c_runtime_paths = (
         *builder.node_c.PRODUCTION_RUNTIME_ADDITIONS,
         *builder.node_c.PRODUCTION_RUNTIME_CHANGES,
@@ -569,6 +691,7 @@ def minimal_fixture_paths() -> tuple[str, ...]:
                 *node_c_runtime_paths,
                 *builder.SOURCE_FILES,
                 *successor_fixture_paths(),
+                *terminal_fixture_paths(),
             )
         )
     )

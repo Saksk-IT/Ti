@@ -662,6 +662,20 @@ def validate_production_surface(predecessor: dict) -> dict:
         raise ValueError("fixed read-contract runtime manifest implementation drifted")
     current = production_runtime_manifest()
     if current != embedded_files:
+        expected_added = tuple(sorted(
+            (relative, digest)
+            for relative, digest in current.items()
+            if relative not in embedded_files
+        ))
+        expected_changed = tuple(sorted(
+            (relative, digest)
+            for relative, digest in current.items()
+            if relative in embedded_files
+            and embedded_files[relative] != digest
+        ))
+        expected_deleted = tuple(sorted(
+            set(embedded_files) - set(current)
+        ))
         successor = tag_preflight_successor().validate_production_runtime_successor(
             ROOT,
             embedded_files,
@@ -674,8 +688,9 @@ def validate_production_surface(predecessor: dict) -> dict:
             != EXPECTED_RUNTIME_MANIFEST_SHA256
             or successor.current_file_count != len(current)
             or successor.current_manifest_sha256 != sha256_json(current)
-            or successor.changed_files
-            or successor.deleted_files
+            or successor.added_files != expected_added
+            or successor.changed_files != expected_changed
+            or successor.deleted_files != expected_deleted
         ):
             raise ValueError("tag preflight runtime successor descriptor drifted")
     return {
@@ -1247,7 +1262,7 @@ def validate_worm() -> dict:
         if (
             successor.accepted_chain_node_count != 5
             or successor.current_build_context_sha256 != build_context
-            or successor.current_chain_node_count != 9
+            or successor.current_chain_node_count != 10
         ):
             raise ValueError("tag preflight WORM successor descriptor drifted")
     worm = load_json(path)

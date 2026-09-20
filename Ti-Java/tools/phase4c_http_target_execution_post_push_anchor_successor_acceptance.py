@@ -800,6 +800,58 @@ def load(
     return document
 
 
+def _load_successor_envelope(ti_java_root: Path) -> dict[str, Any]:
+    """Validate the fixed envelope needed by one source-hash lookup.
+
+    Full checkpoint, JUnit, WORM, and every-source validation remains in
+    :func:`load`. Historical bridges query this API once per source, so
+    replaying the complete contract on each lookup would multiply identical
+    validation work.
+    """
+    root = ti_java_root.resolve(strict=True)
+    payload = _fixed_regular_file(root, CONTRACT_RELATIVE).read_bytes()
+    if _sha256_bytes(payload) != CONTRACT_SHA256:
+        raise AssertionError("post-push anchor contract physical SHA-256 drifted")
+    try:
+        document = json.loads(payload)
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise AssertionError("post-push anchor contract is unreadable") from error
+    expected = _expected_contract()
+    if (
+        not isinstance(document, dict)
+        or set(document) != set(expected)
+        or {
+            "contract_id": document.get("contract_id"),
+            "schema_version": document.get("schema_version"),
+            "captured_at": document.get("captured_at"),
+            "status": document.get("status"),
+            "scope": document.get("scope"),
+        } != {
+            "contract_id": CONTRACT_ID,
+            "schema_version": 1,
+            "captured_at": CONTRACT_CAPTURED_AT,
+            "status": CONTRACT_STATUS,
+            "scope": CONTRACT_SCOPE,
+        }
+        or document.get("document_payload_sha256")
+        != CONTRACT_PAYLOAD_SHA256
+        or _payload_sha256(document) != CONTRACT_PAYLOAD_SHA256
+    ):
+        raise AssertionError("post-push anchor successor envelope drifted")
+    if (
+        document.get("historical_source_successors")
+        != expected["historical_source_successors"]
+    ):
+        raise AssertionError(
+            "post-push anchor successor transition authority drifted"
+        )
+    if document.get("authorization") != expected["authorization"]:
+        raise AssertionError(
+            "post-push anchor successor authorization boundary drifted"
+        )
+    return document
+
+
 def accepted_sha256(relative: str) -> str | None:
     descriptor = SUCCESSOR_SOURCES.get(relative)
     return None if descriptor is None else descriptor["accepted_sha256"]
@@ -808,7 +860,7 @@ def accepted_sha256(relative: str) -> str | None:
 def successor_sha256(ti_java_root: Path, relative: str) -> str | None:
     if relative not in SUCCESSOR_SOURCES or not successor_constants_settled():
         return None
-    document = load(ti_java_root)
+    document = _load_successor_envelope(ti_java_root)
     if (
         document["historical_source_successors"]["overrides"].get(relative)
         != _expected_overrides()[relative]

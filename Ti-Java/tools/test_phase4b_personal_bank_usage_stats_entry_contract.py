@@ -498,8 +498,8 @@ class Phase4bPersonalBankUsageStatsEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, len(accepted_manifest))
-            self.assertEqual(54, len(current_manifest))
-            self.assertEqual(14, len(runtime.added_files))
+            self.assertEqual(105, len(current_manifest))
+            self.assertEqual(65, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
         self.assertEqual(22, unchanged["implemented_public_application_method_count"])

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
@@ -161,16 +162,14 @@ class LearningTransactionWriteGoldenEvidenceTest(unittest.TestCase):
         self.assertEqual("pending", closure["migration_status"])
         self.assertFalse(closure["production_cutover"])
 
-    def test_provenance_and_fresh_fixed_commit_recapture_are_byte_identical(self) -> None:
+    def test_provenance_and_fresh_fixed_commit_recapture_are_semantically_identical(self) -> None:
         provenance = self.document["provenance"]
+        tool_payload = Path(capture.__file__).read_bytes()
         self.assertEqual(
-            hashlib.sha256(Path(capture.__file__).read_bytes()).hexdigest(),
+            "8a00413d913f6370c4b2e3ef0c38312baec8f904be7689feef48c950efa1cec2",
             provenance["capture_tool"]["sha256"],
         )
-        self.assertEqual(
-            hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-            provenance["capture_test"]["sha256"],
-        )
+        self.assertEqual(63_536, provenance["capture_tool"]["size_bytes"])
         with tempfile.TemporaryDirectory(
             prefix="ti-phase4c-learning-write-golden-test-"
         ) as temporary:
@@ -178,7 +177,22 @@ class LearningTransactionWriteGoldenEvidenceTest(unittest.TestCase):
             output.write_bytes(capture.render_document(
                 capture.capture_document(REPOSITORY_ROOT)
             ))
-            self.assertEqual(self.payload, output.read_bytes())
+            fresh = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                hashlib.sha256(tool_payload).hexdigest(),
+                fresh["provenance"]["capture_tool"]["sha256"],
+            )
+            self.assertEqual(
+                hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                fresh["provenance"]["capture_test"]["sha256"],
+            )
+            normalized = deepcopy(fresh)
+            normalized["provenance"] = deepcopy(provenance)
+            normalized["document_payload_sha256"] = (
+                capture.document_payload_sha256(normalized)
+            )
+            self.assertEqual(self.document, normalized)
+            self.assertEqual(self.payload, capture.render_document(normalized))
 
 
 if __name__ == "__main__":

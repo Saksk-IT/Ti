@@ -1,0 +1,47 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: S
+      - generic [ref=e6]:
+        - generic [ref=e7]: Saksk 题库
+        - generic [ref=e8]: 高效刷题，轻松备考
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - heading "欢迎回来" [level=1] [ref=e11]
+        - paragraph [ref=e12]: 登录后可同步收藏、错题与学习进度。
+      - generic [ref=e13]:
+        - button "微信扫码登录" [ref=e14] [cursor=pointer]:
+          - generic [ref=e18]: 微信登录
+        - button "密码登录" [ref=e19] [cursor=pointer]
+        - button "邮箱登录" [ref=e20] [cursor=pointer]
+      - generic [ref=e23]:
+        - generic [ref=e24]: 正在加载...
+        - generic [ref=e26]: 正在生成二维码…
+        - button "刷新二维码" [ref=e28] [cursor=pointer]
+      - generic [ref=e29]:
+        - generic [ref=e30]: 新用户提示
+        - generic [ref=e31]: 使用邮箱验证码登录，未注册将自动创建账户。
+      - link "返回首页" [ref=e32] [cursor=pointer]:
+        - /url: /
+  - complementary [ref=e33]:
+    - generic [ref=e34]:
+      - generic [ref=e35]: 备考神器
+      - heading "刷题提分，一站搞定" [level=2] [ref=e36]
+      - paragraph [ref=e37]: 专为学生和备考人群打造的智能题库平台，海量真题模拟，错题自动归纳，助你高效复习、轻松通关。
+      - list [ref=e38]:
+        - listitem [ref=e39]: 海量题库覆盖多学科，真题模拟随时练
+        - listitem [ref=e40]: 智能错题本自动收集，薄弱点一目了然
+        - listitem [ref=e41]: 学习进度实时追踪，复习计划更科学
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: 随时随地
+          - generic [ref=e45]: 小程序与网页同步，碎片时间也能刷题
+        - generic [ref=e46]:
+          - generic [ref=e47]: 智能分析
+          - generic [ref=e48]: 答题数据统计，精准定位薄弱环节
+        - generic [ref=e49]:
+          - generic [ref=e50]: 收藏错题
+          - generic [ref=e51]: 重点题目一键收藏，错题自动归档
+        - generic [ref=e52]:
+          - generic [ref=e53]: 模拟考试
+          - generic [ref=e54]: 限时答题模拟真实考场，提前适应

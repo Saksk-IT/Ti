@@ -318,7 +318,7 @@ class Phase4cTargetExecutionFixedRootsTest(unittest.TestCase):
                 physical_build_context,
                 successor.current_build_context_sha256,
             )
-            self.assertEqual(9, successor.current_chain_node_count)
+            self.assertEqual(10, successor.current_chain_node_count)
         fixed_chain = predecessor["worm_evidence"]["fixed_phase2_chain"]
         self.assertEqual(5, fixed_chain["node_count"])
         self.assertEqual(builder.WORM_SHA256, fixed_chain["tip_sha256"])

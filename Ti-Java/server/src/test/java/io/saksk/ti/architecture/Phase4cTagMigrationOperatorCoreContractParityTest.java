@@ -226,7 +226,7 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                         "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
                         "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17");
         assertThat(successor.acceptedChainNodeCount()).isEqualTo(7);
-        assertThat(successor.currentChainNodeCount()).isEqualTo(9);
+        assertThat(successor.currentChainNodeCount()).isEqualTo(10);
         assertThat(successor.currentReportSha256()).isNotEqualTo(
                 worm.path("current_report").path("sha256").asString());
         assertThat(successor.currentBuildContextSha256()).isNotEqualTo(
@@ -430,7 +430,7 @@ class Phase4cTagMigrationOperatorCoreContractParityTest {
                         fixture,
                         "93d2c3779f6f0b11035d8fc46b6ed3070efd85977e43caa7ddba39df133d4344",
                         "a23335b57752d5d8378694d3d98c84a2940c31fc547207804c29a00eb142dc17")
-                .currentChainNodeCount()).isEqualTo(9);
+                .currentChainNodeCount()).isEqualTo(10);
     }
 
     @Test

@@ -88,7 +88,7 @@ class Phase4cLearningTransactionWriteHttpFullParityContractParityTest {
                 Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
                         .load(fixture))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("fixed source drifted");
+                .hasMessageContaining("source transition drifted");
     }
 
     @Test

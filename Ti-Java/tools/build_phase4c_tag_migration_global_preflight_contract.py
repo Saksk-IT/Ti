@@ -1725,6 +1725,13 @@ NODE_C_SUCCESSOR_MODULE = (
 NODE_C_SUCCESSOR_DIRECT_MODULE = (
     "phase4c_tag_migration_operator_core_successor_acceptance"
 )
+TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE = (
+    "tools."
+    "phase4c_learning_transaction_write_http_source_successor_acceptance"
+)
+TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_learning_transaction_write_http_source_successor_acceptance"
+)
 
 # Node C remains this historical builder's sole successor authority.  Its
 # fixed bridge may compose a reviewed Node D transition, but this Node A
@@ -1792,25 +1799,41 @@ def validated_source(root: Path, source_name: str) -> bytes:
         physical_sha256 != descriptor["sha256"]
         or len(payload) != descriptor["byte_count"]
     ):
-        if relative not in NODE_C_SOURCE_SUCCESSOR_PATHS:
-            raise AssertionError(f"tag preflight fixed bytes drifted: {relative}")
-        successor = _load_node_c_successor_acceptance()
-        source_transition = getattr(successor, "source_transition", None)
-        if not callable(source_transition):
-            raise AssertionError(
-                "tag preflight Node C/D composed source bridge is absent"
+        if relative in NODE_C_SOURCE_SUCCESSOR_PATHS:
+            successor = _load_node_c_successor_acceptance()
+            source_transition = getattr(successor, "source_transition", None)
+            if not callable(source_transition):
+                raise AssertionError(
+                    "tag preflight Node C/D composed source bridge is absent"
+                )
+            transition = source_transition(root, relative)
+            if transition != {
+                "source": relative,
+                "accepted_sha256": descriptor["sha256"],
+                "accepted_byte_count": descriptor["byte_count"],
+                "successor_sha256": physical_sha256,
+                "successor_byte_count": len(payload),
+            }:
+                raise AssertionError(
+                    f"tag preflight Node C/D composed source bridge drifted: {relative}"
+                )
+        else:
+            transaction_successor = (
+                _load_transaction_write_source_successor_acceptance()
             )
-        transition = source_transition(root, relative)
-        if transition != {
-            "source": relative,
-            "accepted_sha256": descriptor["sha256"],
-            "accepted_byte_count": descriptor["byte_count"],
-            "successor_sha256": physical_sha256,
-            "successor_byte_count": len(payload),
-        }:
-            raise AssertionError(
-                f"tag preflight Node C/D composed source bridge drifted: {relative}"
+            load_successor = getattr(transaction_successor, "load", None)
+            is_current_control_source = getattr(
+                transaction_successor, "is_current_control_source", None
             )
+            if (
+                not callable(load_successor)
+                or not callable(is_current_control_source)
+                or not is_current_control_source(relative)
+            ):
+                raise AssertionError(
+                    f"tag preflight fixed bytes drifted: {relative}"
+                )
+            load_successor(root)
     return payload
 
 
@@ -1827,6 +1850,29 @@ def _load_node_c_successor_acceptance() -> Any:
             raise
         raise AssertionError(
             "tag preflight Node C/D composed successor is required"
+        ) from error
+
+
+def _load_transaction_write_source_successor_acceptance() -> Any:
+    try:
+        return importlib.import_module(
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE
+        )
+    except ModuleNotFoundError as error:
+        if error.name not in {
+            "tools",
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE,
+        }:
+            raise
+    try:
+        return importlib.import_module(
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE
+        )
+    except ModuleNotFoundError as error:
+        if error.name != TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError(
+            "tag preflight transaction-write source successor is required"
         ) from error
 
 

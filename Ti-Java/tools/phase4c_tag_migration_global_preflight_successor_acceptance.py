@@ -34,6 +34,13 @@ NODE_C_SUCCESSOR_MODULE = (
 NODE_C_SUCCESSOR_DIRECT_MODULE = (
     "phase4c_tag_migration_operator_core_successor_acceptance"
 )
+TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE = (
+    "tools."
+    "phase4c_learning_transaction_write_http_source_successor_acceptance"
+)
+TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE = (
+    "phase4c_learning_transaction_write_http_source_successor_acceptance"
+)
 
 
 @dataclass(frozen=True)
@@ -74,6 +81,29 @@ def _load_node_c_successor() -> object:
             raise
         raise AssertionError(
             "tag preflight Node C/D composed successor is required"
+        ) from error
+
+
+def _load_transaction_write_source_successor() -> object:
+    try:
+        return importlib.import_module(
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE
+        )
+    except ModuleNotFoundError as error:
+        if error.name not in {
+            "tools",
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_MODULE,
+        }:
+            raise
+    try:
+        return importlib.import_module(
+            TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE
+        )
+    except ModuleNotFoundError as error:
+        if error.name != TRANSACTION_WRITE_SOURCE_SUCCESSOR_DIRECT_MODULE:
+            raise
+        raise AssertionError(
+            "tag preflight transaction-write source successor is required"
         ) from error
 
 
@@ -459,9 +489,10 @@ def _load_contract_envelope(root: Path) -> dict[str, Any]:
 
 
 def load(root: Path = ROOT) -> dict[str, Any]:
-    document = _load_contract_envelope(root)
-    validate(document, root)
-    return document
+    with validation_session():
+        document = _load_contract_envelope(root)
+        validate(document, root)
+        return document
 
 
 def accepted_sha256(relative: str) -> str | None:
@@ -497,18 +528,37 @@ def successor_sha256(root: Path, relative: str) -> str | None:
     ):
         source_transition = getattr(
             _load_node_c_successor(), "source_transition", None)
-        if not callable(source_transition) or source_transition(
-            resolved_root, relative
-        ) != {
+        node_c_transition = (
+            source_transition(resolved_root, relative)
+            if callable(source_transition)
+            else None
+        )
+        expected = {
             "source": relative,
             "accepted_sha256": transition["successor_sha256"],
             "accepted_byte_count": transition["successor_byte_count"],
             "successor_sha256": physical,
             "successor_byte_count": len(payload),
-        }:
-            raise AssertionError(
-                f"tag preflight source-successor bytes drifted: {relative}"
+        }
+        if node_c_transition != expected:
+            terminal = _load_transaction_write_source_successor()
+            load_terminal = getattr(
+                terminal,
+                "load_source_bridge",
+                getattr(terminal, "load", None),
             )
+            is_current_control_source = getattr(
+                terminal, "is_current_control_source", None
+            )
+            if (
+                not callable(load_terminal)
+                or not callable(is_current_control_source)
+                or not is_current_control_source(relative)
+            ):
+                raise AssertionError(
+                    f"tag preflight source-successor bytes drifted: {relative}"
+                )
+            load_terminal(resolved_root)
     return physical
 
 
@@ -671,7 +721,7 @@ def validate_worm_successor(
         )
         if (
             node_c.accepted_chain_node_count != 7
-            or node_c.current_chain_node_count != 9
+            or node_c.current_chain_node_count != 10
             or node_c.current_build_context_sha256
             != physical_build_context_sha256
         ):

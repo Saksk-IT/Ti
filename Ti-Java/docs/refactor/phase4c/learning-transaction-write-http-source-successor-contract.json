@@ -1,0 +1,315 @@
+{
+  "authorization": {
+    "current_bridge_control_sources_external_git_anchor_complete": false,
+    "full_target_parity_closed": true,
+    "next_gate": "post_push_external_anchor_of_current_bridge_controls",
+    "nine_transaction_write_operations_migrated": false,
+    "predecessor_control_sources_external_git_anchor_complete": true,
+    "production_cutover": false,
+    "production_schema_execution": false,
+    "real_data_migration_execution": false,
+    "route_delta": false,
+    "route_migration_eligible": false
+  },
+  "bootstrap_external_anchor": {
+    "anchored_control_source_count": 8,
+    "anchored_control_sources": {
+      "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json": {
+        "byte_count": 15604,
+        "git_blob_oid": "b13b9d8dd770464f61a0f76d46a500239f5535bc",
+        "sha256": "40b38a443d7f7d754cc42ce43fa854b0c3c18dc66f4920a2f07d451601d6d1db",
+        "source": "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java": {
+        "byte_count": 5313,
+        "git_blob_oid": "2c446524e99e6510e867ac3a1f7594025ab2016e",
+        "sha256": "24f587dda5a78ce19003eb062b3279150cdc71c5c8f4751a977819aadd8eb5a1",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java": {
+        "byte_count": 25784,
+        "git_blob_oid": "728c6bfd5b03b8c308a0c66d03a001abde0a6c9e",
+        "sha256": "b54f0e04ace4a101d06832fdb99f412a83ce0ee2c9a12aeded482c2c8ebdadbb",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java": {
+        "byte_count": 53120,
+        "git_blob_oid": "777841196e7c1eb28931ffcba902f86f8241731a",
+        "sha256": "ba719c5ca08453c22696ff7a3e316936a937371830620a405fdcca424e6afb9a",
+        "source": "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java"
+      },
+      "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py": {
+        "byte_count": 24262,
+        "git_blob_oid": "93e1e37da95bca8252b0c19203397bb14910761d",
+        "sha256": "e34df1686912e5eb40be9380f79420963ec3dd270053f4f1afc92b934f422c41",
+        "source": "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py"
+      },
+      "tools/phase4c_learning_transaction_write_http_full_parity_successor_acceptance.py": {
+        "byte_count": 11098,
+        "git_blob_oid": "bf99128d2395632c4eb43e93f084420ed675623b",
+        "sha256": "146ffdb8b82b33a9cab9a52eac4a0ce14a46254175bf7207ab4ab5c4a3bd4c95",
+        "source": "tools/phase4c_learning_transaction_write_http_full_parity_successor_acceptance.py"
+      },
+      "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py": {
+        "byte_count": 23894,
+        "git_blob_oid": "39ee69e0dbaf3a9d1429e0aed70166e550da6e22",
+        "sha256": "0119bedfa3e0298aa1f9019d8ec8e20995e0b49058a360763d209759a444929d",
+        "source": "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py"
+      },
+      "tools/test_phase4c_learning_transaction_write_http_full_parity_contract.py": {
+        "byte_count": 4957,
+        "git_blob_oid": "265bcb7add6f63fe7c1e34c1b954d34866baa7fa",
+        "sha256": "b44fd3a871253e9a826379b09c1d4c4e3f6bd8353d83af2c3281f328b5bcc536",
+        "source": "tools/test_phase4c_learning_transaction_write_http_full_parity_contract.py"
+      }
+    },
+    "fixed_checkpoint": {
+      "commit_oid": "6ed81347467a4155887300b7e4ae36589204af79",
+      "committed_at": "2026-07-24T16:50:36+08:00",
+      "parent_commit_oid": "b635d1db3b9d71698d9a40cc729a215d67a6906f",
+      "root_tree_oid": "74115f3c94ccab64da81be5ae8c8109bb3ec0034",
+      "subject": "test(java): close transaction write full parity",
+      "ti_java_tree_oid": "f43ea25fe0d86855df0563f3cf5a3853b3791d01"
+    },
+    "live_ref_authority": false,
+    "predecessor_control_sources_external_git_anchor_complete": true
+  },
+  "captured_at": "2026-07-24T17:05:00+08:00",
+  "contract_id": "ti.phase4c.learning-transaction-write-http-source-successor-contract",
+  "document_payload_sha256": "890f2b90c10fcf55f30f426e287b69016af766b17c3c4c9cc86a9f84660bb6af",
+  "predecessor": {
+    "byte_count": 15604,
+    "contract_id": "ti.phase4c.learning-transaction-write-http-full-parity-contract",
+    "document_payload_sha256": "83ca7d51d768540ed744830c74f07eb1fd1f63db88c293ea4ec83e41d6a6c1e1",
+    "immutable": true,
+    "sha256": "40b38a443d7f7d754cc42ce43fa854b0c3c18dc66f4920a2f07d451601d6d1db",
+    "source": "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json"
+  },
+  "route_state": {
+    "implemented_pending_operation_count": 9,
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "scope": "phase4c-learning-transaction-write-http-source-runtime-successor",
+  "semantic_successors": {
+    "full_runtime": {
+      "accepted_file_count": 311,
+      "accepted_manifest_sha256": "053ffc0a6a6ecc02ffb7cd2a8545af339bef35ffd502dcdbfbc0de8b11977d4a",
+      "added_file_count": 84,
+      "changed_file_count": 10,
+      "current_file_count": 395,
+      "current_manifest_sha256": "d90cdbfe0da59544f44e859488c1a3df602857c53d7f082fe5bc9166464b3045",
+      "deleted_file_count": 0
+    },
+    "java_build_context_and_worm": {
+      "accepted_build_context_sha256": "36978a808a327abfb3c7b3dfe138f5622000213a25bad762b59128c78894d7c7",
+      "accepted_chain_node_count": 9,
+      "accepted_report_sha256": "5c3fe0f9d7cba79fca6c2351d811924346182cf61e06b730a0eeb0bcef50081c",
+      "accepted_report_source": "docs/refactor/phase4c/personal-bank-tag-migration-execution-protocol-worm-evidence.json",
+      "current_build_context_sha256": "5e4247d0a43405661cef27b91b4169273e8ad096bfa750b4ba4488ca6c247224",
+      "current_chain_node_count": 10,
+      "current_report_byte_count": 1442,
+      "current_report_sha256": "dd165106d7b3a73512acdbf89924b352e3f1ad027132b8a8519af957a47de599",
+      "current_report_source": "docs/refactor/phase4c/learning-transaction-write-http-worm-evidence.json"
+    },
+    "learning_personalbank_main": {
+      "accepted_file_count": 54,
+      "accepted_manifest_sha256": "66e7874b40dcbfc46fa349e7d4d8cd36025a82a03df009f985a6fc30d2edead6",
+      "added_file_count": 51,
+      "changed_file_count": 0,
+      "current_file_count": 105,
+      "current_manifest_sha256": "b5821442ec7066e807d16c0d9a5a0cf30d96479b49df96cba64f1d8863cbb738",
+      "deleted_file_count": 0
+    }
+  },
+  "source_authority": {
+    "control_source_count": 48,
+    "control_sources": [
+      "docs/refactor/phase4c/learning-transaction-write-http-source-successor-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpSourceSuccessorContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java",
+      "tools/build_phase4c_learning_transaction_write_http_source_successor_contract.py",
+      "tools/phase4c_learning_transaction_write_http_source_successor_acceptance.py",
+      "tools/test_phase4c_learning_transaction_write_http_source_successor_contract.py",
+      "tools/build_phase4c_tag_migration_execution_protocol_contract.py",
+      "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolPostPushAnchorSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolPostPushAnchorContractParityTest.java",
+      "tools/phase4c_http_implementation_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_post_push_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_post_push_anchor_successor_acceptance.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/build_phase4c_personal_bank_user_counts_http_typed_normalization_contract.py",
+      "tools/phase4c_http_typed_normalization_successor_acceptance.py",
+      "tools/phase4c_http_target_execution_anchor_successor_acceptance.py",
+      "tools/test_capture_phase4c_learning_transaction_write_goldens.py",
+      "tools/test_phase4b_personal_bank_all_shares_entry_contract.py",
+      "tools/test_phase4b_personal_bank_all_shares_read_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_entry_contract.py",
+      "tools/test_phase4b_personal_bank_share_list_read_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py",
+      "tools/test_phase4b_personal_bank_usage_stats_read_contract.py",
+      "tools/test_phase4b_personal_bank_user_counts_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_composition_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py",
+      "tools/test_phase4c_personal_bank_user_counts_read_contract.py",
+      "tools/phase4c_tag_migration_operator_core_successor_acceptance.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationOperatorCoreSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationOperatorCoreContractParityTest.java",
+      "tools/build_phase4c_tag_migration_global_preflight_contract.py",
+      "tools/phase4c_tag_migration_global_preflight_successor_acceptance.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightContractParityTest.java",
+      "tools/phase4c_tag_migration_execution_protocol_post_push_anchor_successor_acceptance.py",
+      "tools/test_phase4c_tag_migration_execution_protocol_contract.py",
+      "tools/test_phase4c_tag_migration_operator_core_contract.py",
+      "tools/test_phase4c_tag_migration_global_preflight_contract.py",
+      "tools/capture_phase4c_learning_transaction_write_goldens.py",
+      "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py"
+    ],
+    "control_sources_excluded_from_self_authority": true,
+    "fixed_checkpoint_replay_is_explicit_only": true,
+    "historical_contracts_or_worm_overwritten": false,
+    "live_head_main_or_origin_authority": false,
+    "ordinary_build_is_gitless": true
+  },
+  "source_successors": {
+    "accepted_checkpoint": "2579dfd344dbe318c9fb59d067c843356b98fece",
+    "dynamic_source_discovery": false,
+    "successor_checkpoint": "b635d1db3b9d71698d9a40cc729a215d67a6906f",
+    "transition_count": 17,
+    "transitions": {
+      "docs/refactor/05-progress.md": {
+        "accepted_byte_count": 109911,
+        "accepted_sha256": "2fb55e0aaaeff28c3c3def877b5be51ae2ea6358272222f0e0f8232dec69867f",
+        "source": "docs/refactor/05-progress.md",
+        "successor_byte_count": 122201,
+        "successor_sha256": "4720c1ef1f1dc9d0a7dd6ce8a4c9eb4b1fd4a55c40cd106158fd8060472212de"
+      },
+      "infra/phase2/README.md": {
+        "accepted_byte_count": 9031,
+        "accepted_sha256": "187895861b607be2cfddb63320b4ee52dc4efd7706e94afd5d56a07169832216",
+        "source": "infra/phase2/README.md",
+        "successor_byte_count": 9073,
+        "successor_sha256": "12455289b964d2eeee2f700768f7ff60fa73e13c81f696dbf1a7671714b30aac"
+      },
+      "infra/phase2/verify-local-reference-wormhole.sh": {
+        "accepted_byte_count": 23482,
+        "accepted_sha256": "3267a16d4690f6332f72d6bcfe9a6351f79bcef46b13f974156fd98bfc22fe6d",
+        "source": "infra/phase2/verify-local-reference-wormhole.sh",
+        "successor_byte_count": 24892,
+        "successor_sha256": "fb947695b66d600f5bebf16e2fadadfbdb97ab373e812b1f3f2ff9b9dd06b44f"
+      },
+      "infra/phase2/verify-static.sh": {
+        "accepted_byte_count": 18597,
+        "accepted_sha256": "6878d027fc21c1564840771609f0f2e9dfa6eb2bb483b56b6abfd1e9386eb4a3",
+        "source": "infra/phase2/verify-static.sh",
+        "successor_byte_count": 19350,
+        "successor_sha256": "f915ded1c5c86b4ab2872016307a59370dd4c75c45cee9734af30af99ba54ff4"
+      },
+      "server/pom.xml": {
+        "accepted_byte_count": 9582,
+        "accepted_sha256": "24b45d68c44c64a6b2fda2fbf6f342889640f7c3dbc088015703cd1a68ff916b",
+        "source": "server/pom.xml",
+        "successor_byte_count": 9830,
+        "successor_sha256": "0996c59ac315bad6d24c699adbd5b49f808abf2d5d33be6be7272c382da34431"
+      },
+      "server/src/main/java/io/saksk/ti/catalog/api/SubjectMetadataApplicationApi.java": {
+        "accepted_byte_count": 362,
+        "accepted_sha256": "ef6b469d8d4838d39d35888e05ebe23c66dfd8722c318d0401cff965274eb1e5",
+        "source": "server/src/main/java/io/saksk/ti/catalog/api/SubjectMetadataApplicationApi.java",
+        "successor_byte_count": 440,
+        "successor_sha256": "66daaadd194f58b38043af7b1159a180df8439e0a7431618dfd35281c7992977"
+      },
+      "server/src/main/java/io/saksk/ti/catalog/application/SubjectMetadataQueryService.java": {
+        "accepted_byte_count": 1502,
+        "accepted_sha256": "1aac46da47fe15f9dd74083cd45490cab274415d16d4c3acb280d9b12ca31966",
+        "source": "server/src/main/java/io/saksk/ti/catalog/application/SubjectMetadataQueryService.java",
+        "successor_byte_count": 1947,
+        "successor_sha256": "46404d2ffdd46ad58eae0a61cffedaaa4765d1ff68a42dc1210813a28d525360"
+      },
+      "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectContextQueryPort.java": {
+        "accepted_byte_count": 314,
+        "accepted_sha256": "51c2881c1de7bf353784e2b86b700f7f73adf2904cd838470a6ec0d0d937368b",
+        "source": "server/src/main/java/io/saksk/ti/catalog/application/port/SubjectContextQueryPort.java",
+        "successor_byte_count": 536,
+        "successor_sha256": "ebc5e029efeeed2102d9ebdb81da2cd60337febf7e51d724fcfd49de46cfc91b"
+      },
+      "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectContextQueryAdapter.java": {
+        "accepted_byte_count": 1169,
+        "accepted_sha256": "e3555ed59030c2024fbbb0bb0d752292fda42581ced0abb6e89fa4af4b256bdc",
+        "source": "server/src/main/java/io/saksk/ti/catalog/infrastructure/persistence/JdbcSubjectContextQueryAdapter.java",
+        "successor_byte_count": 2238,
+        "successor_sha256": "81ff1bd0a4275ebc72d2618369d039d89215c2d235c38d9bddd92feba241be47"
+      },
+      "server/src/main/java/io/saksk/ti/web/config/ProductionSecretsConfiguration.java": {
+        "accepted_byte_count": 2287,
+        "accepted_sha256": "c2f56f255d879cf4955c71a5dd385b125c0b6c49d5c26f3cd2e4b98533092331",
+        "source": "server/src/main/java/io/saksk/ti/web/config/ProductionSecretsConfiguration.java",
+        "successor_byte_count": 2551,
+        "successor_sha256": "f59ca847ddee461be4db59e507592e0eec3a5670ab96c56478de4d0ca9cd5d67"
+      },
+      "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java": {
+        "accepted_byte_count": 21994,
+        "accepted_sha256": "8e6a064d9880a37a597ce9c3422ac4028580b54e60694e6ec7741c9829e8eb70",
+        "source": "server/src/main/java/io/saksk/ti/web/config/SecurityConfiguration.java",
+        "successor_byte_count": 27356,
+        "successor_sha256": "288fa46653b922e47d1d9019a5ffdb94c2743f3e5175bbef06c26fc88f3f5cfe"
+      },
+      "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitConfiguration.java": {
+        "accepted_byte_count": 3965,
+        "accepted_sha256": "be9d75e7e9496e489f2d2447b7bfb13ab0815be254bdba47aaba91b1048fd9ed",
+        "source": "server/src/main/java/io/saksk/ti/web/security/LoginRateLimitConfiguration.java",
+        "successor_byte_count": 4948,
+        "successor_sha256": "c37cf7a54d290fce85b5963e7b66f51224815d44deaf43dd876d435db93c299d"
+      },
+      "server/src/main/resources/application-prod.yml": {
+        "accepted_byte_count": 2724,
+        "accepted_sha256": "b741dc5efbe7b0f81750b24c7ad1c48930ca2bb3a104f99f5eb3fb163617d53b",
+        "source": "server/src/main/resources/application-prod.yml",
+        "successor_byte_count": 3477,
+        "successor_sha256": "9c7c214292b66ba13d7b2fada9370011cae4cec66b30de359818407ec016c680"
+      },
+      "server/src/main/resources/application.yml": {
+        "accepted_byte_count": 6053,
+        "accepted_sha256": "6f5584026bcdd412db7a09ab8fde946556011aefabf7ca578441d5548f1a855c",
+        "source": "server/src/main/resources/application.yml",
+        "successor_byte_count": 7237,
+        "successor_sha256": "3335936419b6cf361e0e0e7397c639b0838b2e01175144fc5895d05b6258ed04"
+      },
+      "server/src/test/java/io/saksk/ti/catalog/application/SubjectMetadataQueryServiceTest.java": {
+        "accepted_byte_count": 6258,
+        "accepted_sha256": "d3d4824dd0442ce139cee51776bd50f7d3d40e7bbddb557feefec9932d42c374",
+        "source": "server/src/test/java/io/saksk/ti/catalog/application/SubjectMetadataQueryServiceTest.java",
+        "successor_byte_count": 7952,
+        "successor_sha256": "660214c26b31fae95c3f26a2711522a2b485a9a8e41ce9158f0329d8b4a6500f"
+      },
+      "server/src/test/java/io/saksk/ti/learning/LearningModuleContextTest.java": {
+        "accepted_byte_count": 1707,
+        "accepted_sha256": "694044896e01aee33c9cf82f8284680caa177e4272089a511f0c5361e2bcd48f",
+        "source": "server/src/test/java/io/saksk/ti/learning/LearningModuleContextTest.java",
+        "successor_byte_count": 2407,
+        "successor_sha256": "92b0a927722487789bd9fe0905e3673cc33f2c407dc8b5163d5c3c2199dd9cbb"
+      },
+      "server/src/test/java/io/saksk/ti/web/config/ProductionSecretsConfigurationTest.java": {
+        "accepted_byte_count": 3609,
+        "accepted_sha256": "5f2729c1afd722654dac03087c0078947358c95d082cd348685e8855f1c2ad19",
+        "source": "server/src/test/java/io/saksk/ti/web/config/ProductionSecretsConfigurationTest.java",
+        "successor_byte_count": 4517,
+        "successor_sha256": "24b98da9b4db32f86f2e0709665482e9617d88cfe844a32165b9e10e8f5705e8"
+      }
+    },
+    "unknown_path": "reject"
+  },
+  "status": "full_parity_bootstrap_externally_anchored_runtime_and_worm_successor_closed_current_bridge_anchor_pending_routes_pending"
+}

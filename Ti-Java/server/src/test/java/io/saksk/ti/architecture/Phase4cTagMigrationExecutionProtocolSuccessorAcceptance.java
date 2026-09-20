@@ -358,14 +358,33 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
                 && sha256(physical).equals(transition.successorSha256())) {
             return transition;
         }
-        Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+        Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
                 .SourceTransition current =
-                Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
                         .transitionFromNodeD(
                                 root,
                                 relative,
                                 transition.successorSha256(),
                                 transition.successorByteCount());
+        if (current == null) {
+            var predecessor =
+                    Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                            .transitionFromNodeD(
+                                    root,
+                                    relative,
+                                    transition.successorSha256(),
+                                    transition.successorByteCount());
+            if (predecessor != null) {
+                current =
+                        new Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                .SourceTransition(
+                                predecessor.source(),
+                                predecessor.acceptedSha256(),
+                                predecessor.acceptedByteCount(),
+                                predecessor.successorSha256(),
+                                predecessor.successorByteCount());
+            }
+        }
         require(current != null
                         && relative.equals(current.source())
                         && Files.size(physical)
@@ -421,7 +440,8 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
         expectedCurrent.putAll(textMap(semantic.path("changed_files")));
         strings(semantic.path("deleted_files"))
                 .forEach(expectedCurrent::remove);
-        require("4A0M0D".equals(semantic.path("exact_delta").asString())
+        boolean currentMatchesNodeD =
+                "4A0M0D".equals(semantic.path("exact_delta").asString())
                         && textMap(semantic.path("added_files")).size() == 4
                         && textMap(semantic.path("changed_files")).isEmpty()
                         && strings(semantic.path("deleted_files")).isEmpty()
@@ -429,8 +449,46 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
                         && current.size()
                         == semantic.path("current_file_count").asInt()
                         && canonicalSha256(JSON.valueToTree(current)).equals(
-                        semantic.path("current_manifest_sha256").asString()),
-                "execution-protocol rejected current production manifest");
+                        semantic.path("current_manifest_sha256").asString());
+        if (!currentMatchesNodeD) {
+            var terminal =
+                    Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                            .validateProductionRuntimeSuccessor(
+                                    root, expectedCurrent, current, view);
+            require(terminal.acceptedFileCount()
+                            == semantic.path("current_file_count").asInt()
+                            && terminal.acceptedManifestSha256().equals(
+                            semantic.path(
+                                    "current_manifest_sha256").asString()),
+                    "execution-protocol transaction-write runtime drifted");
+            TreeMap<String, String> additions = new TreeMap<>(
+                    textMap(semantic.path("added_files")));
+            TreeMap<String, String> changes = new TreeMap<>(
+                    textMap(semantic.path("changed_files")));
+            terminal.addedFiles().forEach((relative, digest) -> {
+                if (accepted.containsKey(relative)) {
+                    changes.put(relative, digest);
+                } else {
+                    additions.put(relative, digest);
+                }
+            });
+            terminal.changedFiles().forEach((relative, digest) -> {
+                if (additions.containsKey(relative)) {
+                    additions.put(relative, digest);
+                } else {
+                    changes.put(relative, digest);
+                }
+            });
+            return new ProductionRuntimeSuccessor(
+                    view,
+                    semantic.path("accepted_file_count").asInt(),
+                    semantic.path("accepted_manifest_sha256").asString(),
+                    terminal.currentFileCount(),
+                    terminal.currentManifestSha256(),
+                    Map.copyOf(additions),
+                    Map.copyOf(changes),
+                    Set.copyOf(terminal.deletedFiles()));
+        }
         return new ProductionRuntimeSuccessor(
                 view,
                 semantic.path("accepted_file_count").asInt(),
@@ -462,8 +520,35 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
         String nodeDCurrentBuildContext =
                 worm.path("current_build_context_sha256").asString();
         if (!physicalBuildContext.equals(nodeDCurrentBuildContext)) {
-            Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
-                    .validateCurrentBuildContext(root, physicalBuildContext);
+            Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                    .WormSuccessor terminal;
+            try {
+                terminal =
+                        Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                .validateWormSuccessor(
+                                        root,
+                                        worm.path("current_report")
+                                                .path("sha256").asString(),
+                                        nodeDCurrentBuildContext,
+                                        physicalBuildContext);
+            } catch (AssertionError error) {
+                throw new AssertionError(
+                        "execution-protocol physical build-context successor "
+                                + "drifted",
+                        error);
+            }
+            require(terminal.acceptedChainNodeCount() == 9
+                            && terminal.currentChainNodeCount() == 10
+                            && terminal.currentBuildContextSha256().equals(
+                            physicalBuildContext),
+                    "execution-protocol transaction-write WORM drifted");
+            return new WormSuccessor(
+                    acceptedReportSha256,
+                    acceptedBuildContextSha256,
+                    worm.path("accepted_chain_node_count").asInt(),
+                    terminal.currentReportSha256(),
+                    physicalBuildContext,
+                    terminal.currentChainNodeCount());
         }
         return new WormSuccessor(
                 acceptedReportSha256,
@@ -486,6 +571,10 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
         paths.addAll(
                 Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
                         .minimalFixturePaths());
+        paths.add(
+                "docs/refactor/phase4c/"
+                        + "learning-transaction-write-http-"
+                        + "source-successor-contract.json");
         return Set.copyOf(paths);
     }
 
@@ -497,7 +586,7 @@ final class Phase4cTagMigrationExecutionProtocolSuccessorAcceptance {
             return contract;
         } catch (AssertionError predecessorError) {
             JsonNode successorPredecessor =
-                    Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance
+                    Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
                             .loadNodeDPredecessor(root);
             require(successorPredecessor.equals(contract),
                     "execution-protocol successor returned a different predecessor");

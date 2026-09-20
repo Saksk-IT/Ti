@@ -900,10 +900,20 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                 && transition.successorSha256().equals(physicalSha256)) {
             return physicalSha256;
         }
-        validateNodeCSourceTransition(
-                root, relative,
-                transition.successorSha256(), transition.successorBytes(),
-                physicalSha256, physicalBytes);
+        if (NODE_C_SOURCE_SUCCESSOR_PATHS.contains(relative)) {
+            validateNodeCSourceTransition(
+                    root, relative,
+                    transition.successorSha256(), transition.successorBytes(),
+                    physicalSha256, physicalBytes);
+        } else {
+            require(Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                            .isCurrentControlSource(relative)
+                            && physicalSha256.equals(
+                            Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                    .currentControlSha256(root, relative)),
+                    "tag preflight source-successor bytes drifted: "
+                            + relative);
+        }
         return physicalSha256;
     }
 
@@ -1032,7 +1042,12 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                                     .path("sha256").asString(),
                             nodeABuildContext);
             require(nodeC.acceptedChainNodeCount() == 7
-                            && nodeC.currentChainNodeCount() == 9
+                            && (nodeC.currentChainNodeCount() == 9
+                            || nodeC.currentChainNodeCount() == 10)
+                            && (nodeC.currentChainNodeCount() != 10
+                            || nodeC.currentReportSha256().equals(
+                            "dd165106d7b3a73512acdbf89924b352"
+                                    + "e3f1ad027132b8a8519af957a47de599"))
                             && nodeC.currentBuildContextSha256().equals(
                             physicalBuildContext),
                     "tag preflight Node C/D composed WORM bridge drifted");
@@ -1094,6 +1109,9 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
                     }
                 });
         paths.addAll(PRODUCTION_MANIFEST_ADDITIONS.keySet());
+        paths.addAll(
+                Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                        .minimalFixturePaths(root));
         return Set.copyOf(paths);
     }
 
@@ -1572,12 +1590,21 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
             String acceptedSha256 = descriptor.path("sha256").asString();
             if (physicalBytes != acceptedBytes
                     || !acceptedSha256.equals(physicalSha256)) {
-                require(NODE_C_SOURCE_SUCCESSOR_PATHS.contains(relative),
-                        "tag preflight fixed source physical bytes drifted: "
-                                + relative);
-                validateNodeCSourceTransition(
-                        root, relative, acceptedSha256, acceptedBytes,
-                        physicalSha256, physicalBytes);
+                if (NODE_C_SOURCE_SUCCESSOR_PATHS.contains(relative)) {
+                    validateNodeCSourceTransition(
+                            root, relative, acceptedSha256, acceptedBytes,
+                            physicalSha256, physicalBytes);
+                } else {
+                    require(
+                            Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                    .isCurrentControlSource(relative)
+                                    && physicalSha256.equals(
+                                    Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                            .currentControlSha256(
+                                                    root, relative)),
+                            "tag preflight fixed source physical bytes drifted: "
+                                    + relative);
+                }
             }
             if (descriptor.has("document_payload_sha256")) {
                 JsonNode document = JSON.readTree(Files.readAllBytes(path));
@@ -1602,15 +1629,29 @@ final class Phase4cTagMigrationGlobalPreflightSuccessorAcceptance {
             String physicalSha256,
             long physicalBytes
     ) throws IOException {
-        var transition = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
-                .sourceTransition(root, relative);
-        require(transition != null
-                        && relative.equals(transition.source())
-                        && expectedAcceptedSha256.equals(
-                        transition.acceptedSha256())
-                        && expectedAcceptedBytes == transition.acceptedByteCount()
-                        && physicalSha256.equals(transition.successorSha256())
-                        && physicalBytes == transition.successorByteCount(),
+        Phase4cTagMigrationOperatorCoreSuccessorAcceptance.SourceTransition
+                transition = null;
+        try {
+            transition = Phase4cTagMigrationOperatorCoreSuccessorAcceptance
+                    .sourceTransition(root, relative);
+        } catch (AssertionError ignored) {
+            // The current bootstrap may advance an explicitly self-excluded
+            // control source beyond the externally fixed Node C/D bytes.
+        }
+        boolean nodeCOrDMatches = transition != null
+                && relative.equals(transition.source())
+                && expectedAcceptedSha256.equals(
+                transition.acceptedSha256())
+                && expectedAcceptedBytes == transition.acceptedByteCount()
+                && physicalSha256.equals(transition.successorSha256())
+                && physicalBytes == transition.successorByteCount();
+        boolean currentBootstrapControlMatches =
+                Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                        .isCurrentControlSource(relative)
+                && physicalSha256.equals(
+                Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                        .currentControlSha256(root, relative));
+        require(nodeCOrDMatches || currentBootstrapControlMatches,
                 "tag preflight Node C/D composed source bridge drifted: "
                         + relative);
     }

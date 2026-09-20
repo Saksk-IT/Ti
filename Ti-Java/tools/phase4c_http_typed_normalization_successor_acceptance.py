@@ -315,6 +315,13 @@ LOCAL_SOURCES = {
     ),
 }
 
+LOCAL_SOURCE_SUCCESSORS = {
+    "server/pom.xml": _source(
+        "0996c59ac315bad6d24c699adbd5b49f808abf2d5d33be6be7272c382da34431",
+        9_830,
+    ),
+}
+
 HISTORICAL_MANIFEST = (
     "docs/refactor/phase4c/"
     "personal-bank-user-counts-target-execution-junit-manifest.json"
@@ -710,10 +717,17 @@ def _expected_source_contracts() -> dict[str, dict[str, Any]]:
 def _validate_local_inputs(root: Path) -> None:
     for relative, descriptor in LOCAL_SOURCES.items():
         payload = _fixed_regular_file(root, relative).read_bytes()
-        if (
+        historical = (
             len(payload) != descriptor["byte_count"]
             or _sha256_bytes(payload) != descriptor["sha256"]
-        ):
+        )
+        successor = LOCAL_SOURCE_SUCCESSORS.get(relative)
+        current = (
+            successor is not None
+            and len(payload) == successor["byte_count"]
+            and _sha256_bytes(payload) == successor["sha256"]
+        )
+        if historical and not current:
             raise AssertionError(f"typed-normalization source drifted: {relative}")
 
     predecessor_raw = _fixed_regular_file(root, PREDECESSOR_RELATIVE).read_bytes()

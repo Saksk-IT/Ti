@@ -36,6 +36,10 @@ try:
     from tools.phase4c_tag_migration_global_preflight_successor_acceptance import (
         validation_session as acceptance_validation_session,
     )
+    from tools.phase4c_learning_transaction_write_http_source_successor_acceptance import (
+        accepted_sha256 as transaction_write_accepted_sha256,
+        successor_sha256 as transaction_write_successor_sha256,
+    )
 except ModuleNotFoundError:  # Direct script execution from tools/.
     from phase4c_http_entry_successor_acceptance import (
         accepted_sha256 as http_entry_accepted_sha256,
@@ -59,6 +63,10 @@ except ModuleNotFoundError:  # Direct script execution from tools/.
     )
     from phase4c_tag_migration_global_preflight_successor_acceptance import (
         validation_session as acceptance_validation_session,
+    )
+    from phase4c_learning_transaction_write_http_source_successor_acceptance import (
+        accepted_sha256 as transaction_write_accepted_sha256,
+        successor_sha256 as transaction_write_successor_sha256,
     )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -346,6 +354,18 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                 )
                 if tag_successor is not None:
                     self.assertEqual(current_hash, tag_successor, name)
+                    continue
+                if (
+                    transaction_write_accepted_sha256(reference["source"])
+                    == target_predecessor
+                ):
+                    self.assertEqual(
+                        current_hash,
+                        transaction_write_successor_sha256(
+                            ROOT, reference["source"]
+                        ),
+                        name,
+                    )
                     continue
                 implementation_successor = implementation_successor_sha256(
                     ROOT, reference["source"]
@@ -802,7 +822,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     view="learning_personalbank_main",
                 )
                 self.assertEqual(40, main_successor.accepted_file_count)
-                self.assertEqual(54, main_successor.current_file_count)
+                self.assertEqual(105, main_successor.current_file_count)
                 self.assertEqual([], list(main_successor.changed_files))
                 self.assertEqual([], list(main_successor.deleted_files))
             read_runtime = implementation["production_runtime_surface"]
@@ -831,9 +851,30 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     view="full_runtime",
                 )
                 self.assertEqual(297, runtime_successor.accepted_file_count)
-                self.assertEqual(311, runtime_successor.current_file_count)
-                self.assertEqual([], list(runtime_successor.changed_files))
-                self.assertEqual([], list(runtime_successor.deleted_files))
+                self.assertEqual(395, runtime_successor.current_file_count)
+                expected_added = tuple(sorted(
+                    (relative, digest)
+                    for relative, digest in current_runtime.items()
+                    if relative not in accepted_runtime
+                ))
+                expected_changed = tuple(sorted(
+                    (relative, digest)
+                    for relative, digest in current_runtime.items()
+                    if relative in accepted_runtime
+                    and accepted_runtime[relative] != digest
+                ))
+                expected_deleted = tuple(sorted(
+                    set(accepted_runtime) - set(current_runtime)
+                ))
+                self.assertEqual(98, len(expected_added))
+                self.assertEqual(10, len(expected_changed))
+                self.assertEqual(expected_added, runtime_successor.added_files)
+                self.assertEqual(
+                    expected_changed, runtime_successor.changed_files
+                )
+                self.assertEqual(
+                    expected_deleted, runtime_successor.deleted_files
+                )
             requirements = self.contract["successor_handoff"][
                 "future_read_contract_requirements"
             ]
@@ -890,7 +931,7 @@ class Phase4cPersonalBankUserCountsCompositionContractTest(unittest.TestCase):
                     accepted_build_context,
                     successor.accepted_build_context_sha256,
                 )
-                self.assertEqual(9, successor.current_chain_node_count)
+                self.assertEqual(10, successor.current_chain_node_count)
                 self.assertEqual(
                     build_context,
                     successor.current_build_context_sha256,

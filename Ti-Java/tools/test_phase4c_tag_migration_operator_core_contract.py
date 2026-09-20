@@ -243,14 +243,14 @@ class Phase4cTagMigrationOperatorCoreContractTest(unittest.TestCase):
                 self.root, accepted, current, view="unknown"
             )
 
-    def test_worm_successor_composes_node_c_7_to_node_d_9(self) -> None:
+    def test_worm_successor_composes_node_c_7_to_transaction_node_10(self) -> None:
         result = acceptance.validate_worm_successor(
             self.root,
             builder.WORM_PREDECESSOR_SHA256,
             builder.ACCEPTED_BUILD_CONTEXT_SHA256,
         )
         self.assertEqual(7, result.accepted_chain_node_count)
-        self.assertEqual(9, result.current_chain_node_count)
+        self.assertEqual(10, result.current_chain_node_count)
         self.assertEqual(builder.WORM_PREDECESSOR_SHA256,
                          result.accepted_report_sha256)
         self.assertNotEqual(builder.WORM_SHA256, result.current_report_sha256)

@@ -215,6 +215,10 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
         paths.add(CONTRACT_RELATIVE);
         paths.add(NODE_D_RELATIVE);
         paths.add(NODE_D_ANCHOR_RELATIVE);
+        paths.add(
+                "docs/refactor/phase4c/"
+                        + "learning-transaction-write-http-"
+                        + "source-successor-contract.json");
         paths.addAll(TRANSITION_PATHS);
         paths.addAll(EVIDENCE_PATHS);
         return Set.copyOf(paths);
@@ -271,23 +275,56 @@ final class Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance {
             JsonNode current = contract.path("historical_source_successors")
                     .path("transitions")
                     .path(relative);
+            long physicalBytes = Files.size(physical);
+            String physicalSha256 = sha256(physical);
             if (current.isMissingNode()) {
-                require(Files.size(physical)
-                                == descriptor.path("byte_count").asLong()
-                                && sha256(physical).equals(
-                                descriptor.path("sha256").asString()),
+                boolean fixed = physicalBytes
+                        == descriptor.path("byte_count").asLong()
+                        && physicalSha256.equals(
+                        descriptor.path("sha256").asString());
+                if (!fixed) {
+                    var successor =
+                            Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                    .transitionFromNodeD(
+                                            root,
+                                            relative,
+                                            descriptor.path("sha256")
+                                                    .asString(),
+                                            descriptor.path("byte_count")
+                                                    .asLong());
+                    fixed = successor != null
+                            && physicalSha256.equals(
+                            successor.successorSha256())
+                            && physicalBytes
+                            == successor.successorByteCount();
+                }
+                require(fixed,
                         "transaction-write full-parity fixed source drifted: "
                                 + relative);
                 continue;
             }
-            require(descriptor.path("sha256").asString().equals(
+            boolean fixed = descriptor.path("sha256").asString().equals(
                             current.path("accepted_sha256").asString())
                             && descriptor.path("byte_count").asLong()
                             == current.path("accepted_byte_count").asLong()
-                            && Files.size(physical)
+                            && physicalBytes
                             == current.path("successor_byte_count").asLong()
-                            && sha256(physical).equals(
-                            current.path("successor_sha256").asString()),
+                            && physicalSha256.equals(
+                            current.path("successor_sha256").asString());
+            if (!fixed) {
+                var successor =
+                        Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance
+                                .transitionFromNodeD(
+                                        root,
+                                        relative,
+                                        descriptor.path("sha256").asString(),
+                                        descriptor.path(
+                                                "byte_count").asLong());
+                fixed = successor != null
+                        && physicalSha256.equals(successor.successorSha256())
+                        && physicalBytes == successor.successorByteCount();
+            }
+            require(fixed,
                     "transaction-write full-parity fixed source drifted: "
                             + relative);
         }

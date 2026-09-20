@@ -542,8 +542,8 @@ class Phase4bPersonalBankShareListReadContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, runtime.accepted_file_count)
-            self.assertEqual(54, runtime.current_file_count)
-            self.assertEqual(14, len(runtime.added_files))
+            self.assertEqual(105, runtime.current_file_count)
+            self.assertEqual(65, len(runtime.added_files))
             self.assertEqual((), runtime.changed_files)
             self.assertEqual((), runtime.deleted_files)
 

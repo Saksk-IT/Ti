@@ -171,7 +171,14 @@ class Phase4cPersonalBankUserCountsHttpEntryContractTest(unittest.TestCase):
                 view="learning_personalbank_main",
             )
             self.assertEqual(40, successor.accepted_file_count)
-            self.assertEqual(54, successor.current_file_count)
+            self.assertEqual(105, successor.current_file_count)
+            expected_added = tuple(sorted(
+                (relative, digest)
+                for relative, digest in main.items()
+                if relative not in accepted_main
+            ))
+            self.assertEqual(65, len(expected_added))
+            self.assertEqual(expected_added, successor.added_files)
             self.assertEqual([], list(successor.changed_files))
             self.assertEqual([], list(successor.deleted_files))
         self.assertEqual(

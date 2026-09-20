@@ -47,6 +47,25 @@ def _tag_preflight_successor():
     return successor
 
 
+def _transaction_write_source_successor():
+    try:
+        from tools import (
+            phase4c_learning_transaction_write_http_source_successor_acceptance
+            as successor,
+        )
+    except ModuleNotFoundError as error:
+        if error.name not in {
+            "tools",
+            "tools."
+            "phase4c_learning_transaction_write_http_source_"
+            "successor_acceptance",
+        }:
+            raise
+        import phase4c_learning_transaction_write_http_source_successor_acceptance \
+            as successor
+    return successor
+
+
 def _validate_runtime_successor(*args, **kwargs):
     return _tag_preflight_successor().validate_production_runtime_successor(
         *args, **kwargs
@@ -488,13 +507,26 @@ def _validated_current_sha256(
     nodea_successor = getattr(nodea, "successor_sha256", None)
     if not callable(nodea_accepted) or not callable(nodea_successor):
         raise AssertionError("tag-preflight successor API is incomplete")
-    if nodea_accepted(relative) != fixed_sha256:
+    if nodea_accepted(relative) == fixed_sha256:
+        try:
+            if nodea_successor(root, relative) == physical:
+                return physical
+        except AssertionError:
+            pass
+    terminal = _transaction_write_source_successor()
+    terminal_accepted = getattr(terminal, "accepted_sha256", None)
+    terminal_successor = getattr(terminal, "successor_sha256", None)
+    if (
+        not callable(terminal_accepted)
+        or not callable(terminal_successor)
+        or terminal_accepted(relative) != fixed_sha256
+    ):
         raise AssertionError(
             f"tag-preflight successor does not accept {label}: {relative}"
         )
-    if nodea_successor(root, relative) != physical:
+    if terminal_successor(root, relative) != physical:
         raise AssertionError(
-            f"tag-preflight successor does not bind current {label}: {relative}"
+            f"transaction-write successor does not bind current {label}: {relative}"
         )
     return physical
 
@@ -668,7 +700,13 @@ def load_http_implementation_successor_contract(ti_java_root: Path) -> dict | No
     if loaded is None:
         return None
     root, contract = loaded
-    validate_http_implementation_successor_contract(contract, root)
+    session = getattr(_tag_preflight_successor(), "validation_session", None)
+    if not callable(session):
+        raise AssertionError(
+            "tag-preflight validation session is required"
+        )
+    with session():
+        validate_http_implementation_successor_contract(contract, root)
     return contract
 
 
@@ -851,6 +889,20 @@ def validate_http_implementation_successor_contract(
     if not isinstance(accepted_runtime, dict) or len(accepted_runtime) != 297:
         raise AssertionError("HTTP implementation runtime manifest is incomplete")
     if accepted_runtime != physical_runtime:
+        expected_added = tuple(sorted(
+            (relative, digest)
+            for relative, digest in physical_runtime.items()
+            if relative not in accepted_runtime
+        ))
+        expected_changed = tuple(sorted(
+            (relative, digest)
+            for relative, digest in physical_runtime.items()
+            if relative in accepted_runtime
+            and accepted_runtime[relative] != digest
+        ))
+        expected_deleted = tuple(sorted(
+            set(accepted_runtime) - set(physical_runtime)
+        ))
         successor = _validate_runtime_successor(
             root,
             accepted_runtime,
@@ -862,8 +914,9 @@ def validate_http_implementation_successor_contract(
             or successor.accepted_manifest_sha256 != _sha256_json(accepted_runtime)
             or successor.current_file_count != len(physical_runtime)
             or successor.current_manifest_sha256 != _sha256_json(physical_runtime)
-            or successor.changed_files
-            or successor.deleted_files
+            or successor.added_files != expected_added
+            or successor.changed_files != expected_changed
+            or successor.deleted_files != expected_deleted
         ):
             raise AssertionError("tag preflight runtime successor descriptor drifted")
     if current.get("manifest_sha256") != _sha256_json(accepted_runtime):
