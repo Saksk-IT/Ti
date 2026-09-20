@@ -248,7 +248,9 @@
       position: sticky;
       top: 0;
       height: 100vh;
-      overflow: visible;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
       display: flex;
       flex-direction: column;
     }
@@ -733,7 +735,7 @@
       }
     }
 
-    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar { width: var(--app-sidebar-w-collapsed); padding: 8px 10px; overflow: visible; }
+    :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar { width: var(--app-sidebar-w-collapsed); padding: 8px 10px; overflow-y: auto; }
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-label,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-nav-title,
     :is(html.sidebar-collapsed .app-shell, .app-shell.sidebar-collapsed) .app-sidebar .app-cta-title,

@@ -220,7 +220,7 @@ function normalizeScheduleSnapshots(rows) {
         }).filter(function (dayRow) { return dayRow.sections.length > 0; });
         return __assign(__assign({}, termMeta), { studentText: [student.name, student.class_name, student.major_name].map(function (item) { return cleanText(item); }).filter(Boolean).join(' / '), weekRows: weekRows, practice_courses: normalizeList(payload.practice_courses).map(normalizeCourse) });
     })
-        .filter(function (item) { return item.weekRows.length > 0 || item.practice_courses.length > 0 || item.title !== '课表'; });
+        .filter(function (item) { return item.weekRows.length > 0 || item.practice_courses.length > 0; });
 }
 function normalizeGradeSnapshots(rows) {
     return normalizeList(rows)
@@ -365,14 +365,6 @@ function buildCampusActions(eduBound, statusFailed) {
             icon: '/images/icons/settings.svg',
             tone: 'normal',
             disabled: false,
-        },
-        {
-            key: 'evaluation',
-            title: '一键教评',
-            subtitle: '功能建设中',
-            icon: '/images/icons/clipboard-check.svg',
-            tone: 'muted',
-            disabled: true,
         },
         {
             key: 'more',

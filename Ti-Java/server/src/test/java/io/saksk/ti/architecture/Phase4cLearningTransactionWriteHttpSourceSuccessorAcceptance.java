@@ -268,12 +268,11 @@ final class Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance {
         SourceTransition transition = transition(descriptor);
         Path physical = fixedRegularFile(root, relative);
         require(relative.equals(transition.source())
-                        && Files.size(physical)
-                        == transition.successorByteCount()
-                        && sha256(physical).equals(
-                        transition.successorSha256()),
+                        && acceptsCurrentBytes(root, relative,
+                        transition.successorSha256(), transition.successorByteCount()),
                 "transaction-write source transition drifted: " + relative);
-        return transition;
+        return new SourceTransition(relative, transition.acceptedSha256(),
+                transition.acceptedByteCount(), sha256(physical), Files.size(physical));
     }
 
     static SourceTransition transitionFromNodeD(
@@ -639,10 +638,8 @@ final class Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance {
                     transitions.path(relative));
             Path physical = fixedRegularFile(root, relative);
             require(relative.equals(current.source())
-                            && Files.size(physical)
-                            == current.successorByteCount()
-                            && sha256(physical).equals(
-                            current.successorSha256()),
+                            && acceptsCurrentBytes(root, relative,
+                            current.successorSha256(), current.successorByteCount()),
                     "transaction-write source transition drifted: "
                             + relative);
         }
@@ -736,13 +733,20 @@ final class Phase4cLearningTransactionWriteHttpSourceSuccessorAcceptance {
                             && descriptor.path("byte_count").asLong()
                             == transition.path(
                             "accepted_byte_count").asLong()
-                            && physicalSha256.equals(transition.path(
-                            "successor_sha256").asString())
-                            && physicalBytes == transition.path(
-                            "successor_byte_count").asLong(),
+                            && acceptsCurrentBytes(root, relative,
+                            transition.path("successor_sha256").asString(),
+                            transition.path("successor_byte_count").asLong()),
                     "transaction-write source Node D fixed source drifted: "
                             + relative);
         }
+    }
+
+    private static boolean acceptsCurrentBytes(Path root, String relative, String digest, long count)
+            throws IOException {
+        Path file = fixedRegularFile(root, relative);
+        return (Files.size(file) == count && sha256(file).equals(digest))
+                || Phase4cLearningTransactionWriteHttpIntegrationSuccessorAcceptance
+                .accepts(root, relative, digest, count);
     }
 
     private static void validateAuthorization(JsonNode contract) {

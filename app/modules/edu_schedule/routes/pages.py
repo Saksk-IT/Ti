@@ -47,3 +47,10 @@ def edu_schedule_page():
 @login_required
 def edu_grades_page():
     return _render_campus_page("edu_schedule/grades.html")
+
+
+@edu_schedule_pages_bp.route("/campus")
+@login_required
+def campus_page():
+    """校园聚合首页：集中展示课表、成绩状态并提供二级查询入口。"""
+    return _render_campus_page("edu_schedule/campus.html")

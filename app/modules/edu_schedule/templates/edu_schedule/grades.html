@@ -5,6 +5,10 @@
 
 {% block content %}
 <section class="grade-page">
+  <div class="campus-subpage-nav">
+    <a class="campus-back-link" href="/campus" aria-label="返回校园首页">← <span>返回校园</span></a>
+    <span class="campus-subpage-label">校园 / 成绩查询</span>
+  </div>
   <div class="grade-content">
     <div class="grade-toolbar">
       <form id="gradeForm" class="grade-form" autocomplete="off">
@@ -14,7 +18,7 @@
         </div>
 
         <div class="grade-actions">
-          <button class="primary-btn" type="submit" id="gradeSubmit">刷新全部成绩</button>
+          <button class="primary-btn" type="submit" id="gradeSubmit">一键查询成绩</button>
           <a class="ghost-btn" href="/settings/account/bindings">账号绑定</a>
         </div>
       </form>
@@ -90,6 +94,9 @@
     display: grid;
     gap: 18px;
   }
+  .campus-subpage-nav { display:flex; align-items:center; gap:12px; min-height:28px; }
+  .campus-back-link { color:var(--app-primary); font-size:13px; font-weight:850; text-decoration:none; }
+  .campus-subpage-label { color:var(--app-muted); font-size:12px; }
   .grade-toolbar,
   .grade-overview,
   .academic-year-summary,
@@ -897,7 +904,7 @@
       setState(error.message || '查询失败', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = '刷新全部成绩';
+      submitBtn.textContent = '一键查询成绩';
     }
   });
 
@@ -935,7 +942,7 @@
     } finally {
       submitWebvpnCaptcha.disabled = false;
       submitBtn.disabled = false;
-      submitBtn.textContent = '刷新全部成绩';
+      submitBtn.textContent = '一键查询成绩';
     }
   });
 

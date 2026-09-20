@@ -185,13 +185,28 @@ class EduScheduleService:
             account, secret = EduScheduleService._load_credentials(user_id)
 
         results: List[Dict[str, Any]] = []
+        cohort_year = int(account[:2]) + 2000 if account[:2].isdigit() else None
         for term in terms:
             xnm = str(term["xnm"])
             xqm = str(term["xqm"])
+            if cohort_year is not None and xnm.isdigit() and int(xnm) < cohort_year:
+                continue
             raw_payload = EduScheduleService._fetch_first_success(
                 lambda xnm=xnm, xqm=xqm: JWXTClient(cfg).fetch_schedule(account, secret, xnm, xqm)
             )
             normalized = normalize_schedule_payload(raw_payload)
+            # 教务接口返回的学生信息有时携带当前学期元数据，必须以本次请求的学年学期为准。
+            normalized["term"] = {
+                **(normalized.get("term") or {}),
+                "xnm": xnm,
+                "xqm": xqm,
+                "year_name": f"{xnm}~{int(xnm) + 1}" if xnm.isdigit() else xnm,
+                "term_name": "第一" if xqm == "3" else "第二",
+                "label": f"{xnm}~{int(xnm) + 1} {'第一' if xqm == '3' else '第二'}学期" if xnm.isdigit() else f"{xnm} {'第一' if xqm == '3' else '第二'}学期",
+            }
+            # 教务系统对无课学期通常返回空列表；空学期不形成快照，避免页面显示不存在的课表。
+            if not normalized.get("courses") and not normalized.get("practice_courses"):
+                continue
             EduScheduleService._save_snapshot(
                 int(user_id),
                 xnm,
@@ -448,17 +463,22 @@ class EduScheduleService:
 
     @staticmethod
     def _snapshot_rows_to_dicts(rows) -> List[Dict[str, Any]]:
-        return [
-            {
-                "id": row.id,
-                "xnm": row.xnm,
-                "xqm": row.xqm,
-                "term_label": row.term_label,
-                "fetched_at": row.fetched_at.isoformat() if row.fetched_at else None,
-                "payload": json.loads(row.payload_json or "{}"),
-            }
-            for row in rows
-        ]
+        items = []
+        for row in rows:
+            payload = json.loads(row.payload_json or "{}")
+            if not payload.get("courses") and not payload.get("practice_courses"):
+                continue
+            items.append(
+                {
+                    "id": row.id,
+                    "xnm": row.xnm,
+                    "xqm": row.xqm,
+                    "term_label": row.term_label,
+                    "fetched_at": row.fetched_at.isoformat() if row.fetched_at else None,
+                    "payload": payload,
+                }
+            )
+        return items
 
     @staticmethod
     def _save_grade_snapshot(

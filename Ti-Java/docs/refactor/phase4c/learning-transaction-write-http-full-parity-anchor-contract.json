@@ -1,0 +1,204 @@
+{
+  "authorization": {
+    "bootstrap_control_sources_external_git_anchor_complete": true,
+    "client_change": false,
+    "current_anchor_sources_external_git_anchor_complete": false,
+    "gateway_or_proxy_change": false,
+    "next_gate": "current_tree_full_verification_then_append_only_route_promotion",
+    "nine_transaction_write_operations_migrated": false,
+    "production_cutover": false,
+    "production_schema_execution": false,
+    "real_data_migration_execution": false,
+    "route_migration_eligible": false
+  },
+  "bootstrap_snapshot": {
+    "byte_count": 246770,
+    "includes_modified_preimages": true,
+    "sha256": "6696930a6cce0af544d67a2decd7d9309b7d550852b34bd1bb11f21580bef9a7",
+    "source": "docs/refactor/phase4c/learning-transaction-write-http-full-parity-bootstrap-snapshot.json"
+  },
+  "bootstrap_sources": [
+    "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json",
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java",
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java",
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java",
+    "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py",
+    "tools/phase4c_learning_transaction_write_http_full_parity_successor_acceptance.py",
+    "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py",
+    "tools/test_phase4c_learning_transaction_write_http_full_parity_contract.py"
+  ],
+  "captured_at": "2026-09-13T00:00:00+08:00",
+  "contract_id": "ti.phase4c.learning-transaction-write-http-full-parity-anchor-contract",
+  "document_payload_sha256": "e960beb57ea8c62148404c6af63b524b0a9bdfabac669cbe22e45f34057ff5c6",
+  "git_checkpoint": {
+    "added_path_count": 6,
+    "artifacts": {
+      "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json": {
+        "byte_count": 15604,
+        "change_type": "A",
+        "git_blob_oid": "b13b9d8dd770464f61a0f76d46a500239f5535bc",
+        "mode": "100644",
+        "previous_byte_count": 0,
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "previous_sha256": null,
+        "sha256": "40b38a443d7f7d754cc42ce43fa854b0c3c18dc66f4920a2f07d451601d6d1db"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java": {
+        "byte_count": 5313,
+        "change_type": "A",
+        "git_blob_oid": "2c446524e99e6510e867ac3a1f7594025ab2016e",
+        "mode": "100644",
+        "previous_byte_count": 0,
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "previous_sha256": null,
+        "sha256": "24f587dda5a78ce19003eb062b3279150cdc71c5c8f4751a977819aadd8eb5a1"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java": {
+        "byte_count": 25784,
+        "change_type": "A",
+        "git_blob_oid": "728c6bfd5b03b8c308a0c66d03a001abde0a6c9e",
+        "mode": "100644",
+        "previous_byte_count": 0,
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "previous_sha256": null,
+        "sha256": "b54f0e04ace4a101d06832fdb99f412a83ce0ee2c9a12aeded482c2c8ebdadbb"
+      },
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java": {
+        "byte_count": 53120,
+        "change_type": "M",
+        "git_blob_oid": "777841196e7c1eb28931ffcba902f86f8241731a",
+        "mode": "100644",
+        "previous_byte_count": 51291,
+        "previous_git_blob_oid": "9a9f88ceaf7791c5b8060a4272161a130e08e6b6",
+        "previous_mode": "100644",
+        "previous_sha256": "85b32075327dcbffd4790f760d2cd91714c183a4ccda509b5f71278cfdcd65d2",
+        "sha256": "ba719c5ca08453c22696ff7a3e316936a937371830620a405fdcca424e6afb9a"
+      },
+      "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py": {
+        "byte_count": 24262,
+        "change_type": "A",
+        "git_blob_oid": "93e1e37da95bca8252b0c19203397bb14910761d",
+        "mode": "100644",
+        "previous_byte_count": 0,
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "previous_sha256": null,
+        "sha256": "e34df1686912e5eb40be9380f79420963ec3dd270053f4f1afc92b934f422c41"
+      },
+      "tools/phase4c_learning_transaction_write_http_full_parity_successor_acceptance.py": {
+        "byte_count": 11098,
+        "change_type": "A",
+        "git_blob_oid": "bf99128d2395632c4eb43e93f084420ed675623b",
+        "mode": "100644",
+        "previous_byte_count": 0,
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "previous_sha256": null,
+        "sha256": "146ffdb8b82b33a9cab9a52eac4a0ce14a46254175bf7207ab4ab5c4a3bd4c95"
+      },
+      "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py": {
+        "byte_count": 23894,
+        "change_type": "M",
+        "git_blob_oid": "39ee69e0dbaf3a9d1429e0aed70166e550da6e22",
+        "mode": "100644",
+        "previous_byte_count": 20338,
+        "previous_git_blob_oid": "cfc7ca84573794864436f050995963ffa9486c79",
+        "previous_mode": "100644",
+        "previous_sha256": "434bb8ab22083dab4f63efb2b77ab0b86ebd55d2946726e0902579c458458789",
+        "sha256": "0119bedfa3e0298aa1f9019d8ec8e20995e0b49058a360763d209759a444929d"
+      },
+      "tools/test_phase4c_learning_transaction_write_http_full_parity_contract.py": {
+        "byte_count": 4957,
+        "change_type": "A",
+        "git_blob_oid": "265bcb7add6f63fe7c1e34c1b954d34866baa7fa",
+        "mode": "100644",
+        "previous_byte_count": 0,
+        "previous_git_blob_oid": "0000000000000000000000000000000000000000",
+        "previous_mode": "000000",
+        "previous_sha256": null,
+        "sha256": "b44fd3a871253e9a826379b09c1d4c4e3f6bd8353d83af2c3281f328b5bcc536"
+      }
+    },
+    "authored_at": "2026-07-24T16:50:36+08:00",
+    "changed_path_count": 8,
+    "commit_oid": "6ed81347467a4155887300b7e4ae36589204af79",
+    "committed_at": "2026-07-24T16:50:36+08:00",
+    "exact_changed_paths": [
+      "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java",
+      "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py",
+      "tools/phase4c_learning_transaction_write_http_full_parity_successor_acceptance.py",
+      "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py",
+      "tools/test_phase4c_learning_transaction_write_http_full_parity_contract.py"
+    ],
+    "modified_path_count": 2,
+    "parent_oid": "b635d1db3b9d71698d9a40cc729a215d67a6906f",
+    "raw_delta_sha256": "f1a209ae82d866315cf28ac30b7169a0731b00d1f8564157538f2326b6af6035",
+    "root_tree_oid": "74115f3c94ccab64da81be5ae8c8109bb3ec0034",
+    "subject": "test(java): close transaction write full parity",
+    "ti_java_tree_oid": "f43ea25fe0d86855df0563f3cf5a3853b3791d01"
+  },
+  "parity": {
+    "authentication_execution_complete": true,
+    "full_target_parity_closed": true,
+    "http_and_cors_complete": true,
+    "idempotency_complete": true,
+    "openapi_complete": true,
+    "operation_count": 9,
+    "postgresql_16_14_and_18_4_complete": true,
+    "redis_complete": true,
+    "target_execution_complete": true,
+    "worm_complete": true
+  },
+  "predecessor": {
+    "byte_count": 15604,
+    "immutable": true,
+    "sha256": "40b38a443d7f7d754cc42ce43fa854b0c3c18dc66f4920a2f07d451601d6d1db",
+    "source": "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json"
+  },
+  "progress_successor": {
+    "accepted_byte_count": 122201,
+    "accepted_sha256": "4720c1ef1f1dc9d0a7dd6ce8a4c9eb4b1fd4a55c40cd106158fd8060472212de",
+    "source": "docs/refactor/05-progress.md",
+    "successor_byte_count": 124314,
+    "successor_sha256": "44c294a91ccdac016cc72315e56b87dccc2fb9b129ba78cddc7dc2498b741ccc"
+  },
+  "route_state": {
+    "implemented_pending_operation_count": 9,
+    "migrated_operation_count": 13,
+    "pending_operation_count": 598,
+    "production_cutover_operation_count": 0,
+    "total_operation_count": 611
+  },
+  "schema_version": 1,
+  "source_authority": {
+    "control_sources": [
+      "docs/refactor/phase4c/learning-transaction-write-http-full-parity-anchor-contract.json",
+      "tools/build_phase4c_learning_transaction_write_http_full_parity_anchor_contract.py",
+      "tools/phase4c_learning_transaction_write_http_full_parity_anchor_successor_acceptance.py",
+      "tools/test_phase4c_learning_transaction_write_http_full_parity_anchor_contract.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityAnchorSuccessorAcceptance.java",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityAnchorContractParityTest.java",
+      "tools/build_phase4c_learning_transaction_write_http_full_parity_contract.py",
+      "tools/phase4c_learning_transaction_write_http_full_parity_successor_acceptance.py",
+      "tools/test_phase4c_learning_transaction_write_http_full_parity_contract.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParitySuccessorAcceptance.java"
+    ],
+    "control_sources_excluded_from_self_authority": true,
+    "historical_contracts_or_worm_overwritten": false,
+    "live_head_main_or_origin_authority": false,
+    "ordinary_build_is_gitless": true
+  },
+  "status": "bootstrap_externally_anchored_current_tree_verification_and_route_promotion_pending",
+  "unchanged_bootstrap_sources": [
+    "docs/refactor/phase4c/learning-transaction-write-http-full-parity-contract.json",
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java",
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java",
+    "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py"
+  ]
+}

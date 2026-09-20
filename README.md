@@ -47,6 +47,8 @@ flowchart LR
 
 ## 快速运行 / Quick Start
 
+Windows 本机演示（包含管理员账号与演示数据）：参见 [本机演示说明](LOCAL_DEMO.md)。
+
 默认开发方式：
 
 ```bash

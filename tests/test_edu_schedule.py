@@ -675,9 +675,9 @@ def test_miniprogram_campus_tab_exposes_schedule_and_grade_queries():
     assert "this.data.statusFailed" in ts
     assert "今天要上的课" in content_ts
     assert "最近成绩" in content_ts
-    assert "一键教评" in content_ts
+    assert "一键教评" not in content_ts
     assert "buildCampusActions" in content_ts
-    assert "一键教评" in (feature_dir / "campus-feature.ts").read_text(encoding="utf-8")
+    assert "一键教评" not in (feature_dir / "campus-feature.ts").read_text(encoding="utf-8")
     assert "queryEduSchedule" in api
     assert "request('/edu-schedule/query'" in api
     assert "queryEduGrades" in api

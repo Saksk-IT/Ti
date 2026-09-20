@@ -19,6 +19,7 @@ REQUIRED_EXTENSION_FILES = (
     "manifest.json",
     "README.md",
     "content/userscript-compat.js",
+    "content/sidebar-shell.js",
 )
 VENDOR_FILES = (
     "vendor/docx.min.js",

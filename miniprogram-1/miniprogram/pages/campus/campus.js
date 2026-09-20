@@ -387,7 +387,7 @@ Page({
             this.onGoEduBindingTap();
             return;
         }
-        if (key === 'evaluation' || key === 'more') {
+        if (key === 'more') {
             (0, nav_1.safeNavigate)("/pages/campus-feature/campus-feature?feature=".concat(key), 'navigateTo');
             return;
         }

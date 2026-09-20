@@ -254,6 +254,10 @@ function buildSelectedTerm(yearInput: unknown, semesterIndexInput: unknown): Arr
   const semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
   return buildCampusTerms(String(xnm), String(xnm), semester);
 }
+function buildAllScheduleTerms(): Array<{ xnm: string; xqm: string }> {
+  const endYear = defaultAcademicYear();
+  return buildCampusTerms(String(endYear - 5), String(endYear), 'all');
+}
 
 function termKeyFromSelection(yearInput: unknown, semesterIndexInput: unknown): string {
   const year = String(yearInput || '').trim();
@@ -417,6 +421,19 @@ export function filterScheduleRowsByWeek(rows: any[], weekInput: unknown): any[]
   }).filter((term) => (term.weekRows || []).length || (term.practice_courses || []).length);
 }
 
+function scheduleTableSections(section: string): string[] {
+  const matched = /^(?:第)?(\d+)(?:\s*[-~至]\s*(\d+))?节?$/.exec(section);
+  if (!matched) return [section];
+  const start = Number(matched[1]);
+  const end = Number(matched[2] || matched[1]);
+  if (start < 1 || end < start || end > 100) return [section];
+  const sections: string[] = [];
+  for (let first = start - (start - 1) % 2; first <= end; first += 2) {
+    sections.push(`${first}-${first + 1}节`);
+  }
+  return sections;
+}
+
 function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; tableRows: ScheduleTableRow[] } {
   const firstTerm = (Array.isArray(rows) ? rows : [])[0] || {};
   const days = (Array.isArray(firstTerm.weekRows) ? firstTerm.weekRows : []).map((dayRow: any) => String(dayRow.day || '').trim()).filter(Boolean);
@@ -426,17 +443,23 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
     (dayRow.sections || []).forEach((sectionRow: any) => {
       const section = String(sectionRow.section || '').trim();
       if (!section) return;
-      const current = sectionMap[section] || { section, dayCourses: {} };
-      sectionMap[section] = {
-        section,
-        dayCourses: {
-          ...current.dayCourses,
-          [day]: (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map((course: any) => markCourseWeekStatus(course, weekInput)),
-        },
-      };
+      // A four-period course occupies two standard rows, not a separate overlapping row.
+      scheduleTableSections(section).forEach((tableSection) => {
+        const current = sectionMap[tableSection] || { section: tableSection, dayCourses: {} };
+        const courses = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map((course: any) => ({
+          ...markCourseWeekStatus(course, weekInput),
+          tableSection: tableSection === section ? '' : section,
+        }));
+        current.dayCourses[day] = (current.dayCourses[day] || []).concat(courses);
+        sectionMap[tableSection] = current;
+      });
     });
   });
-  const tableRows = Object.keys(sectionMap).map((section) => ({
+  const tableRows = Object.keys(sectionMap).sort((a, b) => {
+    const rank = (value: string) => Number(/^\d+/.exec(value)?.[0] || 999);
+    const rankDiff = rank(a) - rank(b);
+    return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
+  }).map((section) => ({
     key: section,
     section,
     cells: days.map((day) => {
@@ -453,7 +476,7 @@ function buildScheduleTable(rows: any[], weekInput: unknown): { days: string[]; 
   return { days, tableRows };
 }
 
-function taskRowsSource(task: any, data: any): any {
+function taskRowsSource(task: any, data: any, mode: CampusMode): any {
   const credential = data?.credential || task?.credential || {};
   const gradeMetadata = {
     ...(Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
@@ -467,6 +490,7 @@ function taskRowsSource(task: any, data: any): any {
         ? { academic_year_averages: task.academic_year_averages }
         : {}),
   };
+  if (mode === 'schedule' && Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   if (Array.isArray(task?.results) && task.results.length) return { results: task.results, credential, ...gradeMetadata };
   if (Array.isArray(task?.snapshots) && task.snapshots.length) return { results: task.snapshots, credential, ...gradeMetadata };
   return data || {};
@@ -854,7 +878,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
       queryProgressStatus: taskStatusLabel(status),
       queryProgressPercent: taskProgressPercent(task),
       queryProgressDetail: String(task?.message || (mode === 'grades' ? '正在刷新全部成绩' : '正在后台查询课表')),
-      queryProgressMeta: formatTaskMeta(mode, Array.isArray(task?.terms) ? task.terms : []),
+      queryProgressMeta: '',
     };
     const self = ensureRuntimeState(this as any);
     self.__lastCampusProgress[mode] = progress;
@@ -912,7 +936,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
       this.clearTaskPolling(mode);
     }
 
-    const rows = this.applyQueryRows(taskRowsSource(task, data), mode);
+    const rows = this.applyQueryRows(taskRowsSource(task, data, mode), mode);
     if (status === 'cancelled') {
       if (this.data.mode === mode) this.setData({ statusMsg: task.message || '查询已停止' });
       return true;
@@ -1082,7 +1106,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
     const mode = fixedMode;
     let terms;
     try {
-      terms = buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
+      terms = mode === 'schedule' ? buildAllScheduleTerms() : buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
     } catch (e: any) {
       this.setData({ errorMsg: e?.message || '学年或学期不正确' });
       return;
@@ -1098,7 +1122,7 @@ export function createCampusQueryPage(config: CampusQueryPageConfig): any {
 
   async onQueryTap() {
     if (fixedMode === 'schedule') {
-      this.onOpenScheduleQuerySheetTap();
+      await this.executeCampusQuery();
       return;
     }
     await this.executeCampusQuery();

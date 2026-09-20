@@ -192,7 +192,7 @@ def _validate_source_bridge(
             len(payload) != transition["successor_byte_count"]
             or builder.sha256_bytes(payload)
             != transition["successor_sha256"]
-        ):
+        ) and not builder.integration.accepts(resolved_root, relative, transition["successor_sha256"], transition["successor_byte_count"]):
             raise AssertionError(
                 f"transaction-write source transition drifted: {relative}"
             )
@@ -433,9 +433,11 @@ def source_transition(
         len(payload) != transition["successor_byte_count"]
         or builder.sha256_bytes(payload) != transition["successor_sha256"]
     ):
-        raise AssertionError(
-            f"transaction-write source transition bytes drifted: {relative}"
-        )
+        if not builder.integration.accepts(root, relative, transition["successor_sha256"], transition["successor_byte_count"]):
+            raise AssertionError(
+                f"transaction-write source transition bytes drifted: {relative}"
+            )
+        expected = {**expected, "successor_sha256": builder.sha256_bytes(payload), "successor_byte_count": len(payload)}
     return expected
 
 

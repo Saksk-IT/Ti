@@ -24,6 +24,7 @@
         "*://mobilelearn.chaoxing.com/page/quiz/stu/quizStudentQuestion*"
       ],
       "js": [
+        "content/sidebar-shell.js",
         "vendor/docx.min.js",
         "vendor/FileSaver.min.js",
         "vendor/xlsx.full.min.js",
@@ -45,6 +46,7 @@
         "*://*.yuketang.cn/exam_room/show_paper*"
       ],
       "js": [
+        "content/sidebar-shell.js",
         "vendor/docx.min.js",
         "vendor/FileSaver.min.js",
         "vendor/jspdf.umd.min.js",

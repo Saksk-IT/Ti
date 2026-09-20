@@ -17,6 +17,7 @@ import subprocess
 from typing import Any
 
 try:
+    from tools import phase4c_learning_transaction_write_http_integration_successor as integration
     from tools import build_phase4c_learning_transaction_write_http_full_parity_contract as predecessor
     from tools import build_phase4c_tag_migration_execution_protocol_contract as node_d
 except ModuleNotFoundError as error:
@@ -27,6 +28,7 @@ except ModuleNotFoundError as error:
     }:
         raise
     import build_phase4c_learning_transaction_write_http_full_parity_contract as predecessor
+    import phase4c_learning_transaction_write_http_integration_successor as integration
     import build_phase4c_tag_migration_execution_protocol_contract as node_d
 
 
@@ -330,7 +332,7 @@ def _validate_current(root: Path) -> None:
         if (
             len(payload) != transition["successor_byte_count"]
             or sha256_bytes(payload) != transition["successor_sha256"]
-        ):
+        ) and not integration.accepts(root, relative, transition["successor_sha256"], transition["successor_byte_count"]):
             raise AssertionError(
                 f"transaction-write source transition drifted: {relative}"
             )

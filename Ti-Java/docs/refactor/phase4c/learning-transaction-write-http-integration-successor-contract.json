@@ -1,0 +1,628 @@
+{
+  "authorization": {
+    "current_bridge_external_anchor_complete": false,
+    "production_cutover": false,
+    "production_schema_execution": false,
+    "route_migration_eligible": false
+  },
+  "captured_at": "2026-09-20",
+  "checkpoints": [
+    {
+      "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+      "root_tree": "74115f3c94ccab64da81be5ae8c8109bb3ec0034",
+      "ti_java_tree": "f43ea25fe0d86855df0563f3cf5a3853b3791d01"
+    },
+    {
+      "commit": "a544e266ed971ca889d208411301011ee3ee88a5",
+      "root_tree": "21b1bde0993d2dbefc0a042ddce3ec641640c5b5",
+      "ti_java_tree": "804b115b2bf0d6fdea3bb72a348a3be6651278e8"
+    },
+    {
+      "commit": "e17427515802ae22cde25475058d04cc510e0921",
+      "root_tree": "5aee8d5843fad51a029116e0b51e69160a3ad977",
+      "ti_java_tree": "3fe16cd48deb76aeef7b2241632de195d3e9a55c"
+    },
+    {
+      "commit": "374bf3039d2f045f3e59a620a2c28e6f336ed4d8",
+      "root_tree": "e14cc8fc4742320a0d333b9b27cfcaf0dbaa46a8",
+      "ti_java_tree": "3c7f3265de0d062f4e255942ebaba910e7a3358c"
+    }
+  ],
+  "contract_id": "ti.phase4c.learning-transaction-write-http-integration-successor-contract",
+  "predecessors": {
+    "docs/refactor/phase4c/learning-transaction-write-http-full-parity-anchor-contract.json": {
+      "byte_count": 10681,
+      "immutable": true,
+      "sha256": "956ce6f59bb42df821aa77c6350f4214e62bacfa4a079e347fc2e506a088adc8"
+    },
+    "docs/refactor/phase4c/learning-transaction-write-http-source-successor-contract.json": {
+      "byte_count": 19381,
+      "immutable": true,
+      "sha256": "0c1a46eea25404167cd740f679029c87ec224e7643159eb757dff782c5fc2f5d"
+    }
+  },
+  "route_state": {
+    "migrated": 13,
+    "pending": 598,
+    "production_cutover": 0
+  },
+  "schema_version": 1,
+  "scope": "main history reconciliation; exact source bytes only",
+  "source_authority": {
+    "control_sources_excluded_from_self_authority": [
+      "tools/phase4c_learning_transaction_write_http_integration_successor.py",
+      "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpIntegrationSuccessorAcceptance.java"
+    ],
+    "historical_contracts_overwritten": false,
+    "ordinary_build_is_gitless": true,
+    "unknown_path": "reject"
+  },
+  "transitions": {
+    "docs/refactor/05-progress.md": {
+      "accepted": [
+        {
+          "byte_count": 122201,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "fa2279ff612ef33803e056a604517380de904d1a",
+          "sha256": "4720c1ef1f1dc9d0a7dd6ce8a4c9eb4b1fd4a55c40cd106158fd8060472212de"
+        },
+        {
+          "byte_count": 124314,
+          "commit": "a544e266ed971ca889d208411301011ee3ee88a5",
+          "git_blob_oid": "b22c6a17d38f56c8c79df732039336274e659ead",
+          "sha256": "44c294a91ccdac016cc72315e56b87dccc2fb9b129ba78cddc7dc2498b741ccc"
+        },
+        {
+          "byte_count": 125589,
+          "commit": "374bf3039d2f045f3e59a620a2c28e6f336ed4d8",
+          "git_blob_oid": "1642f5bf4a02fa048b395c9355224aa9a3a535b6",
+          "sha256": "2c688cb22d00f2ea5d7661c5aa2939283eb01a809563d3b42ed614198349118c"
+        }
+      ],
+      "current": {
+        "byte_count": 126679,
+        "sha256": "c9503c6b79419a39b3d85de57e4b6326a06c6f33035644bf0b2bb0738b63040d"
+      }
+    },
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java": {
+      "accepted": [
+        {
+          "byte_count": 5313,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "2c446524e99e6510e867ac3a1f7594025ab2016e",
+          "sha256": "24f587dda5a78ce19003eb062b3279150cdc71c5c8f4751a977819aadd8eb5a1"
+        },
+        {
+          "byte_count": 5318,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "5e968130bffeaa7a601c1187a4d320c75f180d95",
+          "sha256": "936acfca1ffa903d3ccd72682e09efcba5f45c39d7921ba7bd2598dc449d712c"
+        }
+      ],
+      "current": {
+        "byte_count": 5340,
+        "sha256": "d766a95f5a01303459af7dc85c544f6b373b2eb160a582a3cff843f08f97335d"
+      }
+    },
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java": {
+      "accepted": [
+        {
+          "byte_count": 53120,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "777841196e7c1eb28931ffcba902f86f8241731a",
+          "sha256": "ba719c5ca08453c22696ff7a3e316936a937371830620a405fdcca424e6afb9a"
+        },
+        {
+          "byte_count": 57576,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "1a1e2a9f274bc1df41ad276a06be6c51afd0274d",
+          "sha256": "8bf42942cb50f8a6003797949642a76192b1a2be8ada6fcf257c1be3170d165f"
+        }
+      ],
+      "current": {
+        "byte_count": 57576,
+        "sha256": "8bf42942cb50f8a6003797949642a76192b1a2be8ada6fcf257c1be3170d165f"
+      }
+    },
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightContractParityTest.java": {
+      "accepted": [
+        {
+          "byte_count": 46172,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "ee04b2574a4ba11b302cedb5150abbcc983cbde7",
+          "sha256": "849d3fe9b644f7811c13c4ba24a119170f1120a38c86635c3a6d5942e8cd44b9"
+        },
+        {
+          "byte_count": 46483,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "33758eb589e10fda49386120ae3cb9b163c362bc",
+          "sha256": "e012b9083a9e20d76bf5be9b3c139260380aebd8f33c69e15d29dfcb62971c7b"
+        }
+      ],
+      "current": {
+        "byte_count": 46483,
+        "sha256": "e012b9083a9e20d76bf5be9b3c139260380aebd8f33c69e15d29dfcb62971c7b"
+      }
+    },
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationGlobalPreflightSuccessorAcceptance.java": {
+      "accepted": [
+        {
+          "byte_count": 102737,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "e042520beec1918eb92e240055c26ababe014a9a",
+          "sha256": "f3046ce6749f6f0facc3db8b18ee3227c04f6ff0ced54f4df56871e1b7192677"
+        },
+        {
+          "byte_count": 105092,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "ca750159b3458638a79fd31343803f695ac9cb89",
+          "sha256": "722dcce44f8af9912e03d6ab28a033c3370338b2c2ad165f7e76b716d5c5dcdb"
+        }
+      ],
+      "current": {
+        "byte_count": 105092,
+        "sha256": "722dcce44f8af9912e03d6ab28a033c3370338b2c2ad165f7e76b716d5c5dcdb"
+      }
+    },
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationOperatorCoreContractParityTest.java": {
+      "accepted": [
+        {
+          "byte_count": 28965,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "3db1859581177d73861e8eec538d2ef71412512e",
+          "sha256": "9076e30366370c7ed61b962c0a987d1c2b1758e749bd1cc44f98f43387c4fd5b"
+        },
+        {
+          "byte_count": 28967,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "0c9d23b468395436de36f9e585fef6c8874b5607",
+          "sha256": "0bec3907ddb97f6a10fe3c9eb84a6f7d1272c45cdc4e37b20da8d846d16632a9"
+        }
+      ],
+      "current": {
+        "byte_count": 28967,
+        "sha256": "0bec3907ddb97f6a10fe3c9eb84a6f7d1272c45cdc4e37b20da8d846d16632a9"
+      }
+    },
+    "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationOperatorCoreSuccessorAcceptance.java": {
+      "accepted": [
+        {
+          "byte_count": 89356,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "5e609c8e12dbcabb7f00a68cb85ee0c7ce1378ed",
+          "sha256": "35a2352ba8218594919dd2b08108c644ada708b9885300ccfa22d1f17a931831"
+        },
+        {
+          "byte_count": 89850,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "2d524ea1d3a2812affc8e51071eb55fb4b180cfa",
+          "sha256": "7fb100921624e5314a2b1fded35e3c23b7d4271ad0cf4ce359118cfedd451e51"
+        }
+      ],
+      "current": {
+        "byte_count": 89850,
+        "sha256": "7fb100921624e5314a2b1fded35e3c23b7d4271ad0cf4ce359118cfedd451e51"
+      }
+    },
+    "tools/build_phase4c_personal_bank_user_counts_http_target_execution_anchor_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 36240,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "788a84ce6415f8c389fe3c9630b3e6bc085940a7",
+          "sha256": "90ff8b73b778025b16de2c46ec1b4e789f0e677fccd03f67a9aeea546b90753a"
+        },
+        {
+          "byte_count": 36241,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "88e16bef5027cad9eecdb2da0644980eb4a3487f",
+          "sha256": "3e114c256674f6988aac01a03ba7bf59ce433217278b00e710e51692c60c9309"
+        }
+      ],
+      "current": {
+        "byte_count": 36241,
+        "sha256": "3e114c256674f6988aac01a03ba7bf59ce433217278b00e710e51692c60c9309"
+      }
+    },
+    "tools/build_phase4c_personal_bank_user_counts_http_target_execution_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 65798,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "8466af282595e13de4dc9e7329a420cfef96efba",
+          "sha256": "bf4b24b4e9568dde5d88ee0985cd765c063ee09e9ec2e5dc9a19f59ee6f66f0b"
+        },
+        {
+          "byte_count": 66400,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "e4c01887da30c33fb0461d7b4ee232f55d984ef6",
+          "sha256": "616b7646e6ceb85aed69f58bed294c8e07512304c83c22732c4dffcf8ca456e3"
+        }
+      ],
+      "current": {
+        "byte_count": 66400,
+        "sha256": "616b7646e6ceb85aed69f58bed294c8e07512304c83c22732c4dffcf8ca456e3"
+      }
+    },
+    "tools/build_phase4c_tag_migration_global_preflight_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 129994,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "863425d1db39faa44ba8ef6c577bd538640c2785",
+          "sha256": "4efc2cf1a1e0e637dab550d44783e90082d597a18496e2fe63b15fff65b89e66"
+        },
+        {
+          "byte_count": 131676,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "940fdfe71aa61edc893d788bd7c7ff6bcbe760f6",
+          "sha256": "3ed2145a8cc1e23c9bd9490d65cb11fafe8b114b4c96d0ccf1ff602c0dde7be0"
+        }
+      ],
+      "current": {
+        "byte_count": 131676,
+        "sha256": "3ed2145a8cc1e23c9bd9490d65cb11fafe8b114b4c96d0ccf1ff602c0dde7be0"
+      }
+    },
+    "tools/phase4c_http_target_execution_anchor_successor_acceptance.py": {
+      "accepted": [
+        {
+          "byte_count": 36566,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "7208309d7b0986970309d856aab366ca414f4462",
+          "sha256": "e002d6aefee761693087cf549d65f84f4887bb5b7146f8c19b36d9810f3a4cf7"
+        },
+        {
+          "byte_count": 36567,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "cd23f732432ab463c0dc00b70f69b242d41759fc",
+          "sha256": "7f29e2782f0763a34e7eb5bc5adf6acacd597f9fc1200774961c2304eaf7cac0"
+        }
+      ],
+      "current": {
+        "byte_count": 36567,
+        "sha256": "7f29e2782f0763a34e7eb5bc5adf6acacd597f9fc1200774961c2304eaf7cac0"
+      }
+    },
+    "tools/phase4c_http_target_execution_successor_acceptance.py": {
+      "accepted": [
+        {
+          "byte_count": 84585,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "586427e9788f345d32570a38a78083d8e11d8b74",
+          "sha256": "39f997767d20c0e0382c6277da873ae8062a5823cd78910c0f4209823ad682a0"
+        },
+        {
+          "byte_count": 86310,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "f6d48958d3ca60dfdd613843c14e0e2a336d5f59",
+          "sha256": "cc82d03c14099972165eb0d484ebbd3017057f1c7b4211edccb668bbb82d3757"
+        }
+      ],
+      "current": {
+        "byte_count": 86310,
+        "sha256": "cc82d03c14099972165eb0d484ebbd3017057f1c7b4211edccb668bbb82d3757"
+      }
+    },
+    "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py": {
+      "accepted": [
+        {
+          "byte_count": 23894,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "39ee69e0dbaf3a9d1429e0aed70166e550da6e22",
+          "sha256": "0119bedfa3e0298aa1f9019d8ec8e20995e0b49058a360763d209759a444929d"
+        },
+        {
+          "byte_count": 28815,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "f5bc7f470b4d5d67476947c80e276db2e72d019d",
+          "sha256": "33bfe485ab1a5c8d9f057c8299975c40e61e82f355711843018262b773146333"
+        }
+      ],
+      "current": {
+        "byte_count": 28815,
+        "sha256": "33bfe485ab1a5c8d9f057c8299975c40e61e82f355711843018262b773146333"
+      }
+    },
+    "tools/phase4c_tag_migration_global_preflight_successor_acceptance.py": {
+      "accepted": [
+        {
+          "byte_count": 33035,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "b74ee6c1d7e46969e4c04c8361262c94984f208a",
+          "sha256": "d7a116cb3432e280b97a076347b1e659be4cfe9a811d879ead4c4eb886a2679d"
+        },
+        {
+          "byte_count": 34779,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "56cf8ce69680017d57b6c4b809b4351625d9e3fa",
+          "sha256": "c735c2bfcc61fb5a0a23eb91ae2f6d1f51834720570f4724678c3d135a9a5196"
+        }
+      ],
+      "current": {
+        "byte_count": 34779,
+        "sha256": "c735c2bfcc61fb5a0a23eb91ae2f6d1f51834720570f4724678c3d135a9a5196"
+      }
+    },
+    "tools/phase4c_tag_migration_operator_core_successor_acceptance.py": {
+      "accepted": [
+        {
+          "byte_count": 25844,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "18f64a98711473f3bfca312e6e2064b23f9d7c9b",
+          "sha256": "6efd1cb559a6d7da470c2a454dc981db9d7ff670f8053b8b9b9597af270b18f3"
+        },
+        {
+          "byte_count": 25845,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "dee95d8dd32ea3ff8c9a1eeff33bd20ece815997",
+          "sha256": "6cec4c1f3dc6ab0eac41af4082104c3a1b8ef4e6b3e8a821a7766b5c30f800e1"
+        }
+      ],
+      "current": {
+        "byte_count": 25845,
+        "sha256": "6cec4c1f3dc6ab0eac41af4082104c3a1b8ef4e6b3e8a821a7766b5c30f800e1"
+      }
+    },
+    "tools/test_phase4b_personal_bank_all_shares_entry_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 25488,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "d151ad93d30eaf975e3ae420beb5f046f43c08d5",
+          "sha256": "612e5de6dffc85b20e19f7cfb882bf2caa36a796d29c500cb0598b308781cc4c"
+        },
+        {
+          "byte_count": 25489,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "36d06891572b797ef74c209e6d4ab9a7b3fbb3b4",
+          "sha256": "2855f810bf316a734028af856e1f3c9d9b51d6aacf582321875291cc65e6cb59"
+        }
+      ],
+      "current": {
+        "byte_count": 25489,
+        "sha256": "2855f810bf316a734028af856e1f3c9d9b51d6aacf582321875291cc65e6cb59"
+      }
+    },
+    "tools/test_phase4b_personal_bank_all_shares_read_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 20644,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "0b4ccf4d4337ad5d3d37517e4d6380fb80144b2e",
+          "sha256": "46f08e7c6e57696609eda1f89eaaba9023dd6dbe6a3ec999dbfaca6dfed49a1e"
+        },
+        {
+          "byte_count": 20645,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "0f3a4c9a586a177b24db2de1221218f38d5f83ec",
+          "sha256": "38a20c4fb78d0abaeb064030eb80c2fb73a351bd81f75b7178422da3adb23187"
+        }
+      ],
+      "current": {
+        "byte_count": 20645,
+        "sha256": "38a20c4fb78d0abaeb064030eb80c2fb73a351bd81f75b7178422da3adb23187"
+      }
+    },
+    "tools/test_phase4b_personal_bank_share_list_entry_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 34561,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "59362ea49d53ffda2e23969464f187c01ee92bed",
+          "sha256": "7d692b2c577f584ba2534e20c017d941129fe7db50b38bb5f1597d1da697f806"
+        },
+        {
+          "byte_count": 34562,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "cc8bbc89d3ee675fd52afaee628237f15f97031f",
+          "sha256": "f5783eb3aa0e2d6347e239fcfc6d594b815a130afb02b1a47ed89a268d739558"
+        }
+      ],
+      "current": {
+        "byte_count": 34562,
+        "sha256": "f5783eb3aa0e2d6347e239fcfc6d594b815a130afb02b1a47ed89a268d739558"
+      }
+    },
+    "tools/test_phase4b_personal_bank_share_list_read_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 46740,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "3e1e0be143b4b8a59334eb07199854a9b12e113f",
+          "sha256": "1f3dceccb6637949f197637b2ca1edf0f0a7269b202cecf0a0da4cbf12fe8e6b"
+        },
+        {
+          "byte_count": 46741,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "985253b15e089987a1ad94169c9a9cfcdc1fc0aa",
+          "sha256": "a42f1521b5cf8e3f3abff30021959d47a48f9f4865ee03ece738a9b982611ba5"
+        }
+      ],
+      "current": {
+        "byte_count": 46741,
+        "sha256": "a42f1521b5cf8e3f3abff30021959d47a48f9f4865ee03ece738a9b982611ba5"
+      }
+    },
+    "tools/test_phase4b_personal_bank_usage_stats_entry_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 26791,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "b7b34447988c0ff26ffa1858e455b92450309c26",
+          "sha256": "9b9fcfc637a62a7407a56557846284d60a3c03a65bd82ebcd4641e840c488b59"
+        },
+        {
+          "byte_count": 26792,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "9ac79450d1c582d3457327fe436937b61cc45492",
+          "sha256": "3ce776eb53387e7cc716f476cb36aaede5d99e178dbb260a3ffc86e6e6192e48"
+        }
+      ],
+      "current": {
+        "byte_count": 26792,
+        "sha256": "3ce776eb53387e7cc716f476cb36aaede5d99e178dbb260a3ffc86e6e6192e48"
+      }
+    },
+    "tools/test_phase4b_personal_bank_usage_stats_read_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 35656,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "c8b2c74b4a32645a9ab69a592a4bd907a18c054a",
+          "sha256": "a34dfbeab04bbcbe66847c7f033e56a76e202dbdb71a669a25c8baf9f0cac884"
+        },
+        {
+          "byte_count": 35657,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "43ffb88df98cf1e49d3c3042fd551e047ad1320b",
+          "sha256": "4425fe362ba3f14917bed2b6029f6696c2b46206fc27aff15caccc0d7c3a0561"
+        }
+      ],
+      "current": {
+        "byte_count": 35657,
+        "sha256": "4425fe362ba3f14917bed2b6029f6696c2b46206fc27aff15caccc0d7c3a0561"
+      }
+    },
+    "tools/test_phase4b_personal_bank_user_counts_entry_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 37521,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "1b400f84ca02ce8ff7c35f7c3792200716c78bc0",
+          "sha256": "08af86b0cf2b6fb8c59d531500ddc58ca5b0ffc003929e054eb0062f9e25e638"
+        },
+        {
+          "byte_count": 38261,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "a53f156ef7590c25cfe1407b2d105e107a72f61c",
+          "sha256": "7faa11fe2cf8592ec68f07f1c5f108f4c5752f2129354300e687d7cd67beaaaf"
+        }
+      ],
+      "current": {
+        "byte_count": 38261,
+        "sha256": "7faa11fe2cf8592ec68f07f1c5f108f4c5752f2129354300e687d7cd67beaaaf"
+      }
+    },
+    "tools/test_phase4c_personal_bank_user_counts_composition_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 60642,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "e77d320dc524eb158f755f7ab15b01fd179a3b54",
+          "sha256": "c405f432a55caaa7ede0375b18fbc8819b82b3ffeb62e29f10ff5f0793b45c20"
+        },
+        {
+          "byte_count": 62481,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "386ddf20ae5e6d78a7a9686487d44c36948dda2e",
+          "sha256": "165ab23a58ac3031393547e906839df408ee2c7a4e9e90b7d1dc324fea7a4890"
+        }
+      ],
+      "current": {
+        "byte_count": 62481,
+        "sha256": "165ab23a58ac3031393547e906839df408ee2c7a4e9e90b7d1dc324fea7a4890"
+      }
+    },
+    "tools/test_phase4c_personal_bank_user_counts_http_entry_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 32398,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "febd08126f517d4f8efbf09a9d4da14939d651b6",
+          "sha256": "a05b7f0052e66d4233227a9995f0fc9ea1f34cba00269c1ea0999acaa60d801b"
+        },
+        {
+          "byte_count": 32716,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "3447cb76af3202cb0fd7132ef02d384ee00f3fa3",
+          "sha256": "1b5158852e589a0eaccc4895660017175f15d12b3c1e153d6033582ba951926f"
+        }
+      ],
+      "current": {
+        "byte_count": 32716,
+        "sha256": "1b5158852e589a0eaccc4895660017175f15d12b3c1e153d6033582ba951926f"
+      }
+    },
+    "tools/test_phase4c_personal_bank_user_counts_http_target_execution_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 34398,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "630dfb29f5a7de5c1e7e5f4b815bfce60adfe8b6",
+          "sha256": "6ebf44750d2eb5320c79351e9fa7a2e242207da3e4a4c400a0e9b110625546e3"
+        },
+        {
+          "byte_count": 34399,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "37bc6bef0fca2ed19d1de6be28723595306be406",
+          "sha256": "68f915a6dafdcc0786300699dc3735a0baee69baa4bdedd95ff159ebec8ddb77"
+        }
+      ],
+      "current": {
+        "byte_count": 34399,
+        "sha256": "68f915a6dafdcc0786300699dc3735a0baee69baa4bdedd95ff159ebec8ddb77"
+      }
+    },
+    "tools/test_phase4c_personal_bank_user_counts_read_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 24536,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "dffa34a30271b9d29b5b90c4cc096603ead25059",
+          "sha256": "d8c745ff35f298f91afb8a723bc7676187c7da4a67000b02eb7ab2752a0d3522"
+        },
+        {
+          "byte_count": 25333,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "a594f58badbfb1a14e668242b6664be56052ac13",
+          "sha256": "c06883c74684b4dbd5b66c69573714e75f46866e1defb98b047e832a96b4a553"
+        }
+      ],
+      "current": {
+        "byte_count": 25333,
+        "sha256": "c06883c74684b4dbd5b66c69573714e75f46866e1defb98b047e832a96b4a553"
+      }
+    },
+    "tools/test_phase4c_tag_migration_global_preflight_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 40427,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "9f05194372c130a92fbab3cc851a7f1b0fd078be",
+          "sha256": "f40cfec25a0cbcd5ef250ba3ba93408cf73c397e77e1a7dd7d03c67da0b1ed1a"
+        },
+        {
+          "byte_count": 40854,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "5fa7c4141495a664b20d7420cda8af7839120237",
+          "sha256": "972b5751cda4fd6da8de32cbfe93fbd5767ae0161033a9a738ae3bf2db62c802"
+        }
+      ],
+      "current": {
+        "byte_count": 40854,
+        "sha256": "972b5751cda4fd6da8de32cbfe93fbd5767ae0161033a9a738ae3bf2db62c802"
+      }
+    },
+    "tools/test_phase4c_tag_migration_operator_core_contract.py": {
+      "accepted": [
+        {
+          "byte_count": 19902,
+          "commit": "6ed81347467a4155887300b7e4ae36589204af79",
+          "git_blob_oid": "c1f871c38beb788d4c76f369efedde60497bb93f",
+          "sha256": "3c480aa1fd2378ed2c059965663c516c3ed5390c3c1e165f9a7e6855176df4b5"
+        },
+        {
+          "byte_count": 19914,
+          "commit": "e17427515802ae22cde25475058d04cc510e0921",
+          "git_blob_oid": "acf6248d5502857b4788c61acafc6f55d11c7fc1",
+          "sha256": "8fa636f41726b0517fce1680bc80ccbfe9d3d81088fafd0fedbdc15414bb7e44"
+        }
+      ],
+      "current": {
+        "byte_count": 19914,
+        "sha256": "8fa636f41726b0517fce1680bc80ccbfe9d3d81088fafd0fedbdc15414bb7e44"
+      }
+    }
+  }
+}

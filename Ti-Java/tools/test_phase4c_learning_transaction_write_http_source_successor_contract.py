@@ -33,12 +33,16 @@ class Phase4cLearningTransactionWriteHttpSourceSuccessorContractTest(
     def test_03_all_seventeen_source_transitions_compose(self) -> None:
         self.assertEqual(17, len(builder.predecessor.SOURCE_TRANSITIONS))
         for relative, expected in builder.predecessor.SOURCE_TRANSITIONS.items():
+            current = dict(expected)
+            if relative == "docs/refactor/05-progress.md":
+                fixed = builder.integration.load(ROOT)["transitions"][relative]["current"]
+                current.update(successor_sha256=fixed["sha256"], successor_byte_count=fixed["byte_count"])
             self.assertEqual(
-                {"source": relative, **expected},
+                {"source": relative, **current},
                 acceptance.source_transition(ROOT, relative),
             )
             self.assertEqual(
-                expected["successor_sha256"],
+                current["successor_sha256"],
                 acceptance.successor_sha256(ROOT, relative),
             )
         self.assertIsNone(acceptance.source_transition(ROOT, "unknown"))

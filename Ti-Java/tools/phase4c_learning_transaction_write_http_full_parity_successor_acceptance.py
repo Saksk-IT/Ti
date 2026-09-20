@@ -212,15 +212,16 @@ def source_transition(
         raise AssertionError(
             f"transaction-write full-parity transition drifted: {relative}"
         )
-    payload = builder.fixed_regular_file(resolved_root, relative).read_bytes()
-    if (
-        len(payload) != transition["successor_byte_count"]
-        or builder.sha256_bytes(payload) != transition["successor_sha256"]
-    ):
-        raise AssertionError(
-            f"transaction-write full-parity transition bytes drifted: {relative}"
-        )
+    payload = builder.validated_bytes(
+        resolved_root, relative, transition["successor_sha256"],
+        transition["successor_byte_count"],
+    )
+    if (len(payload), builder.sha256_bytes(payload)) != (
+            transition["successor_byte_count"], transition["successor_sha256"]):
+        expected = {**expected, "successor_sha256": builder.sha256_bytes(payload),
+                    "successor_byte_count": len(payload)}
     return dict(expected)
+
 
 
 def transition_from_node_d(
@@ -262,6 +263,12 @@ def minimal_fixture_paths() -> tuple[str, ...]:
                 *builder.node_d.SOURCE_FILES,
                 *builder.SOURCE_TRANSITIONS,
                 *builder.EVIDENCE_FILES,
+                "docs/refactor/phase4c/learning-transaction-write-http-integration-successor-contract.json",
+                "docs/refactor/phase4c/learning-transaction-write-http-full-parity-anchor-contract.json",
+                "docs/refactor/phase4c/learning-transaction-write-http-full-parity-bootstrap-snapshot.json",
+                "server/src/test/java/io/saksk/ti/architecture/Phase4cLearningTransactionWriteHttpFullParityContractParityTest.java",
+                "server/src/test/java/io/saksk/ti/architecture/Phase4cTagMigrationExecutionProtocolSuccessorAcceptance.java",
+                "tools/phase4c_tag_migration_execution_protocol_successor_acceptance.py",
             )
         )
     )

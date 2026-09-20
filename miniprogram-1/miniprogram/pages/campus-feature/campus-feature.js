@@ -2,11 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var theme_1 = require("../../utils/theme");
 var FEATURE_COPY = {
-    evaluation: {
-        title: '一键教评',
-        subtitle: '教评自动化能力正在接入，后续会在这里完成评价流程。',
-        action: '功能建设中',
-    },
     more: {
         title: '更多校园',
         subtitle: '考试安排、校历提醒等校园能力会逐步接入这里。',

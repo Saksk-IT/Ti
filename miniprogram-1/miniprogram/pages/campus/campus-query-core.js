@@ -249,6 +249,10 @@ function buildSelectedTerm(yearInput, semesterIndexInput) {
     var semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
     return (0, campus_content_1.buildCampusTerms)(String(xnm), String(xnm), semester);
 }
+function buildAllScheduleTerms() {
+    var endYear = defaultAcademicYear();
+    return (0, campus_content_1.buildCampusTerms)(String(endYear - 5), String(endYear), 'all');
+}
 function termKeyFromSelection(yearInput, semesterIndexInput) {
     var year = String(yearInput || '').trim();
     var semester = selectedSemesterValue(Number(semesterIndexInput) || 0);
@@ -400,6 +404,20 @@ function filterScheduleRowsByWeek(rows, weekInput) {
         return __assign(__assign({}, term), { weekRows: weekRows, practice_courses: practiceCourses });
     }).filter(function (term) { return (term.weekRows || []).length || (term.practice_courses || []).length; });
 }
+function scheduleTableSections(section) {
+    var matched = /^(?:第)?(\d+)(?:\s*[-~至]\s*(\d+))?节?$/.exec(section);
+    if (!matched)
+        return [section];
+    var start = Number(matched[1]);
+    var end = Number(matched[2] || matched[1]);
+    if (start < 1 || end < start || end > 100)
+        return [section];
+    var sections = [];
+    for (var first = start - (start - 1) % 2; first <= end; first += 2) {
+        sections.push("".concat(first, "-").concat(first + 1, "节"));
+    }
+    return sections;
+}
 function buildScheduleTable(rows, weekInput) {
     var firstTerm = (Array.isArray(rows) ? rows : [])[0] || {};
     var days = (Array.isArray(firstTerm.weekRows) ? firstTerm.weekRows : []).map(function (dayRow) { return String(dayRow.day || '').trim(); }).filter(Boolean);
@@ -407,18 +425,23 @@ function buildScheduleTable(rows, weekInput) {
     (firstTerm.weekRows || []).forEach(function (dayRow) {
         var day = String(dayRow.day || '').trim();
         (dayRow.sections || []).forEach(function (sectionRow) {
-            var _a;
             var section = String(sectionRow.section || '').trim();
             if (!section)
                 return;
-            var current = sectionMap[section] || { section: section, dayCourses: {} };
-            sectionMap[section] = {
-                section: section,
-                dayCourses: __assign(__assign({}, current.dayCourses), (_a = {}, _a[day] = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map(function (course) { return markCourseWeekStatus(course, weekInput); }), _a)),
-            };
+            // A four-period course occupies two standard rows, not a separate overlapping row.
+            scheduleTableSections(section).forEach(function (tableSection) {
+                var current = sectionMap[tableSection] || { section: tableSection, dayCourses: {} };
+                var courses = (Array.isArray(sectionRow.courses) ? sectionRow.courses : []).map(function (course) { return (__assign(__assign({}, markCourseWeekStatus(course, weekInput)), { tableSection: tableSection === section ? '' : section })); });
+                current.dayCourses[day] = (current.dayCourses[day] || []).concat(courses);
+                sectionMap[tableSection] = current;
+            });
         });
     });
-    var tableRows = Object.keys(sectionMap).map(function (section) { return ({
+    var tableRows = Object.keys(sectionMap).sort(function (a, b) {
+        var rank = function (value) { var _a; return Number(((_a = /^\d+/.exec(value)) === null || _a === void 0 ? void 0 : _a[0]) || 999); };
+        var rankDiff = rank(a) - rank(b);
+        return rankDiff !== 0 ? rankDiff : a.localeCompare(b, 'zh-Hans-CN');
+    }).map(function (section) { return ({
         key: section,
         section: section,
         cells: days.map(function (day) {
@@ -434,7 +457,7 @@ function buildScheduleTable(rows, weekInput) {
     }); });
     return { days: days, tableRows: tableRows };
 }
-function taskRowsSource(task, data) {
+function taskRowsSource(task, data, mode) {
     var credential = (data === null || data === void 0 ? void 0 : data.credential) || (task === null || task === void 0 ? void 0 : task.credential) || {};
     var gradeMetadata = __assign(__assign({}, (Object.prototype.hasOwnProperty.call(data || {}, 'grade_overview')
         ? { grade_overview: data.grade_overview }
@@ -445,6 +468,8 @@ function taskRowsSource(task, data) {
         : Object.prototype.hasOwnProperty.call(task || {}, 'academic_year_averages')
             ? { academic_year_averages: task.academic_year_averages }
             : {}));
+    if (mode === 'schedule' && Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
+        return __assign({ results: task.snapshots, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.results) && task.results.length)
         return __assign({ results: task.results, credential: credential }, gradeMetadata);
     if (Array.isArray(task === null || task === void 0 ? void 0 : task.snapshots) && task.snapshots.length)
@@ -826,7 +851,7 @@ function createCampusQueryPage(config) {
                 queryProgressStatus: taskStatusLabel(status),
                 queryProgressPercent: taskProgressPercent(task),
                 queryProgressDetail: String((task === null || task === void 0 ? void 0 : task.message) || (mode === 'grades' ? '正在刷新全部成绩' : '正在后台查询课表')),
-                queryProgressMeta: formatTaskMeta(mode, Array.isArray(task === null || task === void 0 ? void 0 : task.terms) ? task.terms : []),
+                queryProgressMeta: '',
             };
             var self = ensureRuntimeState(this);
             self.__lastCampusProgress[mode] = progress;
@@ -895,7 +920,7 @@ function createCampusQueryPage(config) {
                 this.setActiveCampusTask(mode, null);
                 this.clearTaskPolling(mode);
             }
-            var rows = this.applyQueryRows(taskRowsSource(task, data), mode);
+            var rows = this.applyQueryRows(taskRowsSource(task, data, mode), mode);
             if (status === 'cancelled') {
                 if (this.data.mode === mode)
                     this.setData({ statusMsg: task.message || '查询已停止' });
@@ -1125,7 +1150,7 @@ function createCampusQueryPage(config) {
                             }
                             mode = fixedMode;
                             try {
-                                terms = buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
+                                terms = mode === 'schedule' ? buildAllScheduleTerms() : buildSelectedTerm(this.data.academicYear, this.data.semesterIndex);
                             }
                             catch (e) {
                                 this.setData({ errorMsg: (e === null || e === void 0 ? void 0 : e.message) || '学年或学期不正确' });
@@ -1155,8 +1180,7 @@ function createCampusQueryPage(config) {
                     switch (_a.label) {
                         case 0:
                             if (fixedMode === 'schedule') {
-                                this.onOpenScheduleQuerySheetTap();
-                                return [2 /*return*/];
+                                return [4 /*yield*/, this.executeCampusQuery()];
                             }
                             return [4 /*yield*/, this.executeCampusQuery()];
                         case 1:
