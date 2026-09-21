@@ -10,6 +10,10 @@ __pycache__
 **/__pycache__
 **/*.pyc
 miniprogram-1
+Ti-Java
+videos
+output
+.playwright-cli
 var
 backups
 instance

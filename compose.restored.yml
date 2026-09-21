@@ -1,0 +1,22 @@
+# 从生产快照恢复的本机开发环境；与 compose.dev.yml、compose.local.yml 一起使用。
+services:
+  web:
+    build:
+      args:
+        PIP_INDEX_URL: https://pypi.org/simple
+        PIP_TRUSTED_HOST: ""
+    environment:
+      SCHEDULE_CREDENTIAL_SECRET: ${SCHEDULE_CREDENTIAL_SECRET:-}
+  worker:
+    environment:
+      BACKUP_CREDENTIAL_SECRET: ${BACKUP_CREDENTIAL_SECRET:-}
+      SCHEDULE_CREDENTIAL_SECRET: ${SCHEDULE_CREDENTIAL_SECRET:-}
+  backup:
+    # 生产数据库保留云备份配置，本机默认不运行会访问远端存储的调度器。
+    profiles: [cloud-backup]
+
+volumes:
+  local-data:
+    # 数据由生产快照预先恢复；显式声明外部卷可避免 Compose 误建空卷。
+    external: true
+    name: ti-local-dev_local-data
